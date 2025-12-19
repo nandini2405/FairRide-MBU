@@ -1,0 +1,1111 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/floating-autos.css">
+    <style>
+        :root {
+            --primary-color: #FBBF24; /* Amber 400 */
+            --primary-color-transparent-1: rgba(251, 191, 36, 0.2);
+            --primary-color-transparent-2: rgba(251, 191, 36, 0.1);
+            --primary-color-transparent-3: rgba(251, 191, 36, 0.4);
+            --primary-color-light: #FCD34D; /* Amber 300 */
+            --bg-color: #111827; /* Gray 900 */
+            --card-bg-color: rgba(31, 41, 55, 0.6); /* Gray 800 with alpha */
+            --shadow-color: rgba(251, 191, 36, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            --mx: -9999px;
+            --my: -9999px;
+            overflow-x: hidden;
+        }
+ 
+        /* Interactive reveal effect using mouse position */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at var(--mx) var(--my), 
+                var(--primary-color-transparent-1) 0px, 
+                var(--primary-color-transparent-2) 120px,
+                transparent 240px);
+            pointer-events: none;
+            z-index: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        #laser-flow-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Keep the laser canvas below floating autos background */
+            z-index: -2;
+            background-color: var(--bg-color);
+        }
+        
+        #click-spark-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999; 
+        }
+
+        .gradual-blur {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 6rem;
+            z-index: 5;
+            pointer-events: none;
+            display: flex;
+            isolation: isolate;
+        }
+
+        #gradual-blur-top { top: 0; flex-direction: column-reverse; }
+        #gradual-blur-bottom { bottom: 0; flex-direction: column; }
+        .gradual-blur > div { flex: 1; width: 100%; }
+
+        /* Gradual blur effect */
+        .gradual-blur > div:nth-child(1) { backdrop-filter: blur(2.5px); -webkit-backdrop-filter: blur(2.5px); }
+        .gradual-blur > div:nth-child(2) { backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px); }
+        .gradual-blur > div:nth-child(3) { backdrop-filter: blur(0.8px); -webkit-backdrop-filter: blur(0.8px); }
+        .gradual-blur > div:nth-child(4) { backdrop-filter: blur(0.4px); -webkit-backdrop-filter: blur(0.4px); }
+        .gradual-blur > div:nth-child(5) { backdrop-filter: blur(0.2px); -webkit-backdrop-filter: blur(0.2px); }
+
+        /* Fallback for browsers that don't support backdrop-filter */
+        @supports not (backdrop-filter: blur(1px)) {
+            #gradual-blur-top { background: linear-gradient(to bottom, var(--bg-color) 40%, rgba(17, 24, 39, 0)); }
+            #gradual-blur-bottom { background: linear-gradient(to top, var(--bg-color) 40%, rgba(17, 24, 39, 0)); }
+            .gradual-blur > div { display: none; }
+        }
+
+        .login-card, .modal-card {
+            background-color: var(--card-bg-color);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 1.5rem;
+            border: 1px solid var(--primary-color-transparent-1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+
+        .login-card {
+            animation: slideUpFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUpFadeIn {
+            from { opacity: 0; transform: translateY(30px) perspective(1000px); }
+            to { opacity: 1; transform: translateY(0) perspective(1000px); }
+        }
+
+        .tab-container {
+            background-color: #1f2937; /* Gray 800 */
+            border-radius: 9999px;
+            padding: 0.25rem;
+            display: flex;
+            position: relative;
+        }
+
+        .tab-btn {
+            flex: 1; padding: 0.625rem 0; font-size: 0.875rem; font-weight: 600;
+            color: #9ca3af; /* Gray 400 */
+            border-radius: 9999px; cursor: pointer;
+            transition: color 0.3s ease, transform 0.3s ease;
+            position: relative; z-index: 10;
+        }
+        
+        .tab-btn:not(.active):hover { color: #f9fafb; /* Gray 50 */ transform: translateY(-2px); }
+        .tab-btn.active { color: #111827; /* Gray 900 */ transform: scale(1.05); }
+
+        .tab-highlight {
+            position: absolute; top: 4px; bottom: 4px; left: 4px;
+            background-color: var(--primary-color);
+            border-radius: 9999px;
+            box-shadow: 0 0 15px var(--primary-color-transparent-3);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .login-card .tab-highlight { width: calc((100% - 8px) / 3); }
+        #student-tab.active ~ .tab-highlight { transform: translateX(0%); }
+        #driver-tab.active ~ .tab-highlight { transform: translateX(100%); }
+        #admin-tab.active ~ .tab-highlight { transform: translateX(200%); }
+
+        .forms-grid { display: grid; grid-template-columns: 1fr; }
+        .form-content {
+            grid-column: 1 / -1; grid-row: 1 / -1;
+            opacity: 0; pointer-events: none; transform: translateY(10px);
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .form-content.active { opacity: 1; pointer-events: auto; transform: translateY(0px); }
+
+        @keyframes elementFadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .form-content.active form > * { animation: elementFadeInUp 0.5s ease-out forwards; opacity: 0; }
+        .form-content.active form > div:nth-of-type(1) { animation-delay: 0.1s; }
+        .form-content.active form > div:nth-of-type(2) { animation-delay: 0.2s; }
+        .form-content.active form > .login-btn { animation-delay: 0.3s; }
+        .form-content.active form > p { animation-delay: 0.4s; }
+
+        .input-field {
+            background-color: #374151; /* Gray 700 */ 
+            border: 1px solid #4b5563; /* Gray 600 */
+            border-radius: 0.5rem;
+            transition: border-color 0.2s, box-shadow 0.2s; 
+            color: #f3f4f6; /* Gray 100 */
+        }
+        .input-field::placeholder { color: #9ca3af; /* Gray 400 */ }
+        .input-field:focus { outline: none; animation: glow-yellow 1.8s infinite; }
+
+        @keyframes glow-yellow {
+            0%, 100% { border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-color-transparent-1); }
+            50% { border-color: var(--primary-color-light); box-shadow: 0 0 15px 0px var(--primary-color-transparent-3); }
+        }
+
+        .login-btn { 
+            transition: transform 0.2s ease, box-shadow 0.2s ease; 
+            background-color: var(--primary-color);
+            color: #111827; /* Dark text for better contrast on yellow */
+        }
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
+        }
+        /* Hovering animations */
+        .input-field:hover { border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-color-transparent-1); }
+        .tab-btn:hover { transform: translateY(-2px) scale(1.02); }
+        .hover-float { transition: transform .25s ease, box-shadow .25s ease; }
+        .hover-float:hover { transform: translateY(-4px); box-shadow: 0 10px 18px -8px var(--shadow-color); }
+        .glow-hover { position: relative; overflow: hidden; }
+        .glow-hover::after { content: ""; position: absolute; inset: -2px; background: radial-gradient(120px 40px at var(--mx) var(--my), rgba(251,191,36,0.18), transparent 70%); opacity: 0; transition: opacity .2s ease; pointer-events: none; }
+        .glow-hover:hover::after { opacity: 1; }
+        /* Ripple effect */
+        .ripple-container { position: relative; overflow: hidden; }
+        .ripple { position: absolute; border-radius: 9999px; transform: scale(0); animation: ripple .6s ease-out; background: rgba(255,255,255,.4); pointer-events: none; }
+        @keyframes ripple { to { transform: scale(6); opacity: 0; } }
+        .login-card a, .modal-card a { transition: color 0.2s ease-in-out; color: var(--primary-color); }
+        
+        .animated-gradient-text {
+            background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color), #f9fafb, var(--primary-color), var(--primary-color-light));
+            background-size: 200% auto; 
+            background-clip: text;
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            animation: textGradientShift 4s linear infinite;
+        }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+        
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+        .modal-card {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            opacity: 0; pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            z-index: 101;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+        }
+        .modal-card::-webkit-scrollbar { width: 6px; }
+        .modal-card::-webkit-scrollbar-thumb {
+            background-color: rgba(148, 163, 184, 0.4);
+            border-radius: 9999px;
+        }
+        .modal-backdrop.visible .modal-card {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1; pointer-events: auto;
+        }
+        
+        .spinner {
+            width: 28px; height: 28px;
+            border: 3px solid var(--primary-color-transparent-1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="antialiased text-slate-200">
+    <canvas id="laser-flow-canvas"></canvas>
+
+    <div id="gradual-blur-top" class="gradual-blur">
+        <div></div><div></div><div></div><div></div><div></div>
+    </div>
+    <div id="gradual-blur-bottom" class="gradual-blur">
+        <div></div><div></div><div></div><div></div><div></div>
+    </div>
+    
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 relative z-10" style="perspective: 1000px;">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-black text-slate-50 leading-tight" style="animation: slideUpFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;">
+                Welcome to <span class="animated-gradient-text">FairRide MBU</span>
+            </h1>
+            <p class="text-md text-slate-400 mt-3 italic max-w-2xl mx-auto" style="animation: slideUpFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; opacity: 0;">
+                "Bridging distances, connecting communities. FairRide MBU: Your trusted partner for every journey, ensuring no one is left behind."
+            </p>
+        </header>
+
+        <main class="w-full max-w-md">
+            <!-- 3D Showcases -->
+            <div class="hidden md:grid grid-cols-2 gap-4 mb-6 -mt-2">
+                <div class="h-40 rounded-xl border border-amber-400/20 bg-white/5 backdrop-blur-sm overflow-hidden">
+                    <div class="w-full h-full" data-sketchfab data-title="Auto Rickshaw" data-embed="https://sketchfab.com/models/44776bcb34e04c1a8b9c18a70376304e/embed" data-thumb="https://placehold.co/640x360/ffffff/1f2937?text=Auto+Rickshaw+3D"></div>
+                </div>
+                <div class="h-40 rounded-xl border border-amber-400/20 bg-white/5 backdrop-blur-sm overflow-hidden">
+                    <div class="w-full h-full" data-sketchfab data-title="Royal Enfield" data-embed="https://sketchfab.com/models/f2f8c586b40644ea8024618f51809c39/embed" data-thumb="https://placehold.co/640x360/ffffff/1f2937?text=Royal+Enfield+3D"></div>
+                </div>
+            </div>
+            <div class="login-card p-8 hover-float glow-hover ripple-container">
+                <div class="tab-container mb-6">
+                    <button id="student-tab" class="tab-btn active" data-target="student-form">Student</button>
+                    <button id="driver-tab" class="tab-btn" data-target="driver-form">Driver</button>
+                    <button id="admin-tab" class="tab-btn" data-target="admin-form">Admin</button>
+                    <div class="tab-highlight"></div>
+                </div>
+
+                <div class="forms-grid">
+                     <div id="student-form" class="form-content active">
+                        <form>
+                            <h2 class="text-xl font-bold text-slate-50 text-center mb-1">Student Login</h2>
+                            <p class="text-center text-sm text-slate-400 mb-6">Access your student portal.</p>
+                            <div class="mb-4"><label for="student-email" class="block text-sm font-semibold text-slate-300 mb-2">Student ID / Email</label><input type="email" id="student-email" class="input-field w-full px-4 py-2.5" placeholder="yourid@mbu.asia"></div>
+                            <div class="mb-2"><label for="student-password" class="block text-sm font-semibold text-slate-300 mb-2">Password</label><input type="password" id="student-password" class="input-field w-full px-4 py-2.5" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"></div>
+                            <p class="text-xs text-right text-slate-400 mb-4"><a href="forgot_password.html?role=student" class="font-semibold hover:underline">Forgot password?</a></p>
+                            <button id="student-login-btn" type="submit" class="login-btn w-full font-bold py-3 rounded-lg shadow-lg ripple-container" style="--tw-shadow-color: var(--shadow-color);">Login</button>
+                            <p class="text-xs text-center mt-4 text-slate-400">Don't have an account? <a href="signup.html" class="font-semibold hover:underline">Sign Up</a></p>
+                        </form>
+                    </div>
+                    <div id="driver-form" class="form-content">
+                        <form>
+                             <h2 class="text-xl font-bold text-slate-50 text-center mb-1">Driver Login</h2>
+                            <p class="text-center text-sm text-slate-400 mb-6">Welcome back, partner.</p>
+                            <div class="mb-4"><label for="driver-id" class="block text-sm font-semibold text-slate-300 mb-2">Phone or Email</label><input type="text" id="driver-id" class="input-field w-full px-4 py-2.5" placeholder="Enter your phone or email"></div>
+                            <div class="mb-2"><label for="driver-password" class="block text-sm font-semibold text-slate-300 mb-2">Password</label><input type="password" id="driver-password" class="input-field w-full px-4 py-2.5" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"></div>
+                            <p class="text-xs text-right text-slate-400 mb-4"><a href="forgot_password.html?role=driver" class="font-semibold hover:underline">Forgot password?</a></p>
+                            <button id="driver-login-btn" type="submit" class="login-btn w-full font-bold py-3 rounded-lg shadow-lg ripple-container" style="--tw-shadow-color: var(--shadow-color);">Login</button>
+                            <p class="text-xs text-center mt-4 text-slate-400">Not registered? <a href="signup.html" class="font-semibold hover:underline">Apply Here</a></p>
+                        </form>
+                    </div>
+                    <div id="admin-form" class="form-content">
+                        <form>
+                            <h2 class="text-xl font-bold text-slate-50 text-center mb-1">Admin Login</h2>
+                            <p class="text-center text-sm text-slate-400 mb-6">System Management Portal.</p>
+                            <div class="mb-4"><label for="admin-username" class="block text-sm font-semibold text-slate-300 mb-2">Username</label><input type="text" id="admin-username" class="input-field w-full px-4 py-2.5" placeholder="admin_user"></div>
+                            <div class="mb-2"><label for="admin-password" class="block text-sm font-semibold text-slate-300 mb-2">Password</label><input type="password" id="admin-password" class="input-field w-full px-4 py-2.5" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"></div>
+                            <p class="text-xs text-right text-slate-400 mb-4"><a href="forgot_password.html?role=admin" class="font-semibold hover:underline">Forgot password?</a></p>
+                            <button id="admin-login-btn" type="submit" class="login-btn w-full font-bold py-3 rounded-lg shadow-lg ripple-container" style="--tw-shadow-color: var(--shadow-color);">Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-6" style="animation: slideUpFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; opacity: 0;">
+                <button id="open-fare-estimator-btn" class="bg-slate-800/50 hover:bg-slate-700/70 border border-slate-700 text-slate-300 font-semibold py-3 px-6 rounded-lg transition-all duration-200 backdrop-blur-sm">
+                    &#10024; Smart Fare Estimator
+                </button>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Fare Estimator Modal -->
+    <div id="fare-estimator-modal-backdrop" class="modal-backdrop">
+        <div id="fare-estimator-modal" class="modal-card w-full max-w-md p-8">
+            <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-2xl font-bold animated-gradient-text">Smart Fare Estimator</h2>
+                 <button id="close-fare-estimator-btn" class="text-slate-400 hover:text-white transition-colors text-2xl leading-none">&times;</button>
+            </div>
+            <p class="text-slate-400 mb-6">Get a fare quote that reacts to live traffic, rider demand, and a transparent breakdown before you confirm.</p>
+            <div class="space-y-3 mb-6 text-left">
+                <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wide">The 3 Most Important Smart Estimator Features</h3>
+                <div class="bg-slate-900/40 border border-slate-700/70 rounded-xl px-4 py-3">
+                    <h3 class="text-sm font-semibold text-amber-300 uppercase tracking-wide">1. Real-Time Traffic Adjustment</h3>
+                    <p class="text-xs text-slate-300 mt-2"><strong>What It Is:</strong> We estimate travel time using live routing data and local conditions instead of distance alone.</p>
+                    <p class="text-xs text-slate-400 mt-1"><strong>Why It Matters:</strong> Drivers are paid for the time they lose in congestion, and riders understand fare changes during peak hours.</p>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-700/70 rounded-xl px-4 py-3">
+                    <h3 class="text-sm font-semibold text-amber-300 uppercase tracking-wide">2. Dynamic Demand Surcharging</h3>
+                    <p class="text-xs text-slate-300 mt-2"><strong>What It Is:</strong> When campus demand spikes, a transparent surcharge appears automatically.</p>
+                    <p class="text-xs text-slate-400 mt-1"><strong>Why It Matters:</strong> The surcharge encourages more autos to reach you faster, and we show the exact amount before you book.</p>
+                </div>
+                <div class="bg-slate-900/40 border border-slate-700/70 rounded-xl px-4 py-3">
+                    <h3 class="text-sm font-semibold text-amber-300 uppercase tracking-wide">3. Interactive Fare Breakdown</h3>
+                    <p class="text-xs text-slate-300 mt-2"><strong>What It Is:</strong> Tap the estimate to expand a transparent list of every component.</p>
+                    <p class="text-xs text-slate-400 mt-1"><strong>Why It Matters:</strong> Trust comes from clarity. You see the base fare, distance, time, traffic, and any surcharge in one place.</p>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div><label for="destination" class="block text-sm font-semibold text-slate-300 mb-2">Destination</label><input type="text" id="destination" class="input-field w-full px-4 py-2.5" placeholder="e.g., Tirupati Railway Station"></div>
+                <div><label for="passengers" class="block text-sm font-semibold text-slate-300 mb-2">Number of Passengers</label><input type="number" id="passengers" class="input-field w-full px-4 py-2.5" value="1" min="1" max="3"></div>
+            </div>
+            <button id="estimate-fare-btn" class="login-btn w-full font-bold py-3 rounded-lg mt-6 flex items-center justify-center">
+                <span class="btn-text">Estimate Fare</span>
+                <span class="spinner hidden ml-2"></span>
+            </button>
+            <div id="fare-result" class="mt-6 p-5 bg-slate-900/50 rounded-lg border border-slate-700 hidden">
+                <div class="flex flex-wrap gap-2 mb-4 text-xs">
+                    <span class="px-3 py-1 rounded-full bg-slate-800/70 text-slate-200 border border-slate-700" id="fare-distance-chip"></span>
+                    <span class="px-3 py-1 rounded-full bg-slate-800/70 text-slate-200 border border-slate-700" id="fare-duration-chip"></span>
+                </div>
+                <p class="text-lg font-bold text-center text-slate-100" id="fare-price"></p>
+                <p class="text-sm text-slate-300 mt-2 text-center" id="fare-justification"></p>
+                <p class="text-xs text-amber-200/90 mt-3 text-center" id="fare-traffic-label"></p>
+                <button id="fare-breakdown-toggle" type="button" class="mt-4 w-full bg-slate-800/40 hover:bg-slate-800/70 border border-slate-700/80 rounded-lg px-4 py-3 text-sm font-semibold text-slate-200 flex items-center justify-between transition-all duration-200" aria-expanded="false">
+                    <span class="toggle-text">Show detailed breakdown</span>
+                    <span class="chevron text-lg leading-none">+</span>
+                </button>
+                <div id="fare-breakdown-panel" class="mt-4 space-y-2 hidden">
+                    <div class="flex items-center justify-between text-sm text-slate-200"><span>Base fare</span><span id="fare-breakdown-base"></span></div>
+                    <div class="flex items-center justify-between text-sm text-slate-200"><span>Distance (<span id="fare-breakdown-distance-info" class="text-xs text-slate-400"></span>)</span><span id="fare-breakdown-distance"></span></div>
+                    <div class="flex items-center justify-between text-sm text-slate-200"><span>Time allowance (<span id="fare-breakdown-time-info" class="text-xs text-slate-400"></span>)</span><span id="fare-breakdown-time"></span></div>
+                    <div class="flex items-center justify-between text-sm text-slate-200"><span>Real-time traffic add-on</span><span id="fare-breakdown-traffic"></span></div>
+                    <div class="flex items-center justify-between text-sm text-slate-200"><span>Demand surcharge</span><span id="fare-breakdown-demand"></span></div>
+                    <div class="border-t border-slate-700/60 pt-2 flex items-center justify-between font-semibold text-slate-100 text-base"><span>Total</span><span id="fare-breakdown-total"></span></div>
+                </div>
+                <p class="text-xs text-slate-400 mt-3" id="fare-demand-note"></p>
+            </div>
+        </div>
+    </div>
+    
+    <canvas id="click-spark-canvas"></canvas>
+
+    <script>
+        // --- LaserFlow Canvas Effect ---
+        const laserCanvas = document.getElementById('laser-flow-canvas');
+        const laserCtx = laserCanvas.getContext('2d');
+        let width, height, lasers;
+
+        function setupLasers() {
+            width = laserCanvas.width = window.innerWidth;
+            height = laserCanvas.height = window.innerHeight;
+            lasers = [];
+            for (let i = 0; i < 30; i++) {
+                lasers.push(new Laser(width, height));
+            }
+        }
+
+        class Laser {
+            constructor(w, h) { this.w = w; this.h = h; this.x = Math.random() * w; this.y = Math.random() * h; this.angle = Math.random() * Math.PI * 2; this.speed = (Math.random() * 0.2) + 0.1; this.length = (Math.random() * 150) + 50; this.opacity = (Math.random() * 0.5) + 0.1; }
+            update() { this.x += Math.cos(this.angle) * this.speed; this.y += Math.sin(this.angle) * this.speed; if (this.x < -this.length || this.x > this.w + this.length || this.y < -this.length || this.y > this.h + this.length) { const side = Math.floor(Math.random() * 4); if (side === 0) { this.x = -this.length; this.y = Math.random() * this.h; } else if (side === 1) { this.x = this.w + this.length; this.y = Math.random() * this.h; } else if (side === 2) { this.y = -this.length; this.x = Math.random() * this.w; } else { this.y = this.h + this.length; this.x = Math.random() * this.w; } } }
+            draw(context) { context.beginPath(); context.moveTo(this.x, this.y); context.lineTo(this.x - Math.cos(this.angle) * this.length, this.y - Math.sin(this.angle) * this.length); context.strokeStyle = `rgba(251, 191, 36, ${this.opacity})`; context.lineWidth = 1; context.stroke(); }
+        }
+
+        function animateLasers() { laserCtx.clearRect(0, 0, width, height); lasers.forEach(l => { l.update(); l.draw(laserCtx); }); requestAnimationFrame(animateLasers); }
+        window.addEventListener('resize', setupLasers);
+        setupLasers();
+        animateLasers();
+        
+        document.body.addEventListener('mousemove', (e) => { document.body.style.setProperty('--mx', `${e.clientX}px`); document.body.style.setProperty('--my', `${e.clientY}px`); });
+        document.body.addEventListener('mouseleave', () => { document.body.style.setProperty('--mx', '-9999px'); document.body.style.setProperty('--my', '-9999px'); });
+
+        const mainTabs = document.querySelectorAll('.login-card .tab-btn');
+        const mainFormContents = document.querySelectorAll('.login-card .form-content');
+        mainTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = document.getElementById(tab.dataset.target);
+                mainTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                mainFormContents.forEach(c => c.classList.remove('active'));
+                target.classList.add('active');
+            });
+        });
+        
+        const card = document.querySelector('.login-card');
+        card.addEventListener('mousemove', (e) => { const rect = card.getBoundingClientRect(); const x = e.clientX - rect.left - rect.width / 2; const y = e.clientY - rect.top - rect.height / 2; const rotateX = -y / 30; const rotateY = x / 30; card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`; });
+        card.addEventListener('mouseleave', () => { card.style.transform = 'rotateX(0) rotateY(0) scale(1)'; });
+        
+        // Resolve backend base dynamically for fewer setup issues
+        let API_BASE = window.API_BASE || null;
+        let MOCK_MODE = false;
+        function timeoutFetch(input, init = {}, ms = 2000) {
+            const ctrl = new AbortController();
+            const id = setTimeout(() => ctrl.abort(), ms);
+            return fetch(input, { ...init, signal: ctrl.signal }).finally(() => clearTimeout(id));
+        }
+        async function resolveApiBase() {
+            if (API_BASE) return API_BASE;
+            const candidates = [
+                window.API_BASE,
+                location.origin,
+                `${location.protocol}//${location.hostname}:3001`,
+                'http://127.0.0.1:3001',
+                'http://localhost:3001'
+            ].filter(Boolean);
+            for (const base of [...new Set(candidates)]) {
+                try {
+                    const res = await timeoutFetch(base.replace(/\/$/, '') + '/api/health', { cache: 'no-store' }, 1500);
+                    if (res.ok) { API_BASE = base; break; }
+                } catch (_) {}
+            }
+            if (!API_BASE) {
+                // Fallback to offline demo mode instead of throwing
+                MOCK_MODE = true;
+                return null;
+            }
+            return API_BASE;
+        }
+        function mockApiPost(path, payload) {
+            // Minimal offline login mock
+            if (path === '/api/auth/login') {
+                // Try to use the locally saved offline users from signup.html (mock_users)
+                const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch { return d; } };
+                const users = read('mock_users', []);
+                const identifier = (payload && (payload.email || payload.phone || payload.studentId)) || '';
+                const found = users.find(u =>
+                    (payload?.email && u.email === payload.email) ||
+                    (payload?.phone && u.phone === payload.phone) ||
+                    (payload?.studentId && u.studentId === payload.studentId)
+                );
+
+                // Fallback role heuristic for demo/admin
+                let role = found?.role || 'RIDER';
+                if (!found) {
+                    if (payload && payload.phone) role = 'DRIVER';
+                    if (payload && payload.email && /admin/i.test(payload.email)) role = 'ADMIN';
+                }
+
+                const user = found || {
+                    id: 0,
+                    name: identifier || 'Demo User',
+                    role,
+                    email: payload?.email || null,
+                    phone: payload?.phone || null,
+                    studentId: payload?.studentId || null
+                };
+
+                return Promise.resolve({ token: 'demo-token', user });
+            }
+            return Promise.reject(new Error('Offline mode: endpoint not available'));
+        }
+        async function apiPost(path, payload) {
+            const base = await resolveApiBase();
+            if (!base || MOCK_MODE) {
+                return mockApiPost(path, payload);
+            }
+            const url = base.replace(/\/$/, '') + path;
+            let res;
+            try {
+                res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                // Use offline mock when network fails
+                return mockApiPost(path, payload);
+            }
+            const text = await res.text();
+            let data = null;
+            try { data = text ? JSON.parse(text) : null; } catch (_) {}
+            if (!res.ok) {
+                const msg = (data && (data.error || data.message)) || text || `HTTP ${res.status}`;
+                throw new Error(msg);
+            }
+            return data || {};
+        }
+
+        function cacheCurrentUser(user) {
+            try {
+                const keys = [
+                    'currentUserName',
+                    'currentUserRole',
+                    'currentUserStudentId',
+                    'currentUserEmail',
+                    'currentUserPhone',
+                    'currentUserGender',
+                    'currentUserAvatarUrl'
+                ];
+                keys.forEach(k => localStorage.removeItem(k));
+                if (!user) return;
+                if (user.name) localStorage.setItem('currentUserName', user.name);
+                if (user.role) localStorage.setItem('currentUserRole', user.role);
+                if (user.studentId) localStorage.setItem('currentUserStudentId', user.studentId);
+                if (user.email) localStorage.setItem('currentUserEmail', user.email);
+                if (user.phone) localStorage.setItem('currentUserPhone', user.phone);
+                if (user.gender) localStorage.setItem('currentUserGender', user.gender);
+                if (user.avatarUrl) localStorage.setItem('currentUserAvatarUrl', user.avatarUrl);
+            } catch (_) {}
+        }
+
+        document.getElementById('student-login-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('student-email').value.trim();
+            const password = document.getElementById('student-password').value;
+            if (!identifier || !password) { alert('Enter your email/ID and password'); return; }
+            const payload = { password };
+            if (identifier.includes('@')) payload.email = identifier; else payload.studentId = identifier;
+            try {
+                const data = await apiPost('/api/auth/login', payload);
+                localStorage.setItem('authToken', data.token);
+                cacheCurrentUser(data.user);
+                window.location.href = 'signup_welcome.html';
+            } catch (err) { alert(err.message || 'Login failed'); }
+        });
+
+        document.getElementById('driver-login-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const idOrPhone = document.getElementById('driver-id').value.trim();
+            const password = document.getElementById('driver-password').value;
+            if (!idOrPhone || !password) { alert('Enter phone/email and password'); return; }
+            const payload = { password };
+            if (/^\+?\d{7,}$/.test(idOrPhone)) payload.phone = idOrPhone; else if (idOrPhone.includes('@')) payload.email = idOrPhone; else payload.phone = idOrPhone;
+            try {
+                const data = await apiPost('/api/auth/login', payload);
+                localStorage.setItem('authToken', data.token);
+                cacheCurrentUser(data.user);
+                window.location.href = 'driver_dashboard.html';
+            } catch (err) { alert(err.message || 'Login failed'); }
+        });
+
+        // Admin login (use email or phone as username)
+        document.getElementById('admin-login-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('admin-username').value.trim();
+            const password = document.getElementById('admin-password').value;
+            if (!id || !password) { alert('Enter username and password'); return; }
+            const payload = { password };
+            if (/^\+?\d{7,}$/.test(id)) payload.phone = id; else if (id.includes('@')) payload.email = id; else payload.email = id;
+            try {
+                const data = await apiPost('/api/auth/login', payload);
+                localStorage.setItem('authToken', data.token);
+                cacheCurrentUser(data.user);
+                // Go to Admin Console
+                window.location.href = 'admin.html';
+            } catch (err) { alert(err.message || 'Login failed'); }
+        });
+
+
+        const sparkCanvas = document.getElementById('click-spark-canvas');
+        const sparkCtx = sparkCanvas.getContext('2d');
+        let sparks = [];
+        const sparkConfig = { sparkColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color'), sparkSize: 8, sparkRadius: 25, sparkCount: 10, duration: 500 };
+        const easeOutQuint = t => 1 - Math.pow(1 - t, 5);
+        function setupSparkCanvas() { sparkCanvas.width = window.innerWidth; sparkCanvas.height = window.innerHeight; }
+        document.body.addEventListener('click', (e) => { const x = e.clientX; const y = e.clientY; const now = performance.now(); const newSparks = Array.from({ length: sparkConfig.sparkCount }, (_, i) => ({ x, y, angle: (2 * Math.PI * i) / sparkConfig.sparkCount, startTime: now })); sparks.push(...newSparks); });
+        function animateSparks(timestamp) { sparkCtx.clearRect(0, 0, sparkCanvas.width, sparkCanvas.height); sparks = sparks.filter(spark => { const elapsed = timestamp - spark.startTime; if (elapsed >= sparkConfig.duration) return false; const progress = elapsed / sparkConfig.duration; const eased = easeOutQuint(progress); const distance = eased * sparkConfig.sparkRadius; const lineLength = sparkConfig.sparkSize * (1 - eased); const x1 = spark.x + distance * Math.cos(spark.angle); const y1 = spark.y + distance * Math.sin(spark.angle); const x2 = spark.x + (distance + lineLength) * Math.cos(spark.angle); const y2 = spark.y + (distance + lineLength) * Math.sin(spark.angle); sparkCtx.strokeStyle = sparkConfig.sparkColor; sparkCtx.lineWidth = 2; sparkCtx.beginPath(); sparkCtx.moveTo(x1, y1); sparkCtx.lineTo(x2, y2); sparkCtx.stroke(); return true; }); requestAnimationFrame(animateSparks); }
+        window.addEventListener('resize', setupSparkCanvas);
+        setupSparkCanvas();
+        requestAnimationFrame(animateSparks);
+
+                // --- Smart Fare Estimator Modal Logic ---
+        const openFareModalBtn = document.getElementById('open-fare-estimator-btn');
+        const closeFareModalBtn = document.getElementById('close-fare-estimator-btn');
+        const fareModalBackdrop = document.getElementById('fare-estimator-modal-backdrop');
+        const estimateFareBtn = document.getElementById('estimate-fare-btn');
+        const fareResultEl = document.getElementById('fare-result');
+        const farePriceEl = document.getElementById('fare-price');
+        const fareJustificationEl = document.getElementById('fare-justification');
+        const fareDistanceChip = document.getElementById('fare-distance-chip');
+        const fareDurationChip = document.getElementById('fare-duration-chip');
+        const fareTrafficLabel = document.getElementById('fare-traffic-label');
+        const fareDemandNote = document.getElementById('fare-demand-note');
+        const fareBreakdownToggle = document.getElementById('fare-breakdown-toggle');
+        const fareBreakdownPanel = document.getElementById('fare-breakdown-panel');
+        const fareBreakdownBase = document.getElementById('fare-breakdown-base');
+        const fareBreakdownDistanceInfo = document.getElementById('fare-breakdown-distance-info');
+        const fareBreakdownDistance = document.getElementById('fare-breakdown-distance');
+        const fareBreakdownTimeInfo = document.getElementById('fare-breakdown-time-info');
+        const fareBreakdownTime = document.getElementById('fare-breakdown-time');
+        const fareBreakdownTraffic = document.getElementById('fare-breakdown-traffic');
+        const fareBreakdownDemand = document.getElementById('fare-breakdown-demand');
+        const fareBreakdownTotal = document.getElementById('fare-breakdown-total');
+        const estimateBtnText = estimateFareBtn ? estimateFareBtn.querySelector('.btn-text') : null;
+        const estimateSpinner = estimateFareBtn ? estimateFareBtn.querySelector('.spinner') : null;
+
+        if (fareBreakdownToggle) {
+            fareBreakdownToggle.addEventListener('click', () => {
+                const expanded = fareBreakdownToggle.getAttribute('aria-expanded') === 'true';
+                fareBreakdownToggle.setAttribute('aria-expanded', String(!expanded));
+                if (fareBreakdownPanel) {
+                    fareBreakdownPanel.classList.toggle('hidden', expanded);
+                }
+                const toggleText = fareBreakdownToggle.querySelector('.toggle-text');
+                const chevron = fareBreakdownToggle.querySelector('.chevron');
+                if (toggleText) toggleText.textContent = expanded ? 'Show detailed breakdown' : 'Hide detailed breakdown';
+                if (chevron) chevron.textContent = expanded ? '+' : '-';
+            });
+        }
+
+        const toggleFareModal = (visible) => { fareModalBackdrop.classList.toggle('visible', visible); };
+        openFareModalBtn.addEventListener('click', () => toggleFareModal(true));
+        closeFareModalBtn.addEventListener('click', () => toggleFareModal(false));
+        fareModalBackdrop.addEventListener('click', (e) => { if (e.target === fareModalBackdrop) toggleFareModal(false); });
+
+        const FARE_RATES = Object.freeze({
+            base: 30,
+            perKm: 10,
+            perMinute: 2,
+            rounding: 5,
+            demandTiers: { mild: 8, busy: 14, peak: 20 }
+        });
+        const PRESET_ROUTES = Object.freeze([
+            { label: 'Tirupati Railway Station', aliases: ['tirupati railway station', 'railway station', 'tpty station', 'railway'], distanceKm: 16.8, baseMinutes: 36, trafficHint: 'NH716 evening slowdown' },
+            { label: 'Renigunta Junction', aliases: ['renigunta', 'renigunta junction'], distanceKm: 19.6, baseMinutes: 40, trafficHint: 'Renigunta town bottlenecks' },
+            { label: 'Tirupati International Airport', aliases: ['tirupati airport', 'airport', 'renigunta airport'], distanceKm: 24.2, baseMinutes: 48, trafficHint: 'Airport security checkpoint buffer', hillFactor: 1.05 },
+            { label: 'Sri Padmavathi Ammavari Temple', aliases: ['ammavari temple', 'padmavathi temple'], distanceKm: 11.4, baseMinutes: 26, trafficHint: 'Pilgrim queues near temple', hillFactor: 1.08 },
+            { label: 'Govindaraja Swamy Temple', aliases: ['govindaraja', 'govindaraja swamy temple'], distanceKm: 14.9, baseMinutes: 32, trafficHint: 'Old town traffic build-up' },
+            { label: 'Tirumala Ghat Road', aliases: ['tirumala', 'ghat road', 'hill top', 'seven hills'], distanceKm: 22.7, baseMinutes: 62, trafficHint: 'Ghat road time slots and checkpoints', hillFactor: 1.2, avgSpeed: 18 },
+            { label: 'SV Zoo Park', aliases: ['zoo', 'sv zoo park', 'zoological park'], distanceKm: 9.8, baseMinutes: 22, trafficHint: 'Weekend leisure traffic' }
+        ]);
+
+        if (estimateFareBtn) {
+            estimateFareBtn.addEventListener('click', () => {
+                const destinationInput = document.getElementById('destination');
+                const passengersInput = document.getElementById('passengers');
+                const destination = destinationInput ? destinationInput.value.trim() : '';
+                const passengers = Math.max(1, Math.min(3, Number(passengersInput ? passengersInput.value : 1) || 1));
+
+                if (!destination) {
+                    alert('Please enter a destination.');
+                    return;
+                }
+
+                resetBreakdownState();
+                setEstimatorLoading(true);
+
+                try {
+                    const nowIST = toIST();
+                    const profile = resolveDestinationProfile(destination, nowIST);
+                    const weather = estimateSeasonalWeather(nowIST, profile);
+                    const traffic = computeTrafficImpact(profile.baseDurationMin, weather, nowIST, { trafficHint: profile.trafficHint });
+                    const demand = calculateDemandSurcharge(passengers, nowIST);
+                    const breakdown = createFareBreakdown({
+                        distanceKm: profile.distanceKm,
+                        baseDurationMin: profile.baseDurationMin,
+                        liveDurationMin: traffic.liveDuration,
+                        destinationLabel: profile.displayName,
+                        passengers,
+                        traffic,
+                        demand,
+                        source: profile.source
+                    });
+                    updateFareUI(breakdown, profile.note);
+                } catch (error) {
+                    console.error('Smart estimator error', error);
+                    const profile = buildAdaptiveProfile(destination);
+                    const nowIST = toIST();
+                    const weather = estimateSeasonalWeather(nowIST, profile);
+                    const traffic = computeTrafficImpact(profile.baseDurationMin, weather, nowIST, { trafficHint: profile.trafficHint });
+                    const demand = calculateDemandSurcharge(passengers, nowIST);
+                    const breakdown = createFareBreakdown({
+                        distanceKm: profile.distanceKm,
+                        baseDurationMin: profile.baseDurationMin,
+                        liveDurationMin: traffic.liveDuration,
+                        destinationLabel: profile.displayName,
+                        passengers,
+                        traffic,
+                        demand,
+                        source: profile.source
+                    });
+                    const combinedNote = ['Adaptive campus averages in use.', error?.message].filter(Boolean).join(' ');
+                    updateFareUI(breakdown, combinedNote);
+                } finally {
+                    setEstimatorLoading(false);
+                }
+            });
+        }
+
+        function resetBreakdownState() {
+            if (fareResultEl) fareResultEl.classList.add('hidden');
+            if (fareBreakdownPanel) fareBreakdownPanel.classList.add('hidden');
+            if (fareBreakdownToggle) {
+                fareBreakdownToggle.setAttribute('aria-expanded', 'false');
+                const toggleText = fareBreakdownToggle.querySelector('.toggle-text');
+                const chevron = fareBreakdownToggle.querySelector('.chevron');
+                if (toggleText) toggleText.textContent = 'Show detailed breakdown';
+                if (chevron) chevron.textContent = '+';
+            }
+        }
+
+        function setEstimatorLoading(isLoading) {
+            if (!estimateFareBtn) return;
+            estimateFareBtn.disabled = isLoading;
+            if (estimateBtnText) estimateBtnText.textContent = isLoading ? 'Estimating...' : 'Estimate Fare';
+            if (estimateSpinner) {
+                estimateSpinner.classList[isLoading ? 'remove' : 'add']('hidden');
+            }
+        }
+
+        function toIST(date = new Date()) {
+            return new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        }
+
+        function normalizeDestination(text) {
+            return text.trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function titleCase(text) {
+            return text
+                .toLowerCase()
+                .split(/\s+/)
+                .filter(Boolean)
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ') || 'Destination';
+        }
+
+        function resolveDestinationProfile(query) {
+            const normalized = normalizeDestination(query);
+            const preset = PRESET_ROUTES.find(route => route.aliases.some(alias => normalized.includes(alias)));
+            if (preset) {
+                const baseMinutes = preset.baseMinutes ?? ((preset.distanceKm / (preset.avgSpeed || 24)) * 60);
+                return {
+                    displayName: preset.label,
+                    distanceKm: preset.distanceKm,
+                    baseDurationMin: baseMinutes,
+                    source: 'preset',
+                    note: 'Using verified campus route data.',
+                    trafficHint: preset.trafficHint || null,
+                    hillFactor: preset.hillFactor || 1
+                };
+            }
+            return buildAdaptiveProfile(query);
+        }
+
+        function buildAdaptiveProfile(rawQuery) {
+            const normalized = normalizeDestination(rawQuery);
+            const tokens = normalized.split(' ').filter(Boolean);
+            const alnumLength = normalized.replace(/[^a-z0-9]/g, '').length;
+            let distance = 3 + tokens.length * 1.35 + (alnumLength % 9);
+            let baseSpeed = 24;
+            const reasons = new Set();
+
+            if (normalized.includes('airport')) {
+                distance += 18;
+                baseSpeed = Math.min(baseSpeed, 22);
+                reasons.add('Airport checkpoint buffer');
+            }
+            if (normalized.includes('railway')) {
+                distance += 11;
+                reasons.add('Railway junction traffic');
+            }
+            if (normalized.includes('bus')) {
+                distance += 8;
+                reasons.add('Bus terminus pick-up zone');
+            }
+            if (normalized.includes('temple')) {
+                distance += 5;
+                baseSpeed = Math.min(baseSpeed, 21);
+                reasons.add('Pilgrim traffic expected');
+            }
+            if (normalized.includes('hill') || normalized.includes('ghat')) {
+                distance += 6;
+                baseSpeed = Math.min(baseSpeed, 18);
+                reasons.add('Hill road restrictions');
+            }
+            if (normalized.includes('industrial')) {
+                distance += 4;
+                reasons.add('Industrial freight movement');
+            }
+
+            distance = Math.min(45, Math.max(2.5, distance));
+            const baseDurationMin = (distance / baseSpeed) * 60;
+
+            return {
+                displayName: titleCase(rawQuery),
+                distanceKm: Number(distance.toFixed(1)),
+                baseDurationMin,
+                source: 'adaptive',
+                note: 'Using adaptive campus averages.',
+                trafficHint: reasons.size ? Array.from(reasons).join(' & ') : null,
+                hillFactor: baseSpeed < 22 ? 1.15 : 1
+            };
+        }
+
+        function estimateSeasonalWeather(nowIST, profile) {
+            const month = nowIST.getMonth() + 1;
+            const isMonsoon = month >= 6 && month <= 10;
+            const precipitationBase = isMonsoon ? 0.22 : 0.05;
+            const windBase = isMonsoon ? 17 : 11;
+            const hillBias = profile?.hillFactor ? Math.max(1, profile.hillFactor) : 1;
+            return {
+                precipitation: precipitationBase * hillBias,
+                windSpeed: windBase + (hillBias > 1 ? 4 : 0)
+            };
+        }
+
+        function computeTrafficImpact(baseDurationMin, weather, nowIST = toIST(), options = {}) {
+            let multiplier = 1;
+            const reasons = [];
+            if (options?.trafficHint) reasons.push(options.trafficHint);
+            const hour = nowIST.getHours();
+            const weekday = nowIST.getDay();
+
+            if ((hour >= 8 && hour < 10) || (hour >= 17 && hour < 20)) {
+                multiplier += 0.25;
+                reasons.push('Peak campus commute hours');
+            }
+            if (weekday >= 1 && weekday <= 5 && hour >= 12 && hour < 14) {
+                multiplier += 0.08;
+                reasons.push('Lunch hour slowdown');
+            }
+            if (weather && weather.precipitation > 0.12) {
+                multiplier += 0.12;
+                reasons.push('Rain is slowing traffic');
+            }
+            if (weather && weather.windSpeed > 28) {
+                multiplier += 0.05;
+                reasons.push('Windy conditions');
+            }
+
+            multiplier = Math.min(multiplier, 1.6);
+            const liveDuration = baseDurationMin * multiplier;
+            const label = reasons.length ? `Traffic elevated (+${Math.round((multiplier - 1) * 100)}%)` : 'Normal traffic';
+
+            return { multiplier, liveDuration, label, reasons };
+        }
+
+        function determineBaselineDrivers(hour) {
+            if (hour >= 22 || hour < 6) return 4;
+            if (hour >= 18) return 7;
+            if (hour >= 7 && hour < 10) return 9;
+            return 6;
+        }
+
+        function calculateDemandSurcharge(passengers, nowIST = toIST()) {
+            const storageKey = 'fairride-demand-stats';
+            let stats = {};
+            try {
+                stats = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            } catch (_) {
+                stats = {};
+            }
+
+            const slotMinutes = Math.floor(nowIST.getMinutes() / 15) * 15;
+            const slotKey = `${nowIST.getFullYear()}-${String(nowIST.getMonth() + 1).padStart(2, '0')}-${String(nowIST.getDate()).padStart(2, '0')}T${String(nowIST.getHours()).padStart(2, '0')}:${String(slotMinutes).padStart(2, '0')}`;
+            const baselineDrivers = determineBaselineDrivers(nowIST.getHours());
+            const bucket = stats[slotKey] || { demand: baselineDrivers, drivers: baselineDrivers, updatedAt: nowIST.getTime() };
+            const minutesSinceUpdate = (nowIST.getTime() - (bucket.updatedAt || nowIST.getTime())) / 60000;
+            const decayFactor = minutesSinceUpdate > 0 ? Math.pow(0.5, minutesSinceUpdate / 20) : 1;
+
+            bucket.demand = Math.max(baselineDrivers * 0.6, bucket.demand * decayFactor);
+            bucket.demand += Math.max(1, passengers);
+            bucket.demand = Math.min(bucket.demand, baselineDrivers * 3);
+            bucket.updatedAt = nowIST.getTime();
+            bucket.drivers = baselineDrivers;
+            stats[slotKey] = bucket;
+
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(stats));
+            } catch (_) {
+                /* ignore */
+            }
+
+            const ratio = bucket.demand / baselineDrivers;
+            let amount = 0;
+            let label = 'No surcharge';
+
+            if (ratio > 2.2) { amount = FARE_RATES.demandTiers.peak; label = 'Peak demand surcharge'; }
+            else if (ratio > 1.6) { amount = FARE_RATES.demandTiers.busy; label = 'Busy period surcharge'; }
+            else if (ratio > 1.3) { amount = FARE_RATES.demandTiers.mild; label = 'Mild demand surcharge'; }
+
+            const message = amount > 0
+                ? `Demand is ${ratio.toFixed(2)}× the available autos. Added ${formatCurrency(amount)} to attract more drivers.`
+                : `Demand is ${ratio.toFixed(2)}× the available autos. No surcharge needed.`;
+
+            return { amount, label, message, ratio };
+        }
+
+        function createFareBreakdown({ distanceKm, baseDurationMin, liveDurationMin, destinationLabel, passengers, traffic, demand, isFallback }) {
+            const safeDistance = Number.isFinite(distanceKm) ? Math.max(0, distanceKm) : 0;
+            const safeBaseDuration = Number.isFinite(baseDurationMin) ? Math.max(0, baseDurationMin) : Math.max(10, safeDistance / 22 * 60);
+            const safeLiveDuration = Number.isFinite(liveDurationMin) ? Math.max(safeBaseDuration, liveDurationMin) : safeBaseDuration;
+
+            const baseFare = FARE_RATES.base;
+            const distanceFare = safeDistance * FARE_RATES.perKm;
+            const timeFare = safeBaseDuration * FARE_RATES.perMinute;
+            const trafficExtra = Math.max(0, (safeLiveDuration - safeBaseDuration) * FARE_RATES.perMinute);
+            const demandSurcharge = demand?.amount || 0;
+            const subtotal = baseFare + distanceFare + timeFare + trafficExtra;
+            const totalBeforeRound = subtotal + demandSurcharge;
+            const total = roundTo(totalBeforeRound, FARE_RATES.rounding);
+            const roundingAdjustment = total - totalBeforeRound;
+
+            return {
+                components: {
+                    baseFare,
+                    distanceFare,
+                    timeFare,
+                    trafficExtra,
+                    demandSurcharge,
+                    total,
+                    roundingAdjustment
+                },
+                meta: {
+                    distanceKm: safeDistance,
+                    baseDurationMin: safeBaseDuration,
+                    liveDurationMin: safeLiveDuration,
+                    destinationLabel,
+                    passengers,
+                    traffic,
+                    demand,
+                    isFallback
+                }
+            };
+        }
+
+        function fallbackSmartEstimate(destinationLabel, passengers) {
+            const labelLength = (destinationLabel || '').length;
+            const defaultDistance = 5 + Math.min(labelLength / 4, 6);
+            const baseDuration = (defaultDistance / 22) * 60;
+            const traffic = { multiplier: 1.15, liveDuration: baseDuration * 1.15, label: 'Estimated traffic (+15%)', reasons: ['Live routing unavailable; using campus averages'] };
+            const demand = { amount: FARE_RATES.demandTiers.mild, label: 'Typical evening surcharge', message: `Using stored campus averages. Added ${formatCurrency(FARE_RATES.demandTiers.mild)} to encourage drivers.`, ratio: 1.4 };
+            return createFareBreakdown({
+                distanceKm: defaultDistance,
+                baseDurationMin: baseDuration,
+                liveDurationMin: traffic.liveDuration,
+                destinationLabel,
+                passengers,
+                traffic,
+                demand,
+                isFallback: true
+            });
+        }
+
+        function roundTo(value, step) {
+            if (!step) return value;
+            return Math.round(value / step) * step;
+        }
+
+        function formatCurrency(value) {
+            return `₹ ${Math.round(value)}`;
+        }
+
+        function minutesToLabel(value) {
+            if (!Number.isFinite(value)) return 'n/a';
+            return `${Math.round(value)} min`;
+        }
+
+        function updateFareUI(breakdown, warning) {
+            if (!fareResultEl || !breakdown) return;
+
+            const { components, meta } = breakdown;
+            const { traffic, demand } = meta;
+
+            fareResultEl.classList.remove('hidden');
+
+            const distanceLabel = Number.isFinite(meta.distanceKm) ? `${meta.distanceKm.toFixed(1)} km` : 'Distance unavailable';
+            const durationLabel = minutesToLabel(meta.liveDurationMin);
+
+            if (fareDistanceChip) fareDistanceChip.textContent = meta.isFallback ? `${distanceLabel} (estimated)` : distanceLabel;
+            if (fareDurationChip) fareDurationChip.textContent = meta.isFallback ? `${durationLabel} (estimated)` : durationLabel;
+
+            if (farePriceEl) farePriceEl.textContent = `${formatCurrency(components.total)} estimated fare`;
+
+            if (fareJustificationEl) {
+                const destinationText = meta.destinationLabel ? meta.destinationLabel.split(',')[0] : 'your trip';
+                const baseLine = `Based on ${distanceLabel} in ${durationLabel} for ${destinationText}.`;
+                const fallbackNote = meta.isFallback ? ' Live routing unavailable—using campus averages.' : '';
+                const warningNote = warning ? ` ${warning}` : '';
+                fareJustificationEl.textContent = `${baseLine}${fallbackNote}${warningNote}`;
+            }
+
+            if (fareTrafficLabel) {
+                const reasonsText = traffic?.reasons?.length ? ` - ${traffic.reasons.join(' | ')}` : '';
+                fareTrafficLabel.textContent = traffic ? `${traffic.label}${reasonsText}` : 'Traffic data unavailable.';
+            }
+
+            if (fareBreakdownBase) fareBreakdownBase.textContent = formatCurrency(components.baseFare);
+
+            if (fareBreakdownDistanceInfo) {
+                fareBreakdownDistanceInfo.textContent = Number.isFinite(meta.distanceKm)
+                    ? `${meta.distanceKm.toFixed(1)} km × ${formatCurrency(FARE_RATES.perKm)}/km`
+                    : 'distance estimate';
+            }
+            if (fareBreakdownDistance) fareBreakdownDistance.textContent = formatCurrency(components.distanceFare);
+
+            if (fareBreakdownTimeInfo) {
+                fareBreakdownTimeInfo.textContent = Number.isFinite(meta.baseDurationMin)
+                    ? `${Math.round(meta.baseDurationMin)} min × ${formatCurrency(FARE_RATES.perMinute)}/min`
+                    : 'time estimate';
+            }
+            if (fareBreakdownTime) fareBreakdownTime.textContent = formatCurrency(components.timeFare);
+
+            if (fareBreakdownTraffic) {
+                fareBreakdownTraffic.textContent = components.trafficExtra > 0
+                    ? `+ ${formatCurrency(components.trafficExtra)}`
+                    : 'No additional charge';
+            }
+
+	            if (fareBreakdownDemand) {
+	                fareBreakdownDemand.textContent = components.demandSurcharge > 0
+	                    ? `+ ${formatCurrency(components.demandSurcharge)} (${demand?.label || 'surcharge'})`
+	                    : '₹ 0 (no surcharge)';
+	            }
+
+	            if (fareBreakdownTotal) fareBreakdownTotal.textContent = formatCurrency(components.total);
+
+	            // Auto-scroll the modal to show results after estimating.
+	            try {
+	                const modal = document.getElementById('fare-estimator-modal');
+	                requestAnimationFrame(() => {
+	                    try {
+	                        if (modal && modal.scrollHeight > modal.clientHeight) {
+	                            const top = Math.max(0, fareResultEl.offsetTop - 16);
+	                            modal.scrollTo({ top, behavior: 'smooth' });
+	                        } else {
+	                            fareResultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	                        }
+	                    } catch (_) {}
+	                });
+	            } catch (_) {}
+
+	            if (fareDemandNote) {
+	                const roundingNote = components.roundingAdjustment !== 0
+	                    ? ` Rounded to the nearest ${formatCurrency(FARE_RATES.rounding)}.`
+	                    : '';
+                const fallbackNote = meta.isFallback ? ' Live data fallback in use.' : '';
+                fareDemandNote.textContent = `${demand?.message || 'Demand data unavailable.'}${roundingNote}${fallbackNote}`;
+            }
+        }
+        // Button ripple on click
+        function attachRipples(selector){
+            document.querySelectorAll(selector).forEach(btn => {
+                btn.addEventListener('click', function(ev){
+                    const rect = this.getBoundingClientRect();
+                    const span = document.createElement('span');
+                    span.className = 'ripple';
+                    const size = Math.max(rect.width, rect.height);
+                    span.style.width = span.style.height = size + 'px';
+                    span.style.left = (ev.clientX - rect.left - size/2) + 'px';
+                    span.style.top  = (ev.clientY - rect.top - size/2) + 'px';
+                    this.appendChild(span);
+                    setTimeout(() => span.remove(), 600);
+                });
+            });
+        }
+        attachRipples('.ripple-container');
+    </script>
+
+    <!-- 3D embeds shown above via Sketchfab iframes -->
+
+    <script defer src="assets/defer-3d.js"></script>
+    <script defer src="assets/floating-autos.js"></script>
+</body>
+</html>
+
+
+
+
+
+

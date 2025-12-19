@@ -1,0 +1,328 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FBBF24; --primary-color-transparent-1: rgba(251, 191, 36, 0.2); --primary-color-light: #FCD34D; --bg-color: #111827; --card-bg-color: rgba(31, 41, 55, 0.6); --shadow-color: rgba(251, 191, 36, 0.5);
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); overflow-x: hidden; }
+        .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid var(--primary-color-transparent-1); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3); }
+        .animated-gradient-text { background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color), #f9fafb, var(--primary-color), var(--primary-color-light)); background-size: 200% auto; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textGradientShift 4s linear infinite; }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .input-field { background-color: #374151; border: 1px solid #4b5563; border-radius: 0.5rem; transition: all 0.2s; color: #f3f4f6; }
+        .input-field:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-color-transparent-1); }
+        .input-field:disabled { background-color: #1f2937; cursor: not-allowed; opacity: 0.6; }
+        .primary-btn { transition: transform 0.2s ease, box-shadow 0.2s ease; background-color: var(--primary-color); color: #111827; }
+        .primary-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color); }
+        /* Toast */
+        .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: rgba(17,24,39,0.9); color: #e5e7eb; padding: 12px 16px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+        .toast-success { background: rgba(5, 150, 105, 0.95); }
+        .toast-error { background: rgba(190, 18, 60, 0.95); }
+    </style>
+    <link rel="stylesheet" href="assets/floating-autos.css">
+</head>
+<body class="antialiased text-slate-200">
+    <div class="min-h-screen">
+	        <header class="p-4 md:p-6 fade-in-up">
+	            <nav class="container mx-auto flex justify-between items-center">
+	                <a href="dashboard.html" class="text-2xl font-black text-slate-50"><span class="animated-gradient-text">FairRide MBU</span></a>
+	                <a href="dashboard.html" class="inline-flex items-center bg-gray-800/60 hover:bg-gray-700/70 border border-gray-700 text-slate-200 font-semibold px-4 py-2 rounded-lg transition-all">
+	                    <i class="ph-house mr-2"></i>Dashboard
+	                </a>
+	            </nav>
+	        </header>
+        <main class="container mx-auto p-4 md:p-6">
+            <section class="max-w-2xl mx-auto card p-6 md:p-8 fade-in-up" style="animation-delay: 0.2s;">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-50 mb-6 text-center">My Profile</h1>
+                <div class="flex flex-col items-center space-y-4 mb-8">
+                    <div class="relative">
+                        <img id="profile-image" src="https://placehold.co/128x128/374151/fBBF24?text=S" class="w-32 h-32 rounded-full object-cover border-4 border-gray-700">
+                        <label for="image-upload" class="absolute bottom-0 right-0 bg-amber-400 text-gray-900 rounded-full p-2 cursor-pointer hover:bg-amber-300 transition-colors" title="Upload custom avatar">
+                            <i class="ph-pencil-simple-fill text-lg"></i>
+                            <input type="file" id="image-upload" class="hidden" accept="image/*">
+                        </label>
+                    </div>
+                    <h2 id="student-name-display" class="text-xl font-bold text-white">Student Name</h2>
+                    <p id="student-id-display" class="text-sm text-gray-400">21BCA0000</p>
+                    <span id="student-gender-display" class="text-xs px-3 py-1 rounded-full border border-gray-600 text-gray-300">Gender: &mdash;</span>
+
+                    <!-- Avatar picker -->
+                    <div class="w-full max-w-xl">
+                        <p class="text-slate-300 text-sm font-semibold mb-2">Choose an avatar</p>
+                        <div id="avatar-list" class="grid grid-cols-6 gap-3">
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Student" alt="Avatar 1">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=MBU" alt="Avatar 2">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/bottts/svg?seed=Robo" alt="Avatar 3">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/lorelei/svg?seed=Campus" alt="Avatar 4">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/fun-emoji/svg?seed=Smile" alt="Avatar 5">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/thumbs/svg?seed=Ride" alt="Avatar 6">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <form id="profile-form" class="space-y-4">
+                    <div>
+                        <label for="full-name" class="block text-sm font-semibold text-slate-300 mb-2">Full Name</label>
+                        <input type="text" id="full-name" class="input-field w-full px-4 py-2.5" value="Student Name" disabled>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-semibold text-slate-300 mb-2">Email Address</label>
+                        <input type="email" id="email" class="input-field w-full px-4 py-2.5" value="student@mbu.asia" disabled>
+                        <p id="email-policy-note" class="mt-1 text-xs text-gray-400 hidden">Email is managed by admin and cannot be changed.</p>
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-semibold text-slate-300 mb-2">Phone Number</label>
+                        <input type="tel" id="phone" class="input-field w-full px-4 py-2.5" value="+91 98765 43210" disabled>
+                        <p id="phone-policy-note" class="mt-1 text-xs text-gray-400 hidden">Phone is managed by admin and cannot be changed.</p>
+                    </div>
+                    <div>
+                        <label for="gender-input" class="block text-sm font-semibold text-slate-300 mb-2">Gender</label>
+                        <select id="gender-input" class="input-field w-full px-4 py-2.5" disabled>
+                            <option value="">Not specified</option>
+                            <option value="MALE">Male</option>
+                            <option value="FEMALE">Female</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div class="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button type="button" id="edit-save-btn" class="primary-btn w-full font-bold py-3 rounded-lg">Edit Profile</button>
+                        <button type="button" id="logout-btn" class="w-full font-bold py-3 rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors flex items-center justify-center"><i class="ph-sign-out mr-2"></i>Logout</button>
+                    </div>
+                </form>
+                <div class="mt-8 border-t border-gray-700 pt-6 text-center text-sm space-y-3">
+                    <a href="terms.html" class="text-gray-400 hover:text-amber-400 transition-colors">Terms of Service</a>
+                    <span class="text-gray-600 mx-2">&bull;</span>
+                    <a href="terms.html" class="text-gray-400 hover:text-amber-400 transition-colors">Privacy Policy</a>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+        // Policy flags
+        const POLICY_ALLOW_EDIT_CONTACT = false; // toggle if email/phone should be editable
+        document.getElementById('image-upload').addEventListener('change', function(event) {
+            const [file] = event.target.files;
+            if (file) {
+                document.getElementById('profile-image').src = URL.createObjectURL(file);
+            }
+        });
+        // Avatar selection
+        document.querySelectorAll('#avatar-list .avatar-option').forEach(img => {
+            img.addEventListener('click', () => {
+                const url = img.getAttribute('src');
+                document.getElementById('profile-image').src = url;
+                // highlight selected
+                document.querySelectorAll('#avatar-list button').forEach(btn => btn.classList.remove('border-amber-400'));
+                const parent = img.closest('button');
+                if (parent) parent.classList.add('border-amber-400');
+            });
+        });
+
+        const editSaveBtn = document.getElementById('edit-save-btn');
+        const editableFields = [document.getElementById('full-name'), document.getElementById('email'), document.getElementById('phone'), document.getElementById('gender-input')];
+        let isEditMode = false;
+
+        // Toast helper
+        function showToast(message, type='info'){
+            const toast = document.createElement('div');
+            toast.className = `toast ${type==='success'?'toast-success':''} ${type==='error'?'toast-error':''}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            // force reflow then show
+            getComputedStyle(toast).opacity; toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(()=>toast.remove(), 200); }, 2200);
+        }
+
+        async function saveProfile(){
+            const name = document.getElementById('full-name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const gender = document.getElementById('gender-input').value || null;
+            const token = localStorage.getItem('authToken');
+            const payload = { name, email: email || null, phone: phone || null, gender };
+            // Try backend; fallback to localStorage
+            const bases = [window.API_BASE, `${location.protocol}//${location.hostname}:3001`, 'http://127.0.0.1:3001', 'http://localhost:3001'].filter(Boolean);
+            let saved = false;
+            if (token) {
+                for (const base of [...new Set(bases)]) {
+                    try {
+                        const res = await fetch(base.replace(/\/$/, '') + '/api/users/me', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data?.error || 'Save failed');
+                        // Update top UI and local cache
+                        document.getElementById('student-name-display').textContent = data.name || name;
+                        document.getElementById('student-id-display').textContent = data.studentId || document.getElementById('student-id-display').textContent;
+                        document.getElementById('student-gender-display').textContent = `Gender: ${data.gender || '\u2014'}`;
+                        localStorage.setItem('currentUserName', data.name || name);
+                        if (data.email) localStorage.setItem('currentUserEmail', data.email);
+                        if (data.phone) localStorage.setItem('currentUserPhone', data.phone);
+                        if (data.gender) localStorage.setItem('currentUserGender', data.gender);
+                        // Update avatar to initial letter
+                        const imgEl = document.getElementById('profile-image');
+                        const initialSaved = (data.name || name || '').trim().charAt(0).toUpperCase() || 'S';
+                        imgEl.src = `https://placehold.co/128x128/374151/FBBF24?text=${encodeURIComponent(initialSaved)}`;
+                        showToast('Profile saved', 'success');
+                        saved = true; break;
+                    } catch (err) { console.warn(err); }
+                }
+            }
+            if (!saved) {
+                // offline fallback
+                localStorage.setItem('currentUserName', name);
+                if (email) localStorage.setItem('currentUserEmail', email);
+                if (phone) localStorage.setItem('currentUserPhone', phone);
+                if (gender) localStorage.setItem('currentUserGender', gender);
+                showToast('Saved locally (offline)', 'success');
+            }
+        }
+
+        editSaveBtn.addEventListener('click', async () => {
+            isEditMode = !isEditMode;
+            // enable/disable based on policy
+            for (const field of editableFields) {
+                if (!isEditMode) { field.disabled = true; continue; }
+                if (!POLICY_ALLOW_EDIT_CONTACT && (field.id === 'email' || field.id === 'phone')) {
+                    field.disabled = true;
+                } else {
+                    field.disabled = false;
+                }
+            }
+            // show policy notes
+            document.getElementById('email-policy-note').classList.toggle('hidden', POLICY_ALLOW_EDIT_CONTACT);
+            document.getElementById('phone-policy-note').classList.toggle('hidden', POLICY_ALLOW_EDIT_CONTACT);
+            
+            if (isEditMode) {
+                editSaveBtn.textContent = 'Save Changes';
+                editableFields[0].focus();
+            } else {
+                editSaveBtn.textContent = 'Edit Profile';
+                try {
+                    await saveProfile();
+                } catch (err) {
+                    showToast(err?.message || 'Failed to save', 'error');
+                }
+            }
+        });
+
+        // Populate profile name/id from backend or localStorage
+        (function initStudentProfile(){
+            const nameEl = document.getElementById('student-name-display');
+            const idEl = document.getElementById('student-id-display');
+            const genderEl = document.getElementById('student-gender-display');
+            const imgEl = document.getElementById('profile-image');
+            const token = localStorage.getItem('authToken');
+
+            // Prefill from localStorage immediately to avoid placeholders
+            try {
+                const preName = localStorage.getItem('currentUserName');
+                const preStudentId = localStorage.getItem('currentUserStudentId');
+                const preGender = localStorage.getItem('currentUserGender');
+                if (preName && nameEl) nameEl.textContent = preName;
+                if (preStudentId && idEl) idEl.textContent = preStudentId;
+                if (preGender && genderEl) genderEl.textContent = `Gender: ${preGender}`;
+                const initial = (preName || '').trim().charAt(0).toUpperCase();
+                if (initial && imgEl) imgEl.src = `https://placehold.co/128x128/374151/FBBF24?text=${encodeURIComponent(initial)}`;
+            } catch(_) {}
+
+            const setUI = (name, studentId, gender, email, phone, avatarUrl) => {
+                if (name && nameEl) nameEl.textContent = name;
+                if (studentId && idEl) idEl.textContent = studentId;
+                if (genderEl) genderEl.textContent = `Gender: ${gender || '\u2014'}`;
+                const initial = (name || '').trim().charAt(0).toUpperCase() || 'S';
+                if (imgEl) {
+                    if (avatarUrl) {
+                        imgEl.src = avatarUrl;
+                    } else {
+                        imgEl.src = `https://placehold.co/128x128/374151/FBBF24?text=${encodeURIComponent(initial)}`;
+                    }
+                }
+                // Also populate inputs
+                const fullNameInput = document.getElementById('full-name');
+                const emailInput = document.getElementById('email');
+                const phoneInput = document.getElementById('phone');
+                const genderInput = document.getElementById('gender-input');
+                if (fullNameInput && name) fullNameInput.value = name;
+                if (emailInput) {
+                    const val = (email !== undefined) ? (email || '') : (localStorage.getItem('currentUserEmail') || '');
+                    emailInput.value = val;
+                }
+                if (phoneInput) {
+                    const val = (phone !== undefined) ? (phone || '') : (localStorage.getItem('currentUserPhone') || '');
+                    phoneInput.value = val;
+                }
+                if (genderInput && gender) genderInput.value = gender;
+            };
+
+            async function tryBackend() {
+                const bases = [window.API_BASE, `${location.protocol}//${location.hostname}:3001`, 'http://127.0.0.1:3001', 'http://localhost:3001'].filter(Boolean);
+                for (const base of [...new Set(bases)]) {
+                    try {
+                        const health = await fetch(base.replace(/\/$/, '') + '/api/health', { cache: 'no-store' });
+                        if (!health.ok) continue;
+                        if (!token) break;
+                        const res = await fetch(base.replace(/\/$/, '') + '/api/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (!res.ok) break;
+                        const me = await res.json();
+                        try {
+                            if (me?.name) localStorage.setItem('currentUserName', me.name); else localStorage.removeItem('currentUserName');
+                            if (me?.role) localStorage.setItem('currentUserRole', me.role); else localStorage.removeItem('currentUserRole');
+                            if (me?.studentId) localStorage.setItem('currentUserStudentId', me.studentId); else localStorage.removeItem('currentUserStudentId');
+                            if (me?.email) localStorage.setItem('currentUserEmail', me.email); else localStorage.removeItem('currentUserEmail');
+                            if (me?.phone) localStorage.setItem('currentUserPhone', me.phone); else localStorage.removeItem('currentUserPhone');
+                            if (me?.gender) localStorage.setItem('currentUserGender', me.gender); else localStorage.removeItem('currentUserGender');
+                            if (me?.avatarUrl) localStorage.setItem('currentUserAvatarUrl', me.avatarUrl); else localStorage.removeItem('currentUserAvatarUrl');
+                        } catch (_) {}
+                        setUI(me?.name, me?.studentId, me?.gender, me?.email, me?.phone, me?.avatarUrl);
+                        return true;
+                    } catch (_) { /* try next */ }
+                }
+                return false;
+            }
+
+            tryBackend().then((ok) => {
+                if (ok) return;
+                // Fallback to localStorage (offline/demo)
+                const name = localStorage.getItem('currentUserName');
+                const studentId = localStorage.getItem('currentUserStudentId');
+                const gender = localStorage.getItem('currentUserGender');
+                setUI(name, studentId, gender);
+            });
+        })();
+
+        // Logout: clear any session state and go to login page (index.html)
+        document.getElementById('logout-btn')?.addEventListener('click', () => {
+            try {
+                // Clear potential session indicators
+                localStorage.removeItem('driverOnline');
+                localStorage.removeItem('authToken');
+                sessionStorage.clear();
+            } catch (e) { /* ignore storage errors */ }
+            window.location.href = 'index.html';
+        });
+    </script>
+    <script defer src="assets/floating-autos.js"></script>
+
+</body>
+</html>
+
+

@@ -1,0 +1,904 @@
+﻿﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FBBF24; --primary-color-transparent-1: rgba(251, 191, 36, 0.2); --primary-color-light: #FCD34D; --bg-color: #111827; --card-bg-color: rgba(31, 41, 55, 0.6); --shadow-color: rgba(251, 191, 36, 0.5);
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); overflow-x: hidden; }
+        .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid var(--primary-color-transparent-1); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3); }
+        .animated-gradient-text { background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color), #f9fafb, var(--primary-color), var(--primary-color-light)); background-size: 200% auto; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textGradientShift 4s linear infinite; }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .primary-btn { transition: transform 0.2s ease, box-shadow 0.2s ease; background-color: var(--primary-color); color: #111827; }
+        .primary-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color); }
+        .payment-option { border: 2px solid #374151; transition: all 0.3s ease; }
+        .payment-option.selected, .payment-option:hover { border-color: var(--primary-color); }
+    </style>
+    <link rel="stylesheet" href="assets/floating-autos.css">
+</head>
+<body class="antialiased text-slate-200">
+    <div class="min-h-screen">
+        <header class="p-4 md:p-6 fade-in-up">
+            <nav class="container mx-auto flex justify-between items-center">
+                 <a href="dashboard.html" class="text-2xl font-black text-slate-50"><span class="animated-gradient-text">FairRide MBU</span></a>
+                <a href="dashboard.html" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-600"><i class="ph-x text-xl text-slate-300"></i></a>
+            </nav>
+        </header>
+        <main class="container mx-auto p-4 md:p-6">
+             <section class="max-w-md mx-auto">
+                <div class="card p-8 text-center fade-in-up" style="animation-delay: 0.2s;">
+                    <h1 class="text-3xl font-bold text-slate-50 mb-2">Complete Your Payment</h1>
+                    <div id="outstanding-banner" class="hidden mb-5 text-left bg-red-500/10 border border-red-500/40 rounded-xl p-4">
+                        <p class="text-red-300 font-semibold text-sm uppercase tracking-wide">Outstanding balance</p>
+                        <p class="text-sm text-red-100 mt-2">You still owe <span id="outstanding-amount" class="font-semibold"></span>. This amount has been added to today’s fare.</p>
+                        <button type="button" id="clear-outstanding-btn" class="mt-3 text-xs font-semibold uppercase tracking-wide text-red-200 hover:text-red-100">Mark as settled</button>
+                    </div>
+
+	                    <p class="text-slate-400 mb-2">Total Amount Due</p>
+	                    <p class="text-5xl font-extrabold text-amber-400 mb-4"><span id="total-amount">&#8377;175</span></p>
+
+	                    <div id="fare-summary" class="mb-6 text-left bg-gray-900/60 border border-gray-800 rounded-xl p-4 space-y-2">
+	                        <div class="flex justify-between text-sm text-slate-300"><span>Base fare</span><span id="fare-base">&#8377;0</span></div>
+	                        <div class="flex justify-between text-sm text-slate-300"><span>Distance fare</span><span id="fare-distance">&#8377;0</span></div>
+	                        <div class="flex justify-between text-sm text-slate-300"><span>Time fare</span><span id="fare-time">&#8377;0</span></div>
+	                        <div class="flex justify-between text-sm text-slate-300"><span>Surge adjustment</span><span id="fare-surge">&#8377;0</span></div>
+	                        <div class="flex justify-between text-sm text-red-300"><span>Previous due</span><span id="fare-outstanding">&#8377;0</span></div>
+	                        <div class="flex justify-between text-sm text-slate-200 font-semibold border-t border-gray-800 pt-2"><span>Subtotal</span><span id="fare-subtotal">&#8377;0</span></div>
+	                        <div class="flex justify-between text-sm text-amber-200"><span>Wallet contribution</span><span id="fare-wallet">-&mdash;</span></div>
+	                        <div class="flex justify-between text-base font-extrabold text-amber-300 border-t border-gray-800 pt-2"><span>Payable now</span><span id="fare-payable">&#8377;0</span></div>
+	                    </div>
+
+                    <div class="space-y-4 text-left" role="radiogroup" aria-label="Choose payment method">
+                        <div class="payment-option selected rounded-lg p-4 flex items-center cursor-pointer" data-method="upi" role="radio" aria-checked="true" tabindex="0">
+                            <i class="ph-qr-code text-3xl text-amber-400"></i>
+                            <div class="ml-4">
+                                <h3 class="font-bold text-white">Scan QR (UPI)</h3>
+                                <p class="text-sm text-gray-400">Pay with any UPI app</p>
+                            </div>
+                        </div>
+                        <div class="payment-option rounded-lg p-4 flex items-center cursor-pointer" data-method="card" role="radio" aria-checked="false" tabindex="0">
+                            <i class="ph-credit-card text-3xl text-amber-400"></i>
+                            <div class="ml-4">
+                                <h3 class="font-bold text-white">Card</h3>
+                                <p class="text-sm text-gray-400">Credit or Debit Card</p>
+                            </div>
+                        </div>
+                        <div class="payment-option rounded-lg p-4 flex items-center cursor-pointer" data-method="wallet" role="radio" aria-checked="false" tabindex="0">
+                            <i class="ph-wallet text-3xl text-amber-400"></i>
+                            <div class="ml-4">
+                                <h3 class="font-bold text-white">Wallet</h3>
+                                <p class="text-sm text-gray-400">Pay via FairRide wallet</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="payment-method-details" class="mt-6 text-left space-y-4">
+                        <div id="upi-details" class="method-details space-y-3">
+                            <p class="text-slate-300">Scan the QR code using any UPI app after tapping <span class="font-semibold text-amber-300">Pay Now</span>.</p>
+                            <div class="flex items-center gap-4">
+                                <img id="upi-qr-image" class="hidden w-36 h-36 bg-white p-3 rounded-xl border border-amber-400/60 shadow-lg" alt="UPI QR code placeholder">
+                                <div class="text-sm text-gray-400">
+                                    <p id="upi-reference" class="hidden"></p>
+                                    <p id="upi-status" class="text-emerald-300 hidden"></p>
+                                </div>
+                            </div>
+                            <button type="button" id="refresh-status-btn" class="text-sm text-amber-300 hover:text-amber-200 transition hidden">Refresh payment status</button>
+                        </div>
+                        <div id="card-details" class="method-details hidden space-y-3">
+                            <p class="text-slate-300">When you click <span class="font-semibold text-amber-300">Pay Now</span>, a secure Razorpay checkout window opens to collect your card details. We never touch or store your card information.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="prefill-name" class="block text-sm text-gray-400 mb-1">Name</label>
+                                    <input id="prefill-name" class="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-slate-200 focus:outline-none focus:border-amber-400" placeholder="Your name">
+                                </div>
+                                <div>
+                                    <label for="prefill-email" class="block text-sm text-gray-400 mb-1">Email</label>
+                                    <input id="prefill-email" class="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-slate-200 focus:outline-none focus:border-amber-400" type="email" placeholder="you@example.com">
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500">Tip: Use the fields above to prefill Razorpay checkout for a faster experience.</p>
+                        </div>
+                        <div id="wallet-details" class="method-details hidden space-y-2">
+                            <div class="flex items-center justify-between">
+                                <p class="text-slate-300">Wallet balance: <span id="wallet-balance" class="font-semibold text-amber-300">&mdash;</span></p>
+                                <button type="button" id="wallet-refresh-btn" class="text-sm text-amber-300 hover:text-amber-200 transition">Refresh</button>
+                            </div>
+                            <p id="wallet-status" class="text-sm text-gray-400"></p>
+                            <div class="space-y-2 border border-gray-800 bg-gray-900/50 rounded-lg p-3">
+                                <label for="wallet-contribution" class="block text-xs uppercase tracking-wide text-slate-400">Use wallet for this ride</label>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <input id="wallet-contribution" type="number" min="0" step="5" class="w-32 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-slate-200 focus:outline-none focus:border-amber-400" placeholder="Amount">
+                                    <div class="flex gap-2">
+                                        <button type="button" data-wallet-fill="half" class="wallet-fill px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-400/40 text-amber-200 text-xs hover:bg-amber-500/20">Half</button>
+                                        <button type="button" data-wallet-fill="full" class="wallet-fill px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-400/40 text-amber-200 text-xs hover:bg-amber-500/20">Full</button>
+                                        <button type="button" data-wallet-fill="reset" class="wallet-fill px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-slate-200 text-xs hover:bg-gray-700">Reset</button>
+                                    </div>
+                                </div>
+                                <p id="wallet-contribution-hint" class="text-xs text-gray-400">Wallet contributions reduce what you pay via UPI or card. Choosing Wallet alone requires enough balance to cover the entire fare.</p>
+                            </div>
+                            <div class="mt-4 space-y-3 bg-gray-900/60 border border-gray-800 rounded-xl p-4">
+                                <h4 class="text-slate-200 font-semibold text-sm uppercase tracking-wide">Add Money</h4>
+                                <div class="flex items-center gap-3">
+                                    <input id="wallet-topup-amount" type="number" min="50" step="50" class="w-32 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-slate-200 focus:outline-none focus:border-amber-400" placeholder="&#8377;500">
+                                    <div class="flex gap-2">
+                                        <button type="button" data-topup="200" class="topup-quick px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-400/40 text-amber-200 text-sm hover:bg-amber-500/20">+&#8377;200</button>
+                                        <button type="button" data-topup="500" class="topup-quick px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-400/40 text-amber-200 text-sm hover:bg-amber-500/20">+&#8377;500</button>
+                                        <button type="button" data-topup="1000" class="topup-quick px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-400/40 text-amber-200 text-sm hover:bg-amber-500/20">+&#8377;1k</button>
+                                    </div>
+                                </div>
+                                <button type="button" id="wallet-topup-btn" class="primary-btn px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                                    <span>Add to Wallet</span>
+                                    <span class="spinner hidden" id="wallet-topup-spinner" style="width:16px;height:16px;border-width:2px;"></span>
+                                </button>
+                                <p id="wallet-topup-status" class="text-xs text-emerald-300 hidden"></p>
+                                <p id="wallet-topup-error" class="text-xs text-red-400 hidden"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="payment-status-message" class="text-sm text-slate-400 mt-4 hidden" aria-live="polite"></p>
+                    <p id="payment-error" class="text-sm text-red-400 mt-2 hidden" aria-live="assertive"></p>
+                     <button id="pay-now-btn" type="button" class="primary-btn w-full font-bold py-3 rounded-lg shadow-lg flex items-center justify-center text-lg mt-6 gap-3 disabled:opacity-60 disabled:cursor-not-allowed" style="--tw-shadow-color: var(--shadow-color);">
+                        <span id="pay-btn-label">Pay Now</span>
+                        <span id="pay-btn-spinner" class="spinner hidden" style="width:20px;height:20px;border-width:3px;"></span>
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+    <style>
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+        .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
+        .modal-card { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96); opacity: 0; pointer-events: none; transition: transform 0.25s ease, opacity 0.25s ease; z-index: 101; }
+        .modal-backdrop.visible + .modal-card { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
+        .pop-in { animation: popIn 420ms cubic-bezier(0.16, 1, 0.3, 1); }
+        .spinner { width: 22px; height: 22px; border: 3px solid rgba(251, 191, 36, 0.25); border-top-color: #FBBF24; border-radius: 9999px; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <div id="payment-success-backdrop" class="modal-backdrop"></div>
+    <div id="payment-success-card" class="modal-card card w-full max-w-md p-6 md:p-8 text-center">
+        <div class="w-16 h-16 rounded-full mx-auto flex items-center justify-center" style="background-color: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35);">
+            <i class="ph-check-circle-fill text-4xl text-amber-400"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-white mt-4">Payment Successful</h2>
+        <p class="text-slate-400 mt-2">Redirecting to live tracking...</p>
+        <div class="mt-4 mx-auto spinner"></div>
+    </div>
+    <div id="history-modal-backdrop" class="modal-backdrop"></div>
+    <div id="history-modal" class="modal-card card w-full max-w-3xl p-6 md:p-8 text-left">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide">Ride &amp; Payment History</p>
+                <h2 class="text-xl font-bold text-white mt-1">Receipts</h2>
+            </div>
+            <button type="button" id="history-close-btn" class="text-2xl text-slate-400 hover:text-white">&times;</button>
+        </div>
+        <div id="history-empty" class="text-sm text-gray-400 hidden">No rides or payments have been recorded yet.</div>
+        <div id="history-list" class="space-y-4 max-h-[60vh] overflow-y-auto pr-1"></div>
+    </div>
+    <script>
+        (function () {
+            const API_BASE = '/api';
+            const PAYMENT_POLL_INTERVAL = 4000;
+            const PAYMENT_POLL_MAX_ATTEMPTS = 10;
+
+            const paymentOptions = document.querySelectorAll('.payment-option');
+            const amountEl = document.getElementById('total-amount');
+            const payBtn = document.getElementById('pay-now-btn');
+            const payBtnLabel = document.getElementById('pay-btn-label');
+            const payBtnSpinner = document.getElementById('pay-btn-spinner');
+            const errorEl = document.getElementById('payment-error');
+            const statusEl = document.getElementById('payment-status-message');
+            const refreshBtn = document.getElementById('refresh-status-btn');
+            const upiQrImage = document.getElementById('upi-qr-image');
+            const upiReference = document.getElementById('upi-reference');
+            const upiStatus = document.getElementById('upi-status');
+            const walletBalanceEl = document.getElementById('wallet-balance');
+            const walletStatusEl = document.getElementById('wallet-status');
+            const walletRefreshBtn = document.getElementById('wallet-refresh-btn');
+            const walletTopupAmount = document.getElementById('wallet-topup-amount');
+            const walletTopupBtn = document.getElementById('wallet-topup-btn');
+            const walletTopupSpinner = document.getElementById('wallet-topup-spinner');
+            const walletTopupStatus = document.getElementById('wallet-topup-status');
+            const walletTopupError = document.getElementById('wallet-topup-error');
+            const walletQuickButtons = document.querySelectorAll('.topup-quick');
+            const walletFillButtons = document.querySelectorAll('.wallet-fill');
+            const walletContributionInput = document.getElementById('wallet-contribution');
+	            const walletContributionHint = document.getElementById('wallet-contribution-hint');
+	            const fareBaseEl = document.getElementById('fare-base');
+	            const fareDistanceEl = document.getElementById('fare-distance');
+	            const fareTimeEl = document.getElementById('fare-time');
+	            const fareSurgeEl = document.getElementById('fare-surge');
+	            const fareOutstandingEl = document.getElementById('fare-outstanding');
+	            const fareSubtotalEl = document.getElementById('fare-subtotal');
+	            const fareWalletEl = document.getElementById('fare-wallet');
+	            const farePayableEl = document.getElementById('fare-payable');
+	            const prefillNameInput = document.getElementById('prefill-name');
+            const prefillEmailInput = document.getElementById('prefill-email');
+
+            const DEFAULT_GATEWAY_KEY = window.FAIRRIDE_RAZORPAY_KEY || 'RAZORPAY_TEST_KEY';
+
+            const methodSections = {
+                upi: document.getElementById('upi-details'),
+                card: document.getElementById('card-details'),
+                wallet: document.getElementById('wallet-details'),
+            };
+
+            const psBackdrop = document.getElementById('payment-success-backdrop');
+            const psCard = document.getElementById('payment-success-card');
+
+            const params = new URLSearchParams(window.location.search);
+            const fareParam = params.get('fare');
+            const storedFare = Number(localStorage.getItem('selectedFare') || localStorage.getItem('lastFare'));
+
+            let payableAmount = Number(fareParam);
+            if (!Number.isFinite(payableAmount) || payableAmount <= 0) {
+                if (Number.isFinite(storedFare) && storedFare > 0) {
+                    payableAmount = storedFare;
+                }
+            }
+
+            let rideTotal = Number.isFinite(payableAmount) ? Math.max(0, Math.round(payableAmount)) : 0;
+            payableAmount = rideTotal;
+            let walletContribution = 0;
+
+            const walletState = { balance: null, loading: false };
+            let selectedMethod = 'upi';
+            let currentOrderId = null;
+            let polling = false;
+
+            const formatCurrency = (value) => {
+                const amount = Number(value);
+                if (!Number.isFinite(amount)) return '\u2014';
+                return `\u20B9${amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+            };
+
+            function clampWalletAmount(value, totalBeforeWallet) {
+                const balance = Number(walletState.balance) || 0;
+                const target = Math.max(0, Math.round(Number(value) || 0));
+                return Math.max(0, Math.min(target, Math.min(balance, Math.max(0, Math.round(totalBeforeWallet || 0)))));
+            }
+
+            function disablePayButton(disabled) {
+                payBtn.disabled = disabled;
+            }
+
+            function setLoading(isLoading, label) {
+                disablePayButton(isLoading);
+                payBtnSpinner.classList.toggle('hidden', !isLoading);
+                payBtnLabel.textContent = isLoading ? (label || 'Processing...') : 'Pay Now';
+            }
+
+            function showError(message) {
+                if (!message) {
+                    errorEl.textContent = '';
+                    errorEl.classList.add('hidden');
+                    return;
+                }
+                errorEl.textContent = message;
+                errorEl.classList.remove('hidden');
+            }
+
+            function setStatus(message) {
+                if (!message) {
+                    statusEl.textContent = '';
+                    statusEl.classList.add('hidden');
+                    return;
+                }
+                statusEl.textContent = message;
+                statusEl.classList.remove('hidden');
+            }
+
+            function resetTopupFeedback() {
+                if (walletTopupStatus) { walletTopupStatus.classList.add('hidden'); walletTopupStatus.textContent = ''; }
+                if (walletTopupError) { walletTopupError.classList.add('hidden'); walletTopupError.textContent = ''; }
+            }
+
+            function setTopupLoading(isLoading) {
+                if (!walletTopupBtn) return;
+                walletTopupBtn.disabled = isLoading;
+                if (walletTopupSpinner) walletTopupSpinner.classList.toggle('hidden', !isLoading);
+            }
+
+	            function updateFareBreakdown(effectiveTotal) {
+	                const base = Math.min(35, effectiveTotal);
+	                const remainder = Math.max(0, effectiveTotal - base);
+	                const distance = Math.round(remainder * 0.7);
+	                const time = Math.max(0, remainder - distance);
+
+	                if (document.getElementById('fare-base')) document.getElementById('fare-base').textContent = formatCurrency(base);
+	                if (document.getElementById('fare-distance')) document.getElementById('fare-distance').textContent = formatCurrency(distance);
+	                if (document.getElementById('fare-time')) document.getElementById('fare-time').textContent = formatCurrency(time);
+	                if (document.getElementById('fare-surge')) document.getElementById('fare-surge').textContent = '\u2014';
+	                if (document.getElementById('fare-outstanding')) document.getElementById('fare-outstanding').textContent = '\u2014';
+	                if (document.getElementById('fare-subtotal')) document.getElementById('fare-subtotal').textContent = formatCurrency(effectiveTotal);
+	            }
+
+            function setAmountDisplay() {
+                if (!Number.isFinite(payableAmount) || payableAmount <= 0) {
+                    amountEl.textContent = '\u2014';
+                    disablePayButton(true);
+                    return;
+                }
+                const totalBeforeWallet = Math.max(0, payableAmount);
+                walletContribution = clampWalletAmount(walletContribution, totalBeforeWallet);
+                const remaining = Math.max(0, totalBeforeWallet - walletContribution);
+
+                amountEl.textContent = formatCurrency(remaining);
+                if (document.getElementById('fare-wallet')) document.getElementById('fare-wallet').textContent = walletContribution ? `- ${formatCurrency(walletContribution)}` : '\u2014';
+                if (document.getElementById('fare-payable')) document.getElementById('fare-payable').textContent = formatCurrency(remaining);
+                if (document.getElementById('wallet-contribution') && document.activeElement !== document.getElementById('wallet-contribution')) {
+                    document.getElementById('wallet-contribution').value = walletContribution ? walletContribution : '';
+                }
+                if (walletContributionHint) {
+                    walletContributionHint.textContent = walletContribution
+                        ? (remaining === 0
+                            ? 'Wallet will cover the entire ride amount.'
+                            : `Wallet will cover ${formatCurrency(walletContribution)}. Remaining payable: ${formatCurrency(remaining)}.`)
+                        : 'Wallet contributions reduce what you pay via UPI or card. Paying with wallet only requires enough balance to cover the entire ride.';
+                }
+                updateFareBreakdown(totalBeforeWallet);
+                disablePayButton(remaining <= 0 && selectedMethod !== 'wallet');
+                try { localStorage.setItem('lastFare', String(payableAmount)); } catch {}
+            }
+
+            function showMethod(method) {
+                Object.entries(methodSections).forEach(([key, el]) => {
+                    if (!el) return;
+                    el.classList.toggle('hidden', key !== method);
+                });
+                if (method === 'wallet') {
+                    resetTopupFeedback();
+                    loadWalletBalance();
+                } else {
+                    setStatus('');
+                }
+                if (method === 'upi') {
+                    setStatus('Click Pay Now to generate a QR code and finish the payment in your UPI app.');
+                } else {
+                    upiQrImage.classList.add('hidden');
+                    upiReference.classList.add('hidden');
+                    upiStatus.classList.add('hidden');
+                    refreshBtn.classList.add('hidden');
+                    currentOrderId = null;
+                }
+                if (method !== 'wallet') {
+                    resetTopupFeedback();
+                }
+                setAmountDisplay();
+            }
+
+            function selectMethod(option) {
+                paymentOptions.forEach(o => {
+                    const isActive = o === option;
+                    o.classList.toggle('selected', isActive);
+                    o.setAttribute('aria-checked', isActive ? 'true' : 'false');
+                });
+                selectedMethod = option.dataset.method || 'upi';
+                showMethod(selectedMethod);
+                showError('');
+            }
+
+            function togglePaymentSuccess(show) {
+                psBackdrop.classList.toggle('visible', show);
+                if (show) {
+                    psCard.classList.add('pop-in');
+                } else {
+                    psCard.classList.remove('pop-in');
+                }
+            }
+
+            const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            const mockApi = (() => {
+                const orders = new Map();
+                const walletKey = 'fairrideMockWallet';
+                let walletBalance = Number(localStorage.getItem(walletKey));
+                if (!Number.isFinite(walletBalance)) walletBalance = 650;
+
+                const persistWallet = () => {
+                    try { localStorage.setItem(walletKey, String(walletBalance)); } catch {}
+                };
+
+                const uid = (prefix) => `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+
+                const scheduleSuccess = (orderId) => {
+                    setTimeout(() => {
+                        const current = orders.get(orderId);
+                        if (!current || current.status === 'success') return;
+                        const updated = { ...current, status: 'success', paymentStatus: 'success' };
+                        orders.set(orderId, updated);
+                    }, 3500);
+                };
+
+                const ensureOrder = (orderId) => {
+                    if (!orderId) return null;
+                    return orders.get(orderId) || null;
+                };
+
+                return {
+                    async post(path, payload) {
+                        switch (path) {
+                            case '/payments/order': {
+                                const amount = Number(payload?.amount) || 0;
+                                if (!(amount > 0)) throw new Error('Invalid amount supplied.');
+                                const method = payload?.method || 'upi';
+                                if (method === 'upi') {
+                                    const orderId = uid('UPI');
+                                    const reference = `UPI-${Math.floor(100000 + Math.random() * 900000)}`;
+                                    const paymentString = `upi://pay?pa=fairride@upi&pn=FairRide%20MBU&am=${amount}&cu=INR&tn=Ride%20fare`;
+                                    const order = {
+                                        orderId,
+                                        amount,
+                                        method,
+                                        reference,
+                                        status: 'pending',
+                                        paymentStatus: 'pending',
+                                        qrImage: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(paymentString)}`,
+                                        qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(paymentString)}`,
+                                        createdAt: Date.now(),
+                                    };
+                                    orders.set(orderId, order);
+                                    scheduleSuccess(orderId);
+                                    return order;
+                                }
+                                if (method === 'card') {
+                                    const orderId = uid('CARD');
+                                    const order = {
+                                        orderId,
+                                        amount,
+                                        method,
+                                        paymentStatus: 'created',
+                                        status: 'created',
+                                        amountInPaise: Math.round(amount * 100),
+                                        currency: 'INR',
+                                        gatewayKey: DEFAULT_GATEWAY_KEY,
+                                    };
+                                    orders.set(orderId, order);
+                                    return order;
+                                }
+                                throw new Error(`Unsupported payment method "${method}" in mock API.`);
+                            }
+                            case '/wallet/deduct': {
+                                const amount = Number(payload?.amount) || 0;
+                                if (!(amount > 0)) throw new Error('Amount required to deduct from wallet.');
+                                if (walletBalance < amount) throw new Error('Insufficient wallet balance.');
+                                walletBalance -= amount;
+                                persistWallet();
+                                return { balance: walletBalance, newBalance: walletBalance, paymentStatus: 'success' };
+                            }
+                            case '/wallet/topup': {
+                                const amount = Number(payload?.amount) || 0;
+                                if (!(amount > 0)) throw new Error('Amount required to add to wallet.');
+                                walletBalance += amount;
+                                persistWallet();
+                                return { balance: walletBalance, newBalance: walletBalance, paymentStatus: 'success' };
+                            }
+                            case '/payments/verify': {
+                                const orderId = payload?.razorpay_order_id;
+                                const order = ensureOrder(orderId) || {
+                                    orderId,
+                                    paymentStatus: 'success',
+                                    status: 'success',
+                                };
+                                const updated = {
+                                    ...order,
+                                    paymentStatus: 'success',
+                                    status: 'success',
+                                    razorpay_payment_id: payload?.razorpay_payment_id || uid('PMT'),
+                                    razorpay_signature: payload?.razorpay_signature || uid('SIG'),
+                                };
+                                orders.set(orderId, updated);
+                                return { status: 'success', orderId, newBalance: walletBalance };
+                            }
+                            default:
+                                throw new Error(`Mock API has no handler for POST ${path}`);
+                        }
+                    },
+                    async get(path) {
+                        if (path.startsWith('/payments/status')) {
+                            let orderId = null;
+                            try {
+                                const url = new URL(`${API_BASE}${path}`, window.location.origin);
+                                orderId = url.searchParams.get('orderId');
+                            } catch {
+                                const [, query = ''] = path.split('?');
+                                const params = new URLSearchParams(query);
+                                orderId = params.get('orderId');
+                            }
+                            const order = ensureOrder(orderId);
+                            if (!order) {
+                                return { orderId, status: 'pending', paymentStatus: 'pending' };
+                            }
+                            return order;
+                        }
+                        if (path === '/wallet/balance') {
+                            persistWallet();
+                            return { balance: walletBalance };
+                        }
+                        throw new Error(`Mock API has no handler for GET ${path}`);
+                    },
+                };
+            })();
+
+            const api = {
+                async postJSON(path, payload) {
+                    try {
+                        const response = await fetch(`${API_BASE}${path}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                        });
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        const text = await response.text().catch(() => '');
+                        console.warn(`Backend POST ${path} responded ${response.status}; using mock.`, text);
+                        return mockApi.post(path, payload);
+                    } catch (error) {
+                        console.warn(`Backend POST ${path} unavailable; using mock.`, error);
+                        return mockApi.post(path, payload);
+                    }
+                },
+                async getJSON(path) {
+                    try {
+                        const response = await fetch(`${API_BASE}${path}`);
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        const text = await response.text().catch(() => '');
+                        console.warn(`Backend GET ${path} responded ${response.status}; using mock.`, text);
+                        return mockApi.get(path);
+                    } catch (error) {
+                        console.warn(`Backend GET ${path} unavailable; using mock.`, error);
+                        return mockApi.get(path);
+                    }
+                },
+            };
+
+            async function loadWalletBalance(force = false) {
+                if (walletState.loading) return;
+                if (!force && Number.isFinite(walletState.balance)) {
+                    if (walletBalanceEl) walletBalanceEl.textContent = formatCurrency(walletState.balance);
+                    if (walletStatusEl) {
+                        walletStatusEl.textContent = walletState.balance >= payableAmount
+                            ? 'You have enough balance to cover this ride.'
+                            : 'Add funds to complete the payment via wallet.';
+                    }
+                    return;
+                }
+                walletState.loading = true;
+                if (walletStatusEl) walletStatusEl.textContent = 'Checking wallet balance...';
+                try {
+                    const data = await api.getJSON('/wallet/balance');
+                    const balance = Number(data?.balance);
+                    if (!Number.isFinite(balance)) {
+                        throw new Error('Wallet balance unavailable.');
+                    }
+                    walletState.balance = balance;
+                    if (walletBalanceEl) walletBalanceEl.textContent = formatCurrency(balance);
+                    if (walletStatusEl) {
+                        walletStatusEl.textContent = balance >= payableAmount
+                            ? 'You have enough balance to cover this ride.'
+                            : 'Add funds to complete the payment via wallet.';
+                    }
+                    resetTopupFeedback();
+                } catch (error) {
+                    if (walletStatusEl) walletStatusEl.textContent = 'Unable to fetch wallet balance.';
+                    showError(error.message || 'Could not load wallet balance. Try again later.');
+                } finally {
+                    walletState.loading = false;
+                }
+            }
+
+            async function topupWallet() {
+                if (!walletTopupBtn) return;
+                resetTopupFeedback();
+                const amountInput = Number(walletTopupAmount?.value || 0);
+                const amount = Math.round(amountInput);
+                if (!(amount >= 50)) {
+                    if (walletTopupError) {
+                        walletTopupError.textContent = 'Enter at least \u20B950 to add to your wallet.';
+                        walletTopupError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                setTopupLoading(true);
+                try {
+                    const result = await api.postJSON('/wallet/topup', { amount });
+                    const balance = Number(result?.newBalance ?? result?.balance);
+                    if (Number.isFinite(balance)) {
+                        walletState.balance = balance;
+                    } else {
+                        walletState.balance = (walletState.balance || 0) + amount;
+                    }
+                    if (walletBalanceEl) walletBalanceEl.textContent = formatCurrency(walletState.balance);
+                    if (walletStatusEl) {
+                        walletStatusEl.textContent = walletState.balance >= payableAmount
+                            ? 'You have enough balance to cover this ride.'
+                            : 'Add funds to complete the payment via wallet.';
+                    }
+                    if (walletTopupStatus) {
+                        walletTopupStatus.textContent = `Added ${formatCurrency(amount)} to your wallet.`;
+                        walletTopupStatus.classList.remove('hidden');
+                    }
+                    if (walletTopupAmount) walletTopupAmount.value = '';
+                } catch (error) {
+                    if (walletTopupError) {
+                        walletTopupError.textContent = error.message || 'Could not add money to wallet. Try again.';
+                        walletTopupError.classList.remove('hidden');
+                    }
+                } finally {
+                    setTopupLoading(false);
+                }
+            }
+
+            const safeStatus = (payload) => {
+                const status = payload?.paymentStatus || payload?.status || '';
+                return `${status}`.toLowerCase();
+            };
+
+            async function pollPaymentStatus(orderId) {
+                polling = true;
+                try {
+                    for (let attempt = 0; attempt < PAYMENT_POLL_MAX_ATTEMPTS; attempt++) {
+                        await wait(PAYMENT_POLL_INTERVAL);
+                        const statusPayload = await api.getJSON(`/payments/status?orderId=${encodeURIComponent(orderId)}`);
+                        const state = safeStatus(statusPayload);
+                        if (state === 'success' || state === 'captured') {
+                            return statusPayload;
+                        }
+                        if (state === 'failed' || state === 'failure') {
+                            throw new Error('Payment failed. Please try again.');
+                        }
+                    }
+                    throw new Error('Payment pending. Please complete the payment in your app and tap refresh.');
+                } finally {
+                    polling = false;
+                }
+            }
+
+            function onPaymentSuccess(method, payload) {
+                showError('');
+                setStatus('Payment confirmed! Redirecting you to live tracking...');
+                togglePaymentSuccess(true);
+                try { localStorage.setItem('rideStatus', 'booked'); } catch {}
+                try { localStorage.setItem('lastPaymentMethod', method); } catch {}
+                setTimeout(() => {
+                    window.location.href = 'tracking.html?booked=1';
+                }, 1600);
+            }
+
+            async function handleUpiPayment() {
+                setStatus('Creating a secure payment order...');
+                setLoading(true);
+
+                try {
+                    const order = await api.postJSON('/payments/order', {
+                        amount: payableAmount,
+                        method: 'upi',
+                    });
+
+                    currentOrderId = order?.orderId;
+                    if (!currentOrderId) {
+                        throw new Error('Could not create a payment order.');
+                    }
+
+                    const qrUrl = order.qrImageUrl || order.qrImage || order.qrCode || order.paymentLink;
+                    if (qrUrl) {
+                        upiQrImage.src = qrUrl;
+                        upiQrImage.classList.remove('hidden');
+                    }
+
+                    const referenceText = order.reference || order.referenceId || order.paymentLinkId || currentOrderId;
+                    if (referenceText) {
+                        upiReference.textContent = `Order ID: ${referenceText}`;
+                        upiReference.classList.remove('hidden');
+                    }
+
+                    refreshBtn.classList.remove('hidden');
+                    upiStatus.classList.add('hidden');
+                    setStatus('Scan the QR with your UPI app. Waiting for confirmation...');
+
+                    const result = await pollPaymentStatus(currentOrderId);
+
+                    upiStatus.textContent = 'Payment received!';
+                    upiStatus.classList.remove('hidden');
+                    onPaymentSuccess('upi', result);
+                } catch (error) {
+                    const err = error instanceof Error ? error : new Error(String(error));
+                    err.message = err.message || 'UPI payment failed. Please try again.';
+                    setLoading(false);
+                    throw err;
+                }
+            }
+
+            async function handleCardPayment() {
+                setStatus('Initializing secure card payment...');
+                setLoading(true);
+
+                try {
+                    const order = await api.postJSON('/payments/order', {
+                        amount: payableAmount,
+                        method: 'card',
+                    });
+
+                    if (!order || !order.orderId) {
+                        throw new Error('Failed to create payment order.');
+                    }
+
+                    if (!window.Razorpay) {
+                        throw new Error('Razorpay checkout script not loaded.');
+                    }
+
+                    const options = {
+                        key: order.gatewayKey || DEFAULT_GATEWAY_KEY,
+                        amount: order.amountInPaise || Math.round(payableAmount * 100),
+                        currency: order.currency || 'INR',
+                        name: 'FairRide MBU',
+                        description: 'Ride Payment',
+                        order_id: order.orderId,
+                        handler: async function (response) {
+                            try {
+                                const verification = await api.postJSON('/payments/verify', {
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                });
+
+                                if (verification?.status === 'success' || safeStatus(verification) === 'success') {
+                                    onPaymentSuccess('card', verification);
+                                } else {
+                                    throw new Error('Payment verification failed.');
+                                }
+                            } catch (err) {
+                                showError(err.message || 'Payment verification failed.');
+                                setLoading(false);
+                            }
+                        },
+                        prefill: {
+                            name: prefillNameInput?.value || order.prefillName || '',
+                            email: prefillEmailInput?.value || order.prefillEmail || '',
+                        },
+                        theme: { color: '#FBBF24' },
+                    };
+
+                    const rzp = new window.Razorpay(options);
+                    rzp.on('payment.failed', function (response) {
+                        showError(`Payment Failed: ${response.error?.description || 'Please try again.'}`);
+                        setLoading(false);
+                    });
+
+                    rzp.open();
+                    setLoading(false);
+                } catch (error) {
+                    const err = error instanceof Error ? error : new Error(String(error));
+                    err.message = err.message || 'Could not initiate card payment.';
+                    setLoading(false);
+                    throw err;
+                }
+            }
+
+            async function handleWalletPayment() {
+                setLoading(true);
+                try {
+                    const balanceData = await api.getJSON('/wallet/balance');
+                    const currentBalance = Number(balanceData?.balance);
+
+                    if (!Number.isFinite(currentBalance) || currentBalance < payableAmount) {
+                        throw new Error('Insufficient wallet balance. Please add funds.');
+                    }
+
+                    setStatus('Deducting fare from your wallet...');
+                    const result = await api.postJSON('/wallet/deduct', { amount: payableAmount });
+
+                    const newBalance = Number(result?.newBalance ?? result?.balance ?? currentBalance - payableAmount);
+                    walletState.balance = Number.isFinite(newBalance) ? newBalance : currentBalance - payableAmount;
+
+                    if (walletBalanceEl) walletBalanceEl.textContent = formatCurrency(walletState.balance);
+                    if (walletStatusEl) walletStatusEl.textContent = 'Wallet charged successfully.';
+
+                    onPaymentSuccess('wallet', { paymentStatus: 'success' });
+                } catch (error) {
+                    const err = error instanceof Error ? error : new Error(String(error));
+                    err.message = err.message || 'Wallet payment failed.';
+                    setLoading(false);
+                    throw err;
+                }
+            }
+
+            async function handlePayNow() {
+                if (!Number.isFinite(payableAmount) || payableAmount <= 0) {
+                    showError('Fare unavailable. Please restart your booking.');
+                    return;
+                }
+                showError('');
+                setLoading(true);
+                try {
+                    if (selectedMethod === 'upi') {
+                        await handleUpiPayment();
+                    } else if (selectedMethod === 'card') {
+                        await handleCardPayment();
+                    } else if (selectedMethod === 'wallet') {
+                        await handleWalletPayment();
+                    }
+                } catch (error) {
+                    setStatus('');
+                    showError(error.message || 'Payment failed. Please try again.');
+                } finally {
+                    if (!polling) {
+                        setLoading(false);
+                    }
+                }
+            }
+
+            async function refreshPaymentStatus() {
+                if (!currentOrderId || selectedMethod !== 'upi') return;
+                setLoading(true, 'Checking status...');
+                try {
+                    const result = await api.getJSON(`/payments/status?orderId=${encodeURIComponent(currentOrderId)}`);
+                    const state = safeStatus(result);
+                    if (state === 'success' || state === 'captured') {
+                        onPaymentSuccess('upi', result);
+                        return;
+                    }
+                    if (state === 'failed' || state === 'failure') {
+                        throw new Error('Payment failed. Please create a new order.');
+                    }
+                    setStatus('Payment still pending. Complete the payment in your UPI app and tap refresh again.');
+                } catch (error) {
+                    showError(error.message || 'Could not check payment status. Try again in a moment.');
+                } finally {
+                    setLoading(false);
+                }
+            }
+
+            refreshBtn.addEventListener('click', refreshPaymentStatus);
+            payBtn.addEventListener('click', handlePayNow);
+
+            walletRefreshBtn?.addEventListener('click', () => loadWalletBalance(true));
+            walletTopupBtn?.addEventListener('click', topupWallet);
+            walletQuickButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const val = Number(btn.dataset.topup);
+                    if (walletTopupAmount && Number.isFinite(val)) {
+                        walletTopupAmount.value = String(val);
+                        walletTopupAmount.focus();
+                        resetTopupFeedback();
+                    }
+                });
+            });
+
+            paymentOptions.forEach(option => {
+                option.addEventListener('click', () => selectMethod(option));
+                option.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        selectMethod(option);
+                    }
+                });
+                option.addEventListener('focus', () => option.classList.add('ring-2', 'ring-amber-400/60'));
+                option.addEventListener('blur', () => option.classList.remove('ring-2', 'ring-amber-400/60'));
+            });
+
+            setAmountDisplay();
+            paymentOptions.forEach(option => {
+                if (option.dataset.method === selectedMethod) {
+                    selectMethod(option);
+                }
+            });
+            showMethod(selectedMethod);
+        })();
+    </script>
+    <script defer src="assets/floating-autos.js"></script>
+
+</body>
+</html>

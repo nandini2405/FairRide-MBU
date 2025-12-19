@@ -1,0 +1,356 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Dashboard - FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FBBF24; --primary-color-transparent-1: rgba(251, 191, 36, 0.2); --primary-color-light: #FCD34D; --bg-color: #111827; --card-bg-color: rgba(31, 41, 55, 0.6); --shadow-color: rgba(251, 191, 36, 0.5);
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); overflow-x: hidden; }
+        .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid var(--primary-color-transparent-1); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3); }
+        .animated-gradient-text { background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color), #f9fafb, var(--primary-color), var(--primary-color-light)); background-size: 200% auto; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textGradientShift 4s linear infinite; }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .primary-btn { transition: transform 0.2s ease, box-shadow 0.2s ease; background-color: var(--primary-color); color: #111827; }
+        .primary-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color); }
+        /* Toggle Switch */
+        .availability-toggle { display: inline-flex; align-items: center; gap: 0.5rem; }
+        .toggle-side-label { font-size: 0.75rem; color: rgba(148, 163, 184, 0.9); font-weight: 700; letter-spacing: 0.06em; }
+        .toggle-checkbox { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        .toggle-label {
+            position: relative;
+            display: inline-block;
+            width: 3.25rem;
+            height: 1.75rem;
+            border-radius: 9999px;
+            background: rgba(75, 85, 99, 0.65);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .toggle-label .toggle-ball {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 1.375rem;
+            height: 1.375rem;
+            border-radius: 9999px;
+            background: linear-gradient(180deg, #ffffff, #e5e7eb);
+            box-shadow: 0 10px 18px -14px rgba(0,0,0,0.85), 0 1px 0 rgba(255,255,255,0.5) inset;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .toggle-label:focus-within { box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.22), inset 0 1px 0 rgba(255,255,255,0.05); border-color: rgba(251, 191, 36, 0.55); }
+        .toggle-checkbox:checked + .toggle-label {
+            background: rgba(34, 197, 94, 0.35);
+            border-color: rgba(34, 197, 94, 0.55);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.14), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .toggle-checkbox:checked + .toggle-label .toggle-ball { transform: translateX(1.5rem); }
+        /* Modal styles (shared) */
+        .modal-backdrop { position: fixed; inset: 0; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
+        .modal-card { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); opacity: 0; pointer-events: none; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; z-index: 101; }
+        .modal-backdrop.visible .modal-card { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
+        /* Toast */
+        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-20px); z-index: 110; opacity: 0; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease; }
+        .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+    <link rel="stylesheet" href="assets/floating-autos.css">
+</head>
+<body class="antialiased text-slate-200">
+    <div class="min-h-screen">
+        <header class="p-4 md:p-6 fade-in-up">
+            <nav class="container mx-auto flex justify-between items-center">
+	                <a href="dashboard.html" class="text-2xl font-black text-slate-50"><span class="animated-gradient-text">Driver Dashboard</span></a>
+	                <div class="flex items-center space-x-4">
+	                    <div class="availability-toggle">
+	                        <span id="status-pill" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-semibold">
+	                            <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+	                            <span id="status-text">Offline</span>
+	                        </span>
+	                        <span class="toggle-side-label">OFF</span>
+	                        <input aria-label="Driver availability" type="checkbox" name="toggle" id="online-toggle" class="toggle-checkbox" role="switch" aria-checked="false"/>
+	                        <label for="online-toggle" class="toggle-label" title="Toggle availability">
+	                            <span class="toggle-ball"></span>
+	                        </label>
+	                        <span class="toggle-side-label">ON</span>
+	                    </div>
+		                    <a id="header-profile-link" href="./driver_profile.html" class="flex items-center space-x-3 bg-gray-800/50 hover:bg-gray-700/70 border border-gray-700 text-slate-300 font-semibold py-2 pl-2 pr-4 rounded-full transition-all duration-200 backdrop-blur-sm">
+		                        <img id="header-avatar" src="https://placehold.co/32x32/1f2937/FBBF24?text=D" class="w-8 h-8 rounded-full object-cover border-2 border-gray-600" alt="Driver avatar">
+		                        <span id="header-name" class="hidden sm:block">Driver</span>
+	                    </a>
+                </div>
+            </nav>
+        </header>
+
+        <main class="container mx-auto p-4 md:p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column: Requests & Earnings -->
+                <div class="lg:col-span-1 space-y-8">
+                    <section class="card p-6 md:p-8 fade-in-up relative" style="animation-delay: 0.2s;">
+                        <h2 class="text-xl font-bold text-slate-100 mb-4 flex items-center"><i class="ph-bell-ringing-fill text-amber-400 mr-3"></i>Incoming Requests</h2>
+                        <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                            <!-- Dynamic last booking (from student dashboard) -->
+                            <div id="incoming-latest" class="hidden bg-gray-800/50 p-4 rounded-lg">
+                                <div class="flex items-center mb-3">
+                                    <img src="https://placehold.co/40x40/374151/FBBF24?text=U" class="w-10 h-10 rounded-full mr-3">
+                                    <div>
+                                        <p id="inc-name" class="font-bold text-white">&mdash;</p>
+                                        <p class="text-xs text-gray-400"><span id="inc-from">&mdash;</span> &rarr; <span id="inc-to">&mdash;</span></p>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <p id="inc-fare" class="text-xl font-extrabold text-amber-400">&mdash;</p>
+                                    <div class="flex space-x-2">
+                                        <button class="bg-red-500/20 hover:bg-red-500/40 text-red-300 font-bold py-2 px-4 rounded-lg transition-colors">Decline</button>
+                                        <button class="accept-btn bg-green-500/20 hover:bg-green-500/40 text-green-300 font-bold py-2 px-4 rounded-lg transition-colors text-center">Accept</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Static demo requests removed -->
+                            <div id="incoming-empty" class="text-center text-slate-400 text-sm py-8">No incoming requests</div>
+                        </div>
+                        <!-- Offline overlay -->
+                        <div id="offline-overlay" class="hidden absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-2xl flex items-center justify-center text-center">
+                            <div class="px-4">
+                                <div class="inline-flex items-center gap-2 text-red-300 font-semibold text-sm bg-red-500/10 border border-red-500/30 px-3 py-1 rounded-full mb-3">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                                    Offline
+                                </div>
+                                <p class="text-slate-200 font-medium">You are offline and not receiving ride requests.</p>
+                                <p class="text-slate-400 text-xs mt-1">Switch online to start accepting rides.</p>
+                            </div>
+                        </div>
+                    </section>
+                    <a href="./driver_earnings.html" class="card block p-6 md:p-8 fade-in-up hover:bg-gray-700/50 transition-colors" style="animation-delay: 0.4s;">
+                        <h2 class="text-xl font-bold text-slate-100 mb-4 flex items-center"><i class="ph-chart-line-up-fill text-amber-400 mr-3"></i>Today's Earnings</h2>
+                        <div class="text-center">
+                            <p class="text-5xl font-extrabold text-amber-400">&#8377;850</p>
+                            <p class="text-gray-400 mt-2">from 5 completed trips</p>
+                        </div>
+                    </a>
+                </div>
+                <!-- Right Column: Map -->
+                <div class="lg:col-span-2 space-y-8">
+                    <section class="fade-in-up h-full" style="animation-delay: 0.6s;">
+                        <h2 class="text-xl font-bold text-slate-100 mb-4 flex items-center"><i class="ph-map-trifold-fill text-amber-400 mr-3"></i>Line Map</h2>
+                        <div id="map-container" class="card h-[calc(100vh-12rem)] rounded-2xl overflow-hidden relative">
+                            <button id="driver-map-my-location" class="absolute top-3 right-3 z-10 bg-gray-900/70 text-slate-200 hover:bg-gray-800/70 px-3 py-2 rounded-lg border border-gray-700/60 text-sm">My location</button>
+                            <iframe
+                                title="Tirupati City Map"
+                                class="absolute inset-0 w-full h-full border-0"
+                                loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                src="https://www.google.com/maps?q=Tirupati&output=embed">
+                            </iframe>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- Accept Notification Toast -->
+    <div id="driver-toast" class="toast">
+        <div class="card px-5 py-3 rounded-xl border border-gray-700 bg-gray-900/80 backdrop-blur-sm flex items-center gap-3 shadow-lg">
+            <i class="ph-check-circle text-emerald-400 text-xl"></i>
+            <p class="text-white font-bold">yes ride is accepted</p>
+            <button id="driver-toast-close" class="ml-2 text-slate-400 hover:text-white" title="Close"><i class="ph-x text-lg"></i></button>
+        </div>
+    </div>
+    <!-- OTP Verify Modal -->
+    <div id="otp-modal-backdrop" class="modal-backdrop">
+        <div class="modal-card w-full max-w-md p-6 md:p-8">
+            <div class="card p-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white">Verify Ride OTP</h2>
+                    <button id="otp-close" class="text-slate-300 hover:text-white p-2 rounded-lg hover:bg-gray-700/60" title="Close"><i class="ph-x text-2xl"></i></button>
+                </div>
+                <p class="text-slate-400 mt-1 text-sm">Ask the rider for their OTP and enter it below to start the trip.</p>
+                <div class="mt-4">
+                    <label class="text-slate-300 text-sm font-semibold" for="driver-otp-input">Enter 4-digit OTP</label>
+                    <div class="mt-2 flex items-center gap-2">
+                        <input id="driver-otp-input" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-slate-200 font-mono tracking-widest" maxlength="4" placeholder="0000" inputmode="numeric" />
+                        <button id="driver-otp-paste" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm">Paste</button>
+                        <button id="driver-otp-verify" class="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg font-semibold">Verify</button>
+                    </div>
+                    <p id="driver-otp-status" class="mt-2 text-sm"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+	    <script>
+	        // Online/Offline toggle: clearer visuals + persistence + overlay
+		        (function () {
+	            const toggle = document.getElementById('online-toggle');
+	            const statusText = document.getElementById('status-text');
+	            const statusPill = document.getElementById('status-pill');
+	            const statusDot = document.getElementById('status-dot');
+	            const overlay = document.getElementById('offline-overlay');
+
+		            const applyState = (online) => {
+		                if (toggle) toggle.setAttribute('aria-checked', online ? 'true' : 'false');
+		                // Status text
+		                statusText.textContent = online ? 'Online' : 'Offline';
+		                // Pill colors
+	                statusPill.className = online
+	                    ? 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-green-300 text-xs font-semibold'
+                    : 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-semibold';
+	                statusDot.className = online ? 'w-2.5 h-2.5 rounded-full bg-green-400' : 'w-2.5 h-2.5 rounded-full bg-red-400';
+	                // Overlay for incoming requests
+	                if (overlay) overlay.classList.toggle('hidden', online);
+	            };
+
+		            // Always start offline on page load
+		            const initialOnline = false;
+		            toggle.checked = initialOnline;
+		            applyState(initialOnline);
+
+            toggle.addEventListener('change', function () {
+                applyState(this.checked);
+            });
+        })();
+
+	        // Accept -> Verify OTP flow
+	        (function () {
+            // Populate latest incoming request from last booking
+            (function(){
+                try {
+                    var name = localStorage.getItem('lastRiderName') || 'Rider';
+                    var from = localStorage.getItem('lastPickup') || '';
+                    var to = localStorage.getItem('lastDest') || '';
+                    var fare = localStorage.getItem('lastFare') || '';
+                    var hasReq = !!(from && to);
+                    var card = document.getElementById('incoming-latest');
+                    var empty = document.getElementById('incoming-empty');
+                    if (hasReq && card) {
+                        card.classList.remove('hidden');
+                        if (empty) empty.classList.add('hidden');
+                        var n = document.getElementById('inc-name'); if (n) n.textContent = name;
+                        var f = document.getElementById('inc-from'); if (f) f.textContent = from;
+                        var t = document.getElementById('inc-to'); if (t) t.textContent = to;
+                        var ff = document.getElementById('inc-fare'); if (ff) ff.textContent = fare ? ('\u20B9' + fare) : '\u2014';
+                    } else {
+                        if (card) card.classList.add('hidden');
+                        if (empty) empty.classList.remove('hidden');
+                    }
+                } catch (e) {}
+            })();
+            const acceptButtons = document.querySelectorAll('.accept-btn');
+            const backdrop = document.getElementById('otp-modal-backdrop');
+            const closeBtn = document.getElementById('otp-close');
+            const input = document.getElementById('driver-otp-input');
+            const verifyBtn = document.getElementById('driver-otp-verify');
+            const pasteBtn = document.getElementById('driver-otp-paste');
+            const statusEl = document.getElementById('driver-otp-status');
+            const toast = document.getElementById('driver-toast');
+            const toastClose = document.getElementById('driver-toast-close');
+
+            function toggleModal(v){ backdrop.classList.toggle('visible', v); if (v) { input.value=''; statusEl.textContent=''; input.focus(); } }
+            function getOTP(){ try { return localStorage.getItem('currentRideOTP'); } catch { return null; } }
+            function setStatus(msg, ok){ statusEl.textContent = msg; statusEl.style.color = ok ? '#34d399' : '#f87171'; }
+
+            function showToast(){
+                if (!toast) return;
+                toast.classList.add('visible');
+                setTimeout(() => toast.classList.remove('visible'), 3000);
+            }
+
+            // On Accept, only open OTP modal (no toast yet)
+            acceptButtons.forEach(btn => btn.addEventListener('click', (e) => { e.preventDefault(); toggleModal(true); }));
+            closeBtn?.addEventListener('click', () => toggleModal(false));
+            backdrop?.addEventListener('click', (e) => { if (e.target === backdrop) toggleModal(false); });
+            toastClose?.addEventListener('click', () => toast.classList.remove('visible'));
+
+            pasteBtn?.addEventListener('click', async () => {
+                try { const text = await navigator.clipboard.readText(); input.value = (text || '').trim().slice(0,4); } catch {}
+            });
+
+            function verify(){
+                const val = (input.value || '').trim();
+                if (val.length !== 4 || /\D/.test(val)) { setStatus('Enter a valid 4-digit OTP.', false); return; }
+                // Accept any 4-digit OTP, then show acceptance toast
+                setStatus('Verified \u2713 Starting ride...', true);
+                showToast();
+                setTimeout(() => { window.location.href = 'driver_in_ride.html'; }, 1200);
+            }
+            verifyBtn?.addEventListener('click', verify);
+            input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') verify(); });
+        })();
+
+        // Driver map: current location button
+        (function(){
+            var btn=document.getElementById('driver-map-my-location');
+            var frame=document.querySelector('#map-container iframe');
+            if(!btn||!frame) return;
+            btn.addEventListener('click',function(){
+                if(!navigator.geolocation){alert('Geolocation not supported');return;}
+                var t=btn.textContent; btn.disabled=true; btn.textContent='Locating...';
+                navigator.geolocation.getCurrentPosition(function(p){
+                    var lat=p.coords.latitude.toFixed(6), lon=p.coords.longitude.toFixed(6);
+                    frame.src='https://www.google.com/maps?q='+lat+','+lon+'&z=15&output=embed';
+                    btn.disabled=false; btn.textContent=t;
+                },function(e){
+                    alert((e&&e.message)||'Could not get location');
+                    btn.disabled=false; btn.textContent=t;
+                },{enableHighAccuracy:true,timeout:10000});
+            });
+        })();
+
+        // Ensure profile chip always navigates to driver profile
+        (function () {
+            const link = document.getElementById('header-profile-link');
+            link?.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'driver_profile.html';
+            });
+	        })();
+
+        // Header profile: keep it in sync with logged-in driver
+        (function () {
+            const nameEl = document.getElementById('header-name');
+            const avatarEl = document.getElementById('header-avatar');
+
+            const apply = (name) => {
+                const safeName = (name || '').trim() || 'Driver';
+                if (nameEl) nameEl.textContent = safeName;
+                const initial = safeName.charAt(0).toUpperCase() || 'D';
+                if (avatarEl) avatarEl.src = `https://placehold.co/32x32/1f2937/FBBF24?text=${encodeURIComponent(initial)}`;
+            };
+
+            // Start with local cache
+            apply(localStorage.getItem('currentUserName') || '');
+
+            // Refresh from backend when possible (so DB stays source of truth)
+            const token = localStorage.getItem('authToken');
+            if (!token) return;
+            const bases = [window.API_BASE, `${location.protocol}//${location.hostname}:3001`, 'http://127.0.0.1:3001', 'http://localhost:3001'].filter(Boolean);
+            (async () => {
+                for (const base of [...new Set(bases)]) {
+                    try {
+                        const res = await fetch(base.replace(/\/$/, '') + '/api/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (!res.ok) continue;
+                        const me = await res.json();
+                        if (me?.name) {
+                            localStorage.setItem('currentUserName', me.name);
+                            apply(me.name);
+                        }
+                        break;
+                    } catch (_) {}
+                }
+            })();
+        })();
+	    </script>
+    <script defer src="assets/floating-autos.js"></script>
+
+</body>
+</html>
+
+

@@ -1,0 +1,316 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Ride - FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <!-- Map removed on this screen -->
+    <style>
+        :root {
+            --primary-color: #FBBF24;
+            --primary-color-light: #FCD34D;
+            --primary-color-transparent-1: rgba(251, 191, 36, 0.2);
+            --primary-color-transparent-2: rgba(251, 191, 36, 0.12);
+            --bg-color: #0b1020;
+            --card-bg-color: rgba(17, 24, 39, 0.7);
+            --card-bg-color-strong: rgba(31, 41, 55, 0.9);
+            --shadow-color: rgba(251, 191, 36, 0.45);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background:
+                radial-gradient(900px 520px at 10% -10%, var(--primary-color-transparent-2), transparent 60%),
+                radial-gradient(900px 520px at 90% 0%, rgba(59, 130, 246, 0.12), transparent 60%),
+                linear-gradient(180deg, #0b1020 0%, #0a1327 50%, #0b1020 100%);
+            color: #e5e7eb;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: linear-gradient(180deg, var(--card-bg-color-strong), var(--card-bg-color));
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(251, 191, 36, 0.18);
+            box-shadow: 0 20px 55px -35px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        .page-title {
+            text-shadow: 0 18px 45px rgba(0, 0, 0, 0.65);
+            letter-spacing: -0.02em;
+        }
+        .page-subtitle {
+            max-width: 60ch;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .route-card { position: relative; overflow: hidden; }
+        .route-card::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: radial-gradient(600px 180px at 0% 0%, rgba(251, 191, 36, 0.18), transparent 60%);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .route-item { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.5rem 0; }
+        .route-item + .route-item { border-top: 1px dashed rgba(255, 255, 255, 0.08); padding-top: 0.9rem; margin-top: 0.2rem; }
+        .route-label { font-size: 0.72rem; letter-spacing: 0.12em; color: rgba(203, 213, 225, 0.9); }
+        .route-value { font-size: 1rem; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+
+        .animated-gradient-text {
+            background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color), #f9fafb, var(--primary-color), var(--primary-color-light));
+            background-size: 200% auto;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: textGradientShift 4s linear infinite;
+        }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .primary-btn {
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            background: linear-gradient(180deg, var(--primary-color-light), var(--primary-color));
+            color: #111827;
+            box-shadow: 0 12px 22px -12px var(--shadow-color);
+        }
+        .primary-btn:hover { transform: translateY(-2px); filter: brightness(1.03); box-shadow: 0 16px 28px -14px var(--shadow-color); }
+        .primary-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-color-transparent-1), 0 16px 28px -14px var(--shadow-color); }
+
+        .fare-card {
+            border: 2px solid rgba(148, 163, 184, 0.12);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: clamp(180px, 22vw, 220px);
+            background: radial-gradient(120% 120% at 0% 0%, rgba(255, 255, 255, 0.05), transparent 60%);
+        }
+        .fare-card:hover {
+            border-color: rgba(251, 191, 36, 0.6);
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 22px 38px -25px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(251, 191, 36, 0.15);
+        }
+        .fare-card.selected {
+            border-color: var(--primary-color);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 26px 45px -28px rgba(0, 0, 0, 0.95), 0 0 0 3px rgba(251, 191, 36, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        .fare-card:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.35), 0 22px 38px -25px rgba(0, 0, 0, 0.9); }
+
+        .input-field {
+            background-color: rgba(55, 65, 81, 0.9);
+            border: 1px solid rgba(107, 114, 128, 0.6);
+            border-radius: 0.75rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            color: #f3f4f6;
+        }
+        .input-field:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-color-transparent-1); }
+
+        .secondary-btn {
+            background: rgba(55, 65, 81, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            color: #e5e7eb;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+            white-space: nowrap;
+        }
+        .secondary-btn:hover { transform: translateY(-1px); background: rgba(75, 85, 99, 0.9); border-color: rgba(251, 191, 36, 0.45); }
+        .secondary-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-color-transparent-1); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .fade-in-up { animation: none; opacity: 1; }
+            .animated-gradient-text { animation: none; }
+            .fare-card, .primary-btn, .secondary-btn { transition: none; }
+        }
+
+        #notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.9rem 1.4rem;
+            border-radius: 0.9rem;
+            color: white;
+            z-index: 200;
+            transition: top 0.4s ease-in-out;
+            font-weight: 700;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+        }
+        #notification.show { top: 20px; }
+        #notification.success { background-color: rgba(34, 197, 94, 0.95); }
+        #notification.error { background-color: rgba(239, 68, 68, 0.95); }
+    </style>
+</head>
+<body class="antialiased text-slate-200">
+    <div id="notification"></div>
+    <div class="min-h-screen">
+        <header class="p-4 md:p-6 fade-in-up">
+            <nav class="container mx-auto flex justify-between items-center">
+                <a href="dashboard.html" class="text-2xl font-black text-slate-50"><span class="animated-gradient-text">FairRide MBU</span></a>
+                <a href="dashboard.html" aria-label="Close" class="w-10 h-10 bg-gray-800/60 backdrop-blur-sm rounded-full flex items-center justify-center border border-gray-700/70 hover:bg-gray-700/70 hover:border-amber-400/60 transition-all"><i class="ph-x text-xl text-slate-300"></i></a>
+            </nav>
+        </header>
+        <main class="container mx-auto p-4 md:p-6">
+            <section class="max-w-4xl mx-auto">
+                <div class="text-center">
+                    <h1 class="page-title text-3xl md:text-4xl font-bold text-slate-50 mb-2 fade-in-up">Choose Your Ride</h1>
+                    <p class="page-subtitle text-slate-400 mb-4 fade-in-up" style="animation-delay: 0.2s;">Confirm your route and select a fare that fits your needs.</p>
+                </div>
+                
+                <!-- Route Info (map removed) -->
+                <div class="card route-card p-4 sm:p-6 mb-8 fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div class="md:col-span-3 space-y-3 text-sm">
+                            <div class="route-item">
+                                <i class="ph-navigation-arrow text-amber-400 text-lg mr-2 mt-1"></i>
+                                <div>
+                                    <p class="route-label font-semibold">PICKUP</p>
+                                    <p id="pickup-location" class="route-value text-white">Loading...</p>
+                                </div>
+                            </div>
+                            <div class="route-item">
+                                <i class="ph-map-pin-line text-amber-400 text-lg mr-2 mt-1"></i>
+                                <div>
+                                    <p class="route-label font-semibold">DESTINATION</p>
+                                    <p id="destination-location" class="route-value text-white">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Standard Auto -->
+                    <div class="fare-card card p-5 md:p-6 text-center fade-in-up relative" data-tier="standard" role="button" tabindex="0" aria-pressed="true" style="animation-delay: 0.6s;">
+                        <i class="ph-jeep text-5xl text-amber-300 mx-auto mb-4"></i>
+                        <h2 class="text-xl font-bold text-white">Standard Auto</h2>
+                        <p class="text-3xl font-extrabold text-amber-400 my-2"><span class="fare-amount">&#8377;--</span></p>
+                        <p class="text-sm text-gray-400"><i class="ph-clock"></i> <span class="eta-display">-- min</span></p>
+                    </div>
+                    <!-- Shared Auto -->
+                    <div class="fare-card card p-5 md:p-6 text-center fade-in-up relative" data-tier="shared" role="button" tabindex="0" aria-pressed="false" style="animation-delay: 0.8s;">
+                         <span class="absolute top-0 right-0 -mt-3 -mr-3 bg-amber-400 text-gray-900 text-xs font-bold px-3 py-1 rounded-full">POPULAR</span>
+                        <i class="ph-users-three text-5xl text-amber-300 mx-auto mb-4"></i>
+                        <h2 class="text-xl font-bold text-white">Shared Auto</h2>
+                        <p class="text-3xl font-extrabold text-amber-400 my-2"><span class="fare-amount">&#8377;--</span></p>
+                        <p class="text-sm text-gray-400"><i class="ph-clock"></i> <span class="eta-display">-- min</span></p>
+                    </div>
+                    <!-- Premium -->
+                    <div class="fare-card card p-5 md:p-6 text-center fade-in-up relative" data-tier="premium" role="button" tabindex="0" aria-pressed="false" style="animation-delay: 1s;">
+                        <i class="ph-car-profile text-5xl text-amber-300 mx-auto mb-4"></i>
+                        <h2 class="text-xl font-bold text-white">Premium</h2>
+                        <p class="text-3xl font-extrabold text-amber-400 my-2"><span class="fare-amount">&#8377;--</span></p>
+                        <p class="text-sm text-gray-400"><i class="ph-clock"></i> <span class="eta-display">-- min</span></p>
+                    </div>
+                </div>
+
+                <!-- Promo Code Section -->
+                <div class="max-w-sm mx-auto mt-8 fade-in-up" style="animation-delay: 1.2s;">
+                    <label for="promo-code" class="text-sm font-semibold text-slate-300 mb-2 block text-center">Have a promo code?</label>
+                    <div class="flex gap-2">
+                        <input id="promo-code" type="text" class="input-field w-full px-4 py-2 text-center" placeholder="Enter code">
+                        <button id="apply-promo-btn" class="secondary-btn font-semibold py-2 px-4 rounded-lg">Apply</button>
+                    </div>
+                </div>
+
+                <div class="mt-8 fade-in-up" style="animation-delay: 1.4s;">
+                     <a id="proceed-to-payment" href="payment.html" class="primary-btn w-full max-w-sm mx-auto font-bold py-3 rounded-lg shadow-lg flex items-center justify-center text-lg" style="--tw-shadow-color: var(--shadow-color);">Proceed to Payment</a>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let notificationTimeout;
+            const showNotification = (message, type = 'success') => {
+                const el = document.getElementById('notification');
+                clearTimeout(notificationTimeout);
+                el.textContent = message;
+                el.className = type;
+                el.classList.add('show');
+                notificationTimeout = setTimeout(() => {
+                    el.classList.remove('show');
+                }, 3000);
+            };
+
+            const pickup = localStorage.getItem('lastPickup') || 'MBU Campus';
+            const destination = localStorage.getItem('lastDest') || 'Tirupati Railway Station';
+            document.getElementById('pickup-location').textContent = pickup;
+            document.getElementById('destination-location').textContent = destination;
+
+            const formatCurrency = (value) => `\u20B9${Math.round(value)}`;
+            const roundToFive = (value) => Math.max(10, Math.round(value / 5) * 5);
+            
+            const storedFare = Number(localStorage.getItem('lastFare'));
+            const baseETAString = localStorage.getItem('lastETA') || "20 mins";
+            const baseETAMinutes = parseInt(baseETAString.split(' ')[0]);
+
+            const fallbackTiers = { standard: 165, shared: 70, premium: 235 };
+            const tiers = Number.isFinite(storedFare) && storedFare > 0
+                ? {
+                    standard: roundToFive(storedFare),
+                    shared: roundToFive(storedFare * 0.6),
+                    premium: roundToFive(storedFare * 1.35)
+                }
+                : fallbackTiers;
+
+            const etas = Number.isFinite(baseETAMinutes) ? {
+                standard: `${baseETAMinutes - 1}-${baseETAMinutes + 2} min`,
+                shared: `${baseETAMinutes + 2}-${baseETAMinutes + 5} min`,
+                premium: `${baseETAMinutes - 3}-${baseETAMinutes} min`,
+            } : { standard: '20-25 min', shared: '25-30 min', premium: '15-20 min' };
+
+            const cards = document.querySelectorAll('.fare-card');
+            const paymentBtn = document.getElementById('proceed-to-payment');
+
+            const setSelection = (tier) => {
+                cards.forEach(card => {
+                    const isActive = card.dataset.tier === tier;
+                    card.classList.toggle('selected', isActive);
+                    card.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                });
+                const amount = tiers[tier] || tiers.standard;
+                localStorage.setItem('selectedTier', tier);
+                localStorage.setItem('selectedFare', String(amount));
+                if (paymentBtn) {
+                    const tierName = tier.charAt(0).toUpperCase() + tier.slice(1);
+                    paymentBtn.textContent = `Pay for ${tierName} (${formatCurrency(amount)})`;
+                }
+            };
+
+            cards.forEach(card => {
+                const tier = card.dataset.tier;
+                const amountEl = card.querySelector('.fare-amount');
+                const etaEl = card.querySelector('.eta-display');
+                if (tier && amountEl && tiers[tier]) {
+                    amountEl.textContent = formatCurrency(tiers[tier]);
+                }
+                if (tier && etaEl && etas[tier]) {
+                    etaEl.textContent = etas[tier];
+                }
+                card.addEventListener('click', (e) => { e.preventDefault(); setSelection(tier || 'standard'); });
+                card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelection(tier || 'standard'); } });
+            });
+            
+            document.getElementById('apply-promo-btn').addEventListener('click', () => {
+                showNotification('Promo code applied successfully!', 'success');
+            });
+
+            const storedTier = localStorage.getItem('selectedTier');
+            setSelection(storedTier && tiers[storedTier] ? storedTier : 'standard');
+        });
+    </script>
+</body>
+</html>

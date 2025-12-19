@@ -1,0 +1,344 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Profile - FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FBBF24; --primary-color-transparent-1: rgba(251, 191, 36, 0.2); --primary-color-light: #FCD34D; --bg-color: #111827; --card-bg-color: rgba(31, 41, 55, 0.6); --shadow-color: rgba(251, 191, 36, 0.5);
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); overflow-x: hidden; }
+        .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid var(--primary-color-transparent-1); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3); }
+        .animated-gradient-text { background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color), #f9fafb, var(--primary-color), var(--primary-color-light)); background-size: 200% auto; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textGradientShift 4s linear infinite; }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .input-field { background-color: #374151; border: 1px solid #4b5563; border-radius: 0.5rem; transition: all 0.2s; color: #f3f4f6; }
+        .input-field:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-color-transparent-1); }
+        .input-field:disabled { background-color: #1f2937; cursor: not-allowed; opacity: 0.6; }
+        .primary-btn { transition: transform 0.2s ease, box-shadow 0.2s ease; background-color: var(--primary-color); color: #111827; }
+        .primary-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color); }
+        .file-upload-label { border: 2px dashed #4b5563; transition: all 0.2s ease; }
+        .file-upload-label:hover { border-color: var(--primary-color); background-color: rgba(251, 191, 36, 0.05); }
+        /* Toast */
+        .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: rgba(17,24,39,0.95); color: #e5e7eb; padding: 12px 16px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+        .toast-success { background: rgba(5, 150, 105, 0.95); }
+        .toast-error { background: rgba(190, 18, 60, 0.95); }
+    </style>
+    <link rel="stylesheet" href="assets/floating-autos.css">
+</head>
+<body class="antialiased text-slate-200">
+    <div class="min-h-screen">
+	        <header class="p-4 md:p-6 fade-in-up">
+	            <nav class="container mx-auto flex justify-between items-center">
+	                <a href="driver_dashboard.html" class="text-2xl font-black text-slate-50"><span class="animated-gradient-text">My Profile</span></a>
+	                <a href="driver_dashboard.html" class="inline-flex items-center gap-2 bg-gray-800/50 hover:bg-gray-700/70 border border-gray-700 text-slate-200 font-semibold px-4 py-2 rounded-xl transition-all duration-200 backdrop-blur-sm">
+	                    <i class="ph-gauge text-lg text-amber-300"></i>
+	                    <span>Dashboard</span>
+	                </a>
+	            </nav>
+	        </header>
+        <main class="container mx-auto p-4 md:p-6">
+            <section class="max-w-2xl mx-auto card p-6 md:p-8 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="flex flex-col items-center space-y-4 mb-8">
+                    <img id="driver-avatar" src="https://placehold.co/128x128/1f2937/FBBF24?text=R" class="w-32 h-32 rounded-full object-cover border-4 border-gray-700">
+                    <div class="w-full max-w-xl mt-2">
+                        <p class="text-slate-300 text-sm font-semibold mb-2 text-center">Choose an avatar</p>
+                        <div id="driver-avatar-list" class="grid grid-cols-6 gap-3 place-items-center">
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Ramesh" alt="Avatar 1">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=Driver" alt="Avatar 2">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/bottts/svg?seed=Auto" alt="Avatar 3">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/lorelei/svg?seed=FairRide" alt="Avatar 4">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/fun-emoji/svg?seed=Happy" alt="Avatar 5">
+                            </button>
+                            <button class="rounded-full p-0.5 border-2 border-transparent hover:border-amber-400 transition-colors">
+                                <img class="avatar-option w-12 h-12 rounded-full object-cover" src="https://api.dicebear.com/7.x/thumbs/svg?seed=MBU" alt="Avatar 6">
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 id="driver-name-heading" class="text-xl font-bold text-white text-center">Ramesh Kumar</h2>
+                        <div class="mt-2 flex items-center justify-center bg-green-500/10 text-green-300 text-xs font-bold px-3 py-1 rounded-full">
+                            <i class="ph-check-circle-fill mr-2"></i>Verified
+                        </div>
+                    </div>
+                </div>
+                <form id="driver-profile-form" class="space-y-4">
+                    <div>
+                        <label for="full-name" class="block text-sm font-semibold text-slate-300 mb-2">Full Name</label>
+                        <input type="text" id="full-name" class="input-field w-full px-4 py-2.5" value="Ramesh Kumar" disabled>
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-semibold text-slate-300 mb-2">Phone Number</label>
+                        <input type="tel" id="phone" class="input-field w-full px-4 py-2.5" value="+91 98765 43210" disabled>
+                        <p id="driver-phone-policy-note" class="mt-1 text-xs text-gray-400 hidden">Phone is managed by admin and cannot be changed.</p>
+                    </div>
+                    <div>
+                        <label for="driver-gender" class="block text-sm font-semibold text-slate-300 mb-2">Gender</label>
+                        <select id="driver-gender" class="input-field w-full px-4 py-2.5" disabled>
+                            <option value="">Not specified</option>
+                            <option value="MALE">Male</option>
+                            <option value="FEMALE">Female</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="vehicle" class="block text-sm font-semibold text-slate-300 mb-2">Vehicle Number</label>
+                        <input type="text" id="vehicle" class="input-field w-full px-4 py-2.5" value="AP 03 N 1234" disabled>
+                    </div>
+                    <div class="pt-4 flex flex-col sm:flex-row gap-3">
+                        <button type="button" id="driver-edit-save-btn" class="primary-btn flex-1 inline-flex items-center justify-center gap-2 font-bold py-3 rounded-lg">
+                            <i class="ph-pencil-simple"></i>
+                            <span>Edit Profile</span>
+                        </button>
+                        <button type="button" id="driver-logout-btn" class="flex-1 inline-flex items-center justify-center gap-2 font-bold py-3 rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors">
+                            <i class="ph-sign-out"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-8 border-t border-gray-700 pt-6">
+                    <h3 class="text-lg font-bold text-slate-100 mb-4">Your Documents</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="license-upload" class="file-upload-label w-full p-6 rounded-lg flex flex-col items-center justify-center cursor-pointer">
+                                <i class="ph-identification-card-fill text-4xl text-amber-400 mb-2"></i>
+                                <span class="font-semibold">Driving License</span>
+                                <span id="license-name" class="text-xs text-gray-400 mt-1">license.pdf</span>
+                                <input type="file" id="license-upload" class="hidden">
+                            </label>
+                        </div>
+                        <div>
+                            <label for="insurance-upload" class="file-upload-label w-full p-6 rounded-lg flex flex-col items-center justify-center cursor-pointer">
+                                <i class="ph-shield-check-fill text-4xl text-amber-400 mb-2"></i>
+                                <span class="font-semibold">Insurance</span>
+                                <span id="insurance-name" class="text-xs text-gray-400 mt-1">insurance.pdf</span>
+                                <input type="file" id="insurance-upload" class="hidden">
+                            </label>
+                        </div>
+                    </div>
+                    
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+        // Load driver profile and handle doc uploads
+        function resolveApiBases() {
+            return [window.API_BASE, `${location.protocol}//${location.hostname}:3001`, 'http://127.0.0.1:3001', 'http://localhost:3001'].filter(Boolean);
+        }
+        // Policy flags
+        const POLICY_ALLOW_EDIT_CONTACT = false; // phone is private
+        const POLICY_ALLOW_EDIT_VEHICLE = false; // vehicle number is private
+
+        function showToast(message, type='info'){
+            const toast = document.createElement('div');
+            toast.className = `toast ${type==='success'?'toast-success':''} ${type==='error'?'toast-error':''}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            getComputedStyle(toast).opacity; toast.classList.add('show');
+            setTimeout(()=>{ toast.classList.remove('show'); setTimeout(()=>toast.remove(), 200); }, 2200);
+        }
+
+        (function initDriverProfile(){
+            const token = localStorage.getItem('authToken');
+
+            function loadFromLocal(){
+                const name = localStorage.getItem('currentUserName') || '';
+                const phone = localStorage.getItem('currentUserPhone') || '';
+                const gender = localStorage.getItem('currentUserGender') || '';
+                const vehicle = localStorage.getItem('currentUserVehicle') || '';
+                const nameEl = document.getElementById('full-name');
+                const phoneEl = document.getElementById('phone');
+                const vehicleEl = document.getElementById('vehicle');
+                const genderEl = document.getElementById('driver-gender');
+                const heading = document.getElementById('driver-name-heading');
+                if (nameEl && name) nameEl.value = name;
+                if (heading && name) heading.textContent = name;
+                if (phoneEl && phone) phoneEl.value = phone;
+                if (vehicleEl && vehicle) vehicleEl.value = vehicle;
+                if (genderEl && gender) genderEl.value = gender;
+                const initial = (name || '').trim().charAt(0).toUpperCase() || 'D';
+                const avatar = document.getElementById('driver-avatar');
+                if (avatar) avatar.src = `https://placehold.co/128x128/1f2937/FBBF24?text=${encodeURIComponent(initial)}`;
+            }
+
+            if (!token) { loadFromLocal(); return; }
+
+            // Populate top fields from backend (try common bases), fallback to local
+            (async () => {
+                const bases = resolveApiBases();
+                for (const base of [...new Set(bases)]) {
+                    try {
+                        const root = base.replace(/\/$/, '');
+                        const [meRes, profRes] = await Promise.all([
+                            fetch(root + '/api/users/me', { headers: { 'Authorization': `Bearer ${token}` } }),
+                            fetch(root + '/api/driver/profile', { headers: { 'Authorization': `Bearer ${token}` } })
+                        ]);
+                        if (!meRes.ok || !profRes.ok) continue;
+                        const me = await meRes.json();
+                        const profile = await profRes.json();
+
+                        const nameEl = document.getElementById('full-name');
+                        const phoneEl = document.getElementById('phone');
+                        const vehicleEl = document.getElementById('vehicle');
+                        const genderEl = document.getElementById('driver-gender');
+                        const heading = document.getElementById('driver-name-heading');
+                        if (nameEl && me?.name) nameEl.value = me.name;
+                        if (heading && me?.name) heading.textContent = me.name;
+                        if (phoneEl && me?.phone) phoneEl.value = me.phone;
+                        if (vehicleEl && profile?.vehicleNumber) vehicleEl.value = profile.vehicleNumber;
+                        if (genderEl && me?.gender) genderEl.value = me.gender;
+                        const initial = (me?.name || '').trim().charAt(0).toUpperCase() || 'D';
+                        const avatar = document.getElementById('driver-avatar');
+                        if (avatar) avatar.src = `https://placehold.co/128x128/1f2937/FBBF24?text=${encodeURIComponent(initial)}`;
+
+                        // Refresh local cache
+                        try {
+                            if (me?.name) localStorage.setItem('currentUserName', me.name);
+                            if (me?.phone) localStorage.setItem('currentUserPhone', me.phone);
+                            if (me?.gender) localStorage.setItem('currentUserGender', me.gender);
+                            if (profile?.vehicleNumber) localStorage.setItem('currentUserVehicle', profile.vehicleNumber);
+                        } catch (_) {}
+                        return;
+                    } catch (_) {}
+                }
+                loadFromLocal();
+            })();
+
+            function uploadDoc(inputId, nameId, fieldName){
+                const input = document.getElementById(inputId);
+                input?.addEventListener('change', async (e) => {
+                    const [file] = e.target.files;
+                    if (!file) return;
+                    try {
+                        const fd = new FormData();
+                        fd.append(fieldName, file);
+                        const res = await fetch(API_BASE + '/api/driver/documents', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || 'Upload failed');
+                        document.getElementById(nameId).textContent = file.name;
+                    } catch (err) { alert(err.message); }
+                });
+            }
+            uploadDoc('license-upload', 'license-name', 'license');
+            uploadDoc('insurance-upload', 'insurance-name', 'insurance');
+        })();
+
+        // Driver avatar selection (optional override)
+        document.querySelectorAll('#driver-avatar-list .avatar-option').forEach(img => {
+            img.addEventListener('click', () => {
+                const url = img.getAttribute('src');
+                const main = document.getElementById('driver-avatar');
+                if (main) main.src = url;
+                document.querySelectorAll('#driver-avatar-list button').forEach(btn => btn.classList.remove('border-amber-400'));
+                const parent = img.closest('button');
+                if (parent) parent.classList.add('border-amber-400');
+            });
+        });
+
+        // Edit/Save
+        const driverEditBtn = document.getElementById('driver-edit-save-btn');
+        const fields = [document.getElementById('full-name'), document.getElementById('phone'), document.getElementById('driver-gender'), document.getElementById('vehicle')];
+        let driverEdit = false;
+        driverEditBtn?.addEventListener('click', async () => {
+            driverEdit = !driverEdit;
+            for (const f of fields) {
+                if (!driverEdit) { f.disabled = true; continue; }
+                if ((f.id === 'phone' && !POLICY_ALLOW_EDIT_CONTACT) || (f.id === 'vehicle' && !POLICY_ALLOW_EDIT_VEHICLE)) { f.disabled = true; continue; }
+                f.disabled = false;
+            }
+            document.getElementById('driver-phone-policy-note').classList.toggle('hidden', POLICY_ALLOW_EDIT_CONTACT);
+            if (driverEdit) {
+                driverEditBtn.textContent = 'Save Changes';
+                fields[0].focus();
+            } else {
+                driverEditBtn.textContent = 'Edit Profile';
+                driverEditBtn.disabled = true; driverEditBtn.classList.add('opacity-60','cursor-not-allowed');
+                try {
+                    // Basic validation
+                    const name = document.getElementById('full-name').value.trim();
+                    const phone = document.getElementById('phone').value.trim();
+                    const gender = document.getElementById('driver-gender').value || null;
+                    const vehicleNumber = document.getElementById('vehicle').value.trim();
+                    if (!name || name.length < 2) throw new Error('Please enter a valid full name');
+                    const token = localStorage.getItem('authToken');
+                    // Save to backend (name and gender only; phone/vehicle are private)
+                    let uData = null;
+                    try {
+                        const bases = resolveApiBases();
+                        const base = bases.find(Boolean) || 'http://localhost:3001';
+                        const uRes = await fetch(base.replace(/\/$/, '') + '/api/users/me', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ name, gender }) });
+                        uData = await uRes.json();
+                        if (!uRes.ok) throw new Error(uData?.error || 'Failed to save profile');
+                    } catch (err) { console.warn('User save offline fallback', err); }
+                    if (POLICY_ALLOW_EDIT_VEHICLE) {
+                        try {
+                            const bases = resolveApiBases();
+                            const base = bases.find(Boolean) || 'http://localhost:3001';
+                            const pRes = await fetch(base.replace(/\/$/, '') + '/api/driver/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ vehicleNumber }) });
+                            const pData = await pRes.json();
+                            if (!pRes.ok) throw new Error(pData?.error || 'Failed to save vehicle');
+                        } catch (err) { console.warn('Vehicle save skipped/failed', err); }
+                    }
+                    // Update avatar initial and heading
+                    const initial = ((uData?.name) || name || '').trim().charAt(0).toUpperCase() || 'D';
+                    const avatar = document.getElementById('driver-avatar');
+                    if (avatar) avatar.src = `https://placehold.co/128x128/1f2937/FBBF24?text=${encodeURIComponent(initial)}`;
+                    const heading = document.getElementById('driver-name-heading');
+                    if (heading) heading.textContent = (uData?.name) || name;
+                    showToast('Profile saved', 'success');
+                    // Persist locally for offline fallback
+                    localStorage.setItem('currentUserName', (uData?.name) || name);
+                    if (phone) localStorage.setItem('currentUserPhone', phone);
+                    if (gender) localStorage.setItem('currentUserGender', gender);
+                    if (POLICY_ALLOW_EDIT_VEHICLE && vehicleNumber) localStorage.setItem('currentUserVehicle', vehicleNumber);
+                } catch (err) {
+                    console.error(err);
+                    // Graceful offline/local save if network fails
+                    const nameLocal = document.getElementById('full-name').value.trim();
+                    const genderLocal = document.getElementById('driver-gender').value || null;
+                    localStorage.setItem('currentUserName', nameLocal);
+                    if (genderLocal) localStorage.setItem('currentUserGender', genderLocal);
+                    const heading = document.getElementById('driver-name-heading');
+                    if (heading) heading.textContent = nameLocal;
+                    const initial = (nameLocal || '').trim().charAt(0).toUpperCase() || 'D';
+                    const avatar = document.getElementById('driver-avatar');
+                    if (avatar) avatar.src = `https://placehold.co/128x128/1f2937/FBBF24?text=${encodeURIComponent(initial)}`;
+                    showToast('Saved locally (offline)', 'success');
+                }
+                driverEditBtn.disabled = false; driverEditBtn.classList.remove('opacity-60','cursor-not-allowed');
+            }
+        });
+
+        // Logout to login page
+        document.getElementById('driver-logout-btn')?.addEventListener('click', () => {
+            try {
+                localStorage.removeItem('driverOnline');
+                localStorage.removeItem('authToken');
+                sessionStorage.clear();
+            } catch (e) {}
+            window.location.href = 'index.html';
+        });
+    </script>
+    <script defer src="assets/floating-autos.js"></script>
+
+</body>
+</html>
+
+

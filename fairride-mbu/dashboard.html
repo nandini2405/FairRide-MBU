@@ -1,0 +1,1622 @@
+﻿﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <title>Student Dashboard - FairRide MBU</title>
+		    <link rel="stylesheet" href="assets/tailwind.css">
+		    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+		    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+		    <link rel="stylesheet" href="assets/floating-autos.css">
+		    <!-- Optional Google Maps key config (ignored by git). See assets/maps-config.example.js -->
+		    <script defer src="assets/maps-config.js"></script>
+		    <script defer src="assets/google-maps-loader.js"></script>
+		    <script defer src="assets/floating-autos.js"></script>
+		    <style>
+        :root {
+            --primary-color: #FBBF24; /* Amber 400 */
+            --primary-color-transparent-1: rgba(251, 191, 36, 0.2);
+            --primary-color-transparent-2: rgba(251, 191, 36, 0.1);
+            --primary-color-transparent-3: rgba(251, 191, 36, 0.4);
+            --primary-color-light: #FCD34D; /* Amber 300 */
+            --bg-color: #111827; /* Gray 900 */
+            --card-bg-color: rgba(31, 41, 55, 0.6); /* Gray 800 with alpha */
+            --shadow-color: rgba(251, 191, 36, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+        }
+
+        .card, .modal-card {
+            background-color: var(--card-bg-color);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 1.5rem;
+            border: 1px solid var(--primary-color-transparent-1);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+        }
+
+        .animated-gradient-text {
+            background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color), #f9fafb, var(--primary-color), var(--primary-color-light));
+            background-size: 200% auto; 
+            background-clip: text;
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            animation: textGradientShift 4s linear infinite;
+        }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOutDown {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(20px); }
+        }
+
+        .fade-in-up { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .fade-out-down { animation: fadeOutDown 0.6s cubic-bezier(0.7, 0, 0.84, 0) forwards; }
+
+
+        .input-field, .select-field, .textarea-field {
+            background-color: #374151; 
+            border: 1px solid #4b5563; 
+            border-radius: 0.5rem;
+            transition: border-color 0.2s, box-shadow 0.2s; 
+            color: #f3f4f6; 
+        }
+        .select-field { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+        .input-field::placeholder, .textarea-field::placeholder { color: #9ca3af; }
+        .input-field:focus, .select-field:focus, .textarea-field:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-color-transparent-1); }
+
+        .primary-btn { 
+            transition: transform 0.2s ease, box-shadow 0.2s ease; 
+            background-color: var(--primary-color);
+            color: #111827;
+        }
+	        .primary-btn:hover {
+	            transform: translateY(-3px);
+	            box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
+	        }
+
+	        /* Quick Picks blocks */
+	        .quick-pick-btn {
+	            display: flex;
+	            flex-direction: column;
+	            align-items: center;
+	            justify-content: center;
+	            text-align: center;
+	            gap: 0.5rem;
+	            padding: 1rem;
+	            background: rgba(31, 41, 55, 0.85);
+	            border: 1px solid rgba(75, 85, 99, 0.6);
+	            border-radius: 0.75rem;
+	            color: #cbd5e1; /* slate-300 */
+	            font-weight: 600;
+	            transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+	                        background-color 240ms ease,
+	                        border-color 240ms ease,
+	                        box-shadow 240ms ease;
+	            will-change: transform;
+	        }
+	        .quick-pick-btn:hover {
+	            background: rgba(55, 65, 81, 0.95);
+	            transform: scale(1.05);
+	            border-color: rgba(251, 191, 36, 0.4);
+	            box-shadow: 0 12px 20px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(251, 191, 36, 0.15);
+	        }
+	        .quick-pick-btn:active { transform: scale(1.02); }
+        
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+        .modal-card {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            opacity: 0; pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            z-index: 101;
+        }
+        .modal-backdrop.visible .modal-card {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1; pointer-events: auto;
+        }
+
+        .booking-tab {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .booking-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        #map-container {
+            position: relative;
+            background: #1f2937; /* Gray 800 */
+        }
+      
+        .spinner, .btn-spinner {
+            width: 24px; height: 24px;
+            border: 3px solid rgba(251, 191, 36, 0.3);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .btn-spinner {
+             width: 16px; height: 16px; border-width: 2px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Live Ride Pools animations */
+        .live-dot {
+            width: 10px; height: 10px; border-radius: 9999px;
+            background-color: #34d399; /* emerald-400 */
+            box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6);
+            animation: pingDot 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes pingDot {
+            0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6); }
+            70% { box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+        .count-bump { display: inline-block; }
+        .count-bump.bump { animation: bump 220ms ease-out; }
+        @keyframes bump { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        
+        .departing {
+            opacity: 0.5;
+            transition: opacity 0.5s ease;
+        }
+        
+        /* Notification styles */
+        #notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            color: white;
+            z-index: 200;
+            transition: top 0.4s ease-in-out;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        #notification.show { top: 20px; }
+        #notification.error { background-color: #ef4444; } /* Red 500 */
+        #notification.success { background-color: #22c55e; } /* Green 500 */
+
+        /* Ride pools scrolling */
+        #ride-pools-list {
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 0.5rem; /* Space for scrollbar */
+        }
+
+        /* Custom scrollbar styling */
+        #ride-pools-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        #ride-pools-list::-webkit-scrollbar-track {
+            background: rgba(31, 41, 55, 0.5); /* Gray 800 transparent */
+            border-radius: 10px;
+        }
+        #ride-pools-list::-webkit-scrollbar-thumb {
+            background-color: #4b5563; /* Gray 600 */
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+        #ride-pools-list::-webkit-scrollbar-thumb:hover {
+            background-color: #6b7280; /* Gray 500 */
+        }
+    </style>
+</head>
+<body class="antialiased text-slate-200">
+
+    <div id="notification"></div>
+
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="p-4 md:p-6 fade-in-up">
+            <nav class="container mx-auto flex justify-between items-center">
+                <div class="text-2xl font-black text-slate-50">
+                    <span class="animated-gradient-text">FairRide MBU</span>
+                </div>
+	                <div class="flex items-center gap-3">
+	                    <a href="predictions.html" class="hidden sm:inline-flex items-center gap-2 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-semibold py-2 px-3 rounded-lg transition-all">
+	                        <i class="ph-trend-up"></i>
+	                        Predictions
+	                    </a>
+	                    <a href="user_profile.html" class="flex items-center space-x-4 group focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-full">
+	                        <span id="user-greeting" class="text-sm font-medium text-slate-300 hidden sm:block group-hover:text-white transition-colors">Hello, Student</span>
+	                        <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-600 group-hover:border-amber-400 transition-colors">
+	                            <span id="user-avatar-initial" class="text-lg font-extrabold text-slate-100 select-none">S</span>
+	                        </div>
+	                    </a>
+	                </div>
+	            </nav>
+	        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto p-4 md:p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column: Booking & Controls -->
+                <div class="lg:col-span-1 space-y-8">
+                    <!-- Booking Card -->
+                    <section class="card p-6 md:p-8 fade-in-up" style="animation-delay: 0.2s;">
+                        <h1 class="text-2xl md:text-3xl font-bold text-slate-50 mb-4">Plan Your Journey</h1>
+                        <div class="flex border-b border-gray-700 mb-6">
+                            <button id="ride-now-tab" class="booking-tab active font-semibold py-3 px-4" data-target="ride-now-content"><i class="ph-lightning-fill mr-2"></i>Ride Now</button>
+                            <button id="schedule-tab" class="booking-tab font-semibold py-3 px-4 text-gray-400" data-target="schedule-content"><i class="ph-calendar-plus-fill mr-2"></i>Schedule</button>
+                        </div>
+                        <div id="ride-now-content" class="tab-content active">
+                            <div class="space-y-4">
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i class="ph-navigation-arrow text-xl text-slate-400"></i></div>
+                                    <input id="pickup-input" list="destinations" class="input-field w-full pl-12 pr-12 py-4 text-lg" placeholder="Enter pickup location...">
+                                    <button id="use-my-location" class="absolute inset-y-0 right-2 my-2 px-3 rounded-lg text-sm bg-gray-700 hover:bg-gray-600 text-slate-200">Use my location</button>
+                                </div>
+                                <div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i class="ph-map-pin-line text-xl text-slate-400"></i></div><input id="destination-input" list="destinations" class="input-field w-full pl-12 pr-4 py-4 text-lg" placeholder="Enter destination..."></div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div><label for="passengers" class="block text-sm font-semibold text-slate-300 mb-2">Passengers</label><select id="passengers" class="select-field input-field w-full px-4 py-2.5"><option>1</option><option>2</option><option>3</option></select></div>
+                                    <div><label for="ride-type" class="block text-sm font-semibold text-slate-300 mb-2">Ride Type</label><select id="ride-type" class="select-field input-field w-full px-4 py-2.5"><option>Auto</option><option>Share Auto</option><option>Bike</option></select></div>
+                                </div>
+                                <div id="route-metrics" class="flex flex-wrap gap-2 text-sm">
+                                    <span id="distance-chip" class="bg-amber-500/10 text-amber-300 font-semibold px-3 py-1 rounded-full">Distance: &mdash;</span>
+                                    <span id="eta-chip" class="bg-amber-500/10 text-amber-300 font-semibold px-3 py-1 rounded-full">ETA: &mdash;</span>
+                                </div>
+                                <button id="find-ride-btn" class="primary-btn w-full font-bold py-4 rounded-lg shadow-lg flex items-center justify-center text-lg" style="--tw-shadow-color: var(--shadow-color);"><i class="ph-magnifying-glass mr-2"></i>Find Ride</button>
+                            </div>
+                        </div>
+	                        <div id="schedule-content" class="tab-content">
+	                             <div class="space-y-4">
+	                                <div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i class="ph-navigation-arrow text-xl text-slate-400"></i></div><input id="schedule-pickup-input" list="destinations" class="input-field w-full pl-12 pr-4 py-4 text-lg" placeholder="Enter pickup location..."></div>
+	                                <div class="relative"><div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i class="ph-map-pin-line text-xl text-slate-400"></i></div><input id="schedule-destination-input" list="destinations" class="input-field w-full pl-12 pr-4 py-4 text-lg" placeholder="Enter destination..."></div>
+	                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+	                                    <div><label for="schedule-date" class="block text-sm font-semibold text-slate-300 mb-2">Date</label><input type="date" id="schedule-date" class="input-field w-full px-4 py-2.5"></div>
+	                                    <div><label for="schedule-time" class="block text-sm font-semibold text-slate-300 mb-2">Time</label><input type="time" id="schedule-time" class="input-field w-full px-4 py-2.5"></div>
+	                                </div>
+	                                <button id="schedule-ride-btn" class="primary-btn w-full font-bold py-4 rounded-lg shadow-lg flex items-center justify-center text-lg" style="--tw-shadow-color: var(--shadow-color);"><i class="ph-calendar-check-fill mr-2"></i>Schedule Ride</button>
+	                            </div>
+	                            <div class="mt-6 pt-4 border-t border-gray-700/60">
+	                                <div class="flex items-center justify-between mb-3">
+	                                    <h3 class="text-lg font-bold text-slate-50 flex items-center gap-2">
+	                                        <i class="ph-calendar-blank text-amber-400"></i>
+	                                        Scheduled Trips
+	                                    </h3>
+	                                    <button id="clear-scheduled-btn" class="text-xs bg-gray-800 hover:bg-gray-700/80 border border-gray-700 text-slate-300 font-semibold px-3 py-1.5 rounded-lg">Clear All</button>
+	                                </div>
+	                                <div id="scheduled-trips-empty" class="text-sm text-slate-400">No trips scheduled yet.</div>
+	                                <div id="scheduled-trips-list" class="space-y-3 mt-3"></div>
+	                            </div>
+	                        </div>
+                    </section>
+                     <!-- Quick Destinations -->
+                    <section class="fade-in-up" style="animation-delay: 0.4s;">
+                         <div class="flex justify-between items-center mb-4">
+                             <h2 class="text-xl font-bold text-slate-100 flex items-center"><i class="ph-rocket-launch-fill text-amber-400 mr-3"></i>Quick Picks</h2>
+                             <button id="plan-outing-btn" class="text-sm bg-amber-500/10 text-amber-300 font-semibold py-2 px-4 rounded-lg hover:bg-amber-500/20 transition-all">&#10024; Plan My Outing</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+	                            <button type="button" data-dest="Tirupati Railway Station" class="quick-dest-btn quick-pick-btn"><i class="ph-train text-2xl text-amber-400"></i><p>Railway Station</p></button>
+	                            <button type="button" data-dest="Tirupati Bus Stand" class="quick-dest-btn quick-pick-btn"><i class="ph-bus text-2xl text-amber-400"></i><p>Bus Stand</p></button>
+	                            <button type="button" id="temples-btn" class="quick-pick-btn"><i class="ph-bank text-2xl text-amber-400"></i><p>Temples</p></button>
+	                            <button type="button" id="theatres-btn" class="quick-pick-btn"><i class="ph-popcorn text-2xl text-amber-400"></i><p>Theatres</p></button>
+	                        </div>
+	                    </section>
+                </div>
+
+                 <!-- Right Column: Map and Ride Info -->
+                <div class="lg:col-span-2 space-y-8">
+                    <section class="fade-in-up" style="animation-delay: 0.6s;">
+                         <h2 class="text-xl font-bold text-slate-100 mb-4 flex items-center"><i class="ph-map-trifold-fill text-amber-400 mr-3"></i>Live Map</h2>
+                         <div id="map-container" class="card h-96 rounded-2xl overflow-hidden">
+                            <iframe
+                                title="Tirupati City Map"
+                                class="absolute inset-0 w-full h-full border-0"
+                                loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade"
+                                src="https://www.google.com/maps?q=Tirupati&output=embed">
+                            </iframe>
+                            <div id="availability-panel" class="absolute top-3 left-3 bg-gray-900/70 backdrop-blur-sm border border-gray-700/60 rounded-xl px-4 py-3 text-slate-200 flex items-center gap-4 z-10">
+                                <div class="flex items-center gap-2">
+                                    <i class="ph-car-profile text-amber-400 text-xl"></i>
+                                    <div>
+                                        <div class="text-xs text-slate-400">Autos nearby</div>
+                                        <div id="nearby-autos" class="text-lg font-bold text-white">--</div>
+                                    </div>
+                                </div>
+                                <div class="w-px h-8 bg-gray-700"></div>
+                                <div class="flex items-center gap-2">
+                                    <i class="ph-clock text-amber-400 text-xl"></i>
+                                    <div>
+                                        <div class="text-xs text-slate-400">Pickup ETA</div>
+                                        <div id="pickup-eta" class="text-lg font-bold text-white">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                         </div>
+                    </section>
+
+                    <section class="fade-in-up" style="animation-delay: 0.8s;">
+                        <div class="flex justify-between items-center mb-4">
+                           <h2 class="text-xl font-bold text-slate-100 flex items-center">
+                                <i class="ph-users-three-fill text-amber-400 mr-3"></i>
+                                Live Ride Pools
+                                <span class="ml-3 inline-flex items-center gap-2 text-xs font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 rounded-full">
+                                    <span class="live-dot"></span> Live
+                                </span>
+                            </h2>
+                            <button id="create-pool-btn" class="text-sm bg-gray-700 hover:bg-gray-600 text-slate-200 font-semibold py-2 px-3 rounded-lg transition-all"><i class="ph-plus-circle-fill mr-1"></i> Create Pool</button>
+                        </div>
+                        <div id="ride-pools-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <datalist id="destinations"><option value="MBU Campus"></option><option value="Tirumala Temple"></option><option value="Tirupati Railway Station"></option><option value="Tirupati Bus Stand"></option><option value="D-Mart"></option><option value="Kapila Theertham"></option><option value="ISKCON Temple"></option></datalist>
+
+    <div id="theatres-modal-backdrop" class="modal-backdrop"><div class="modal-card w-full max-w-md p-6 md:p-8"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold animated-gradient-text">Select a Theatre</h2><button id="close-theatres-btn" class="text-slate-400 hover:text-white transition-colors text-2xl leading-none">&times;</button></div><p class="text-slate-400 mb-6">Choose your preferred theatre from the list below.</p><div id="theatres-list" class="space-y-3 max-h-60 overflow-y-auto pr-2"></div></div></div>
+
+    <div id="temples-modal-backdrop" class="modal-backdrop"><div class="modal-card w-full max-w-md p-6 md:p-8"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold animated-gradient-text">Select a Temple</h2><button id="close-temples-btn" class="text-slate-400 hover:text-white transition-colors text-2xl leading-none">&times;</button></div><p class="text-slate-400 mb-6">Choose your preferred temple from the list below.</p><div id="temples-list" class="space-y-3 max-h-60 overflow-y-auto pr-2"></div></div></div>
+
+    <div id="booking-confirmation-modal-backdrop" class="modal-backdrop">
+        <div class="modal-card w-full max-w-md p-6 md-p-8">
+            <h2 class="text-2xl font-bold animated-gradient-text mb-4">Confirm Your Ride</h2>
+            <div id="confirmation-map" class="mb-4 h-48 rounded-lg bg-gray-700"></div>
+            <div class="space-y-3 mb-6">
+                <div class="flex justify-between items-center"><p class="text-slate-400">Pickup</p><p id="confirm-pickup" class="font-bold text-slate-50"></p></div>
+                <div class="flex justify-between items-center"><p class="text-slate-400">Destination</p><p id="confirm-destination" class="font-bold text-slate-50"></p></div>
+                <div id="fare-details-loading" class="flex items-center justify-center py-8 hidden"><div class="spinner"></div></div>
+                <div id="fare-details-content">
+                    <div class="flex justify-between items-center"><p class="text-slate-400">Est. Duration</p><p id="confirm-eta" class="font-bold text-slate-50">25-30 mins</p></div>
+                    <div class="flex justify-between items-center border-t border-gray-700 pt-3 mt-3"><p class="text-slate-300 font-bold text-lg">Smart Fare</p><p id="confirm-fare" class="font-extrabold text-amber-400 text-2xl"></p></div>
+                    <p id="confirm-fare-justification" class="text-xs text-slate-400 text-right italic mt-1"></p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="cancel-booking-btn" class="bg-gray-700 hover:bg-gray-600 text-slate-200 font-bold py-3 rounded-lg transition-all">Cancel</button>
+                <button id="confirm-booking-btn" class="primary-btn font-bold py-3 rounded-lg">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="outing-planner-modal-backdrop" class="modal-backdrop">
+        <div class="modal-card w-full max-w-lg p-6 md:p-8">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold animated-gradient-text">&#10024; AI Outing Planner</h2><button id="close-outing-planner-btn" class="text-slate-400 hover:text-white transition-colors text-2xl leading-none">&times;</button></div>
+            <p class="text-slate-400 mb-4">Tell me what you're looking for, and I'll find the best spots in Tirupati for you!</p>
+            <textarea id="outing-prompt" class="textarea-field w-full p-3 h-24" placeholder="e.g., 'Suggest a good place for dinner tonight'"></textarea>
+            <button id="get-outing-suggestion-btn" class="primary-btn w-full font-bold py-3 rounded-lg mt-4 flex items-center justify-center">Get Suggestion</button>
+            <div id="outing-result-loading" class="flex items-center justify-center py-8 hidden"><div class="spinner"></div></div>
+            <div id="outing-result" class="mt-6 p-4 bg-gray-900/50 rounded-lg border border-gray-700 hidden"></div>
+        </div>
+    </div>
+
+    <!-- Create Pool Modal -->
+    <div id="create-pool-modal-backdrop" class="modal-backdrop">
+        <div class="modal-card w-full max-w-md p-6 md:p-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold animated-gradient-text">Create New Ride Pool</h2>
+                <button id="close-create-pool-btn" class="text-slate-400 hover:text-white transition-colors text-2xl leading-none">&times;</button>
+            </div>
+            <p class="text-slate-400 mb-6">Enter a destination to start a new ride pool for others to join.</p>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i class="ph-map-pin-line text-xl text-slate-400"></i></div>
+                <input id="new-pool-destination-input" list="destinations" class="input-field w-full pl-12 pr-4 py-3" placeholder="Enter pool destination...">
+            </div>
+            <button id="confirm-create-pool-btn" class="primary-btn w-full font-bold py-3 rounded-lg mt-4">Create Pool</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Element Cache ---
+            const DOMElements = {
+                destinationInput: document.getElementById('destination-input'),
+                pickupInput: document.getElementById('pickup-input'),
+                useMyLocBtn: document.getElementById('use-my-location'),
+                findRideBtn: document.getElementById('find-ride-btn'),
+                bookingModalBackdrop: document.getElementById('booking-confirmation-modal-backdrop'),
+                notificationEl: document.getElementById('notification'),
+                userGreeting: document.getElementById('user-greeting'),
+                scheduleRideBtn: document.getElementById('schedule-ride-btn'),
+                outingPrompt: document.getElementById('outing-prompt'),
+            };
+
+            // --- App State ---
+            let notificationTimeout;
+	            const mapsState = {
+	                ready: false,
+	                map: null,
+	                geocoder: null,
+	                directionsService: null,
+	                directionsRenderer: null,
+	                pickupMarker: null,
+	                destMarker: null,
+	                pickupLatLng: null,
+	                destLatLng: null,
+	                pickupText: '', // display text
+	                destText: '', // display text
+	                pickupQuery: '', // geocode query
+	                destQuery: '', // geocode query
+	                pickupAutocomplete: null,
+	                destAutocomplete: null,
+	            };
+
+            // --- Notification System ---
+            const showNotification = (message, type = 'error') => {
+                clearTimeout(notificationTimeout);
+                DOMElements.notificationEl.textContent = message;
+                DOMElements.notificationEl.className = type;
+                DOMElements.notificationEl.classList.add('show');
+                notificationTimeout = setTimeout(() => {
+                    DOMElements.notificationEl.classList.remove('show');
+                }, 3000);
+            };
+
+            // Set destination into the currently active tab (Ride Now or Schedule).
+	            function setDestinationFromQuickPick(dest, query) {
+	                const displayValue = (dest || '').trim();
+	                const queryValue = (query || dest || '').trim();
+	                if (!displayValue) return;
+
+	                // Always update Ride Now destination (Quick Picks live outside tabs).
+	                if (DOMElements.destinationInput) {
+	                    DOMElements.destinationInput.value = displayValue;
+	                    mapsState.destText = displayValue;
+	                    mapsState.destQuery = queryValue || displayValue;
+	                    mapsState.destLatLng = null;
+	                    scheduleRouteUpdate();
+	                    DOMElements.destinationInput.dispatchEvent(new Event('input', { bubbles: true }));
+	                }
+
+	                // If user is scheduling, also fill the schedule destination input for convenience.
+	                const scheduleActive = document.getElementById('schedule-content')?.classList.contains('active');
+	                if (scheduleActive) {
+	                    const schedDest = document.getElementById('schedule-destination-input');
+	                    if (schedDest) schedDest.value = displayValue;
+	                }
+	            }
+
+	            // --- Gemini API Configuration ---
+	            // Keep keys out of git. Provide via `assets/ai-config.js` (ignored) or localStorage `fairrideGeminiKey`.
+	            const getGeminiKey = () => {
+	                try {
+	                    const key = (window.FAIRRIDE_GEMINI_KEY || window.FAIRRIDE_GEMINI_API_KEY || localStorage.getItem('fairrideGeminiKey') || '').trim();
+	                    return key;
+	                } catch (_) {
+	                    return '';
+	                }
+	            };
+	            const geminiUrlForKey = (key) =>
+	                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${encodeURIComponent(key || '')}`;
+
+	            // --- Dynamic Greeting ---
+		            const setGreeting = () => {
+		                const hour = new Date().getHours();
+		                let name = 'Student';
+	                try {
+	                    const stored = (localStorage.getItem('currentUserName') || '').trim();
+	                    if (stored) name = stored;
+	                } catch (_) {}
+	                let greeting = `Hello, ${name}`;
+	                if (hour < 12) greeting = `Good Morning, ${name}`;
+	                else if (hour < 18) greeting = `Good Afternoon, ${name}`;
+	                else greeting = `Good Evening, ${name}`;
+	                if (DOMElements.userGreeting) DOMElements.userGreeting.textContent = greeting;
+	                const initialEl = document.getElementById('user-avatar-initial');
+	                if (initialEl) {
+	                    const initial = (name || '').trim().charAt(0).toUpperCase() || 'S';
+	                    initialEl.textContent = initial;
+		                }
+		            };
+
+	            async function refreshCurrentUserFromApi() {
+	                const token = localStorage.getItem('authToken');
+	                if (!token) return null;
+	                const bases = [window.API_BASE, `${location.protocol}//${location.hostname}:3001`, 'http://127.0.0.1:3001', 'http://localhost:3001'].filter(Boolean);
+	                for (const base of [...new Set(bases)]) {
+	                    try {
+	                        const res = await fetch(base.replace(/\/$/, '') + '/api/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+	                        if (!res.ok) continue;
+	                        const me = await res.json();
+	                        try {
+	                            if (me?.name) localStorage.setItem('currentUserName', me.name); else localStorage.removeItem('currentUserName');
+	                            if (me?.studentId) localStorage.setItem('currentUserStudentId', me.studentId); else localStorage.removeItem('currentUserStudentId');
+	                            if (me?.email) localStorage.setItem('currentUserEmail', me.email); else localStorage.removeItem('currentUserEmail');
+	                            if (me?.phone) localStorage.setItem('currentUserPhone', me.phone); else localStorage.removeItem('currentUserPhone');
+	                            if (me?.gender) localStorage.setItem('currentUserGender', me.gender); else localStorage.removeItem('currentUserGender');
+	                            if (me?.avatarUrl) localStorage.setItem('currentUserAvatarUrl', me.avatarUrl); else localStorage.removeItem('currentUserAvatarUrl');
+	                        } catch (_) {}
+	                        return me;
+	                    } catch (_) {}
+	                }
+	                return null;
+	            }
+
+            // --- Scheduled Trips (localStorage-backed) ---
+            const SCHEDULED_TRIPS_KEY = 'scheduledTrips';
+
+            function readScheduledTrips() {
+                try {
+                    const raw = localStorage.getItem(SCHEDULED_TRIPS_KEY);
+                    const list = raw ? JSON.parse(raw) : [];
+                    return Array.isArray(list) ? list : [];
+                } catch (_) {
+                    return [];
+                }
+            }
+
+            function writeScheduledTrips(list) {
+                try {
+                    localStorage.setItem(SCHEDULED_TRIPS_KEY, JSON.stringify(list));
+                } catch (_) {}
+            }
+
+            function sortTrips(list) {
+                return [...list].sort((a, b) => {
+                    const ad = `${a.date || ''}T${a.time || '00:00'}`;
+                    const bd = `${b.date || ''}T${b.time || '00:00'}`;
+                    return ad.localeCompare(bd);
+                });
+            }
+
+            function formatTripDateTime(trip) {
+                if (!trip?.date) return '—';
+                const iso = `${trip.date}T${trip.time || '00:00'}`;
+                const d = new Date(iso);
+                if (Number.isNaN(d.getTime())) {
+                    return `${trip.date}${trip.time ? ` • ${trip.time}` : ''}`;
+                }
+                const dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                const timeStr = trip.time ? d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+                return timeStr ? `${dateStr} • ${timeStr}` : dateStr;
+            }
+
+            function renderScheduledTrips() {
+                const listEl = document.getElementById('scheduled-trips-list');
+                const emptyEl = document.getElementById('scheduled-trips-empty');
+                if (!listEl || !emptyEl) return;
+                const trips = sortTrips(readScheduledTrips());
+                if (!trips.length) {
+                    emptyEl.classList.remove('hidden');
+                    listEl.innerHTML = '';
+                    return;
+                }
+                emptyEl.classList.add('hidden');
+                listEl.innerHTML = trips.map(t => `
+                    <div class="bg-gray-900/50 border border-gray-700/60 rounded-xl p-4 flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-sm text-slate-400 mb-1">${formatTripDateTime(t)}</div>
+                            <div class="text-slate-100 font-semibold truncate"><span class="text-slate-400">Pickup:</span> ${t.pickup || '—'}</div>
+                            <div class="text-slate-100 font-semibold truncate"><span class="text-slate-400">Destination:</span> ${t.destination || '—'}</div>
+                        </div>
+                        <button data-remove-trip="${t.id}" class="flex-shrink-0 text-xs bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold px-3 py-1.5 rounded-lg">Cancel</button>
+                    </div>
+                `).join('');
+            }
+
+            // --- Main Dashboard Logic ---
+            const setupDashboard = () => {
+                const bookingTabs = document.querySelectorAll('.booking-tab');
+                const tabContents = document.querySelectorAll('.tab-content');
+                bookingTabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const target = document.getElementById(tab.dataset.target);
+                        bookingTabs.forEach(t => t.classList.remove('active', 'text-white'));
+                        tab.classList.add('active', 'text-white');
+                        tabContents.forEach(c => c.classList.remove('active'));
+                        target.classList.add('active');
+                    });
+                });
+
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('schedule-date').setAttribute('min', today);
+
+                const quickDestButtons = document.querySelectorAll('.quick-dest-btn');
+                quickDestButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        setDestinationFromQuickPick(button.dataset.dest);
+                    });
+                });
+                
+                DOMElements.scheduleRideBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pickupEl = document.getElementById('schedule-pickup-input');
+                    const destEl = document.getElementById('schedule-destination-input');
+                    const dateEl = document.getElementById('schedule-date');
+                    const timeEl = document.getElementById('schedule-time');
+                    const pickup = (pickupEl?.value || '').trim();
+                    const destination = (destEl?.value || '').trim();
+                    const date = (dateEl?.value || '').trim();
+                    const time = (timeEl?.value || '').trim();
+
+                    if (!pickup || !destination || !date || !time) {
+                        showNotification('Please fill pickup, destination, date and time.', 'error');
+                        return;
+                    }
+
+                    const trip = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, pickup, destination, date, time, createdAt: Date.now() };
+                    const trips = readScheduledTrips();
+                    trips.push(trip);
+                    writeScheduledTrips(trips);
+                    renderScheduledTrips();
+
+                    // Clear inputs
+                    if (pickupEl) pickupEl.value = '';
+                    if (destEl) destEl.value = '';
+                    if (dateEl) dateEl.value = '';
+                    if (timeEl) timeEl.value = '';
+
+                    showNotification('Your ride has been scheduled successfully!', 'success');
+                });
+
+                // Clear all scheduled trips
+                document.getElementById('clear-scheduled-btn')?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (!confirm('Clear all scheduled trips?')) return;
+                    try { localStorage.removeItem(SCHEDULED_TRIPS_KEY); } catch (_) {}
+                    renderScheduledTrips();
+                });
+
+                // Cancel single scheduled trip
+                document.getElementById('scheduled-trips-list')?.addEventListener('click', (e) => {
+                    const btn = e.target.closest('[data-remove-trip]');
+                    if (!btn) return;
+                    const id = btn.getAttribute('data-remove-trip');
+                    const trips = readScheduledTrips().filter(t => String(t.id) !== String(id));
+                    writeScheduledTrips(trips);
+                    renderScheduledTrips();
+                });
+
+                DOMElements.useMyLocBtn.addEventListener('click', () => {
+                    if (!navigator.geolocation) { 
+                        showNotification('Geolocation is not supported by your browser.');
+                        return; 
+                    }
+                    DOMElements.useMyLocBtn.disabled = true; 
+                    DOMElements.useMyLocBtn.textContent = 'Locating...';
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+                        const latLng = { lat, lng: lon };
+                        mapsState.pickupLatLng = latLng;
+                        mapsState.pickupText = 'My Location';
+                        // Reverse geocode when possible
+                        if (mapsState.geocoder) {
+                            mapsState.geocoder.geocode({ location: latLng }, (results, status) => {
+                                const addr = (status === 'OK' && results && results[0]) ? results[0].formatted_address : null;
+                                if (addr) {
+                                    DOMElements.pickupInput.value = addr;
+                                    mapsState.pickupText = addr;
+                                } else {
+                                    const text = `My Location (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+                                    DOMElements.pickupInput.value = text;
+                                    mapsState.pickupText = text;
+                                }
+                                if (mapsState.ready) {
+                                    updatePickupMarker();
+                                    updateRouteFromInputs();
+                                }
+                            });
+                        } else {
+                            const text = `My Location (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+                            DOMElements.pickupInput.value = text;
+                            mapsState.pickupText = text;
+                            if (mapsState.ready) {
+                                updatePickupMarker();
+                                updateRouteFromInputs();
+                            }
+                        }
+                        DOMElements.useMyLocBtn.disabled = false; 
+                        DOMElements.useMyLocBtn.textContent = 'Use my location';
+                    }, (err) => { 
+                        showNotification((err && err.message) || 'Could not get location.');
+                        DOMElements.useMyLocBtn.disabled = false; 
+                        DOMElements.useMyLocBtn.textContent = 'Use my location'; 
+                    }, { enableHighAccuracy: true, timeout: 10000 });
+                });
+
+            };
+
+            // --- Ride Now Map + Route Logic (Google Maps) ---
+            const distanceChip = document.getElementById('distance-chip');
+            const etaChip = document.getElementById('eta-chip');
+
+            function setMetrics(distanceText, durationText) {
+                if (distanceChip) distanceChip.textContent = distanceText ? `Distance: ${distanceText}` : 'Distance: —';
+                if (etaChip) etaChip.textContent = durationText ? `ETA: ${durationText}` : 'ETA: —';
+            }
+
+            function updatePickupMarker() {
+                if (!mapsState.map || !mapsState.pickupLatLng) return;
+                if (mapsState.pickupMarker) mapsState.pickupMarker.setMap(null);
+                mapsState.pickupMarker = new google.maps.Marker({
+                    position: mapsState.pickupLatLng,
+                    map: mapsState.map,
+                    label: 'P',
+                    title: 'Pickup'
+                });
+            }
+
+            function updateDestMarker() {
+                if (!mapsState.map || !mapsState.destLatLng) return;
+                if (mapsState.destMarker) mapsState.destMarker.setMap(null);
+                mapsState.destMarker = new google.maps.Marker({
+                    position: mapsState.destLatLng,
+                    map: mapsState.map,
+                    label: 'D',
+                    title: 'Destination'
+                });
+            }
+
+            function geocodeAddress(address) {
+                return new Promise((resolve, reject) => {
+                    if (!mapsState.geocoder) return reject(new Error('Geocoder not ready'));
+                    mapsState.geocoder.geocode({ address }, (results, status) => {
+                        if (status === 'OK' && results && results[0]) resolve(results[0]);
+                        else reject(new Error('Location not found'));
+                    });
+                });
+            }
+
+            let routeDebounce;
+	            async function updateRouteFromInputs() {
+	                if (!mapsState.ready) return;
+	                const pickupText = (DOMElements.pickupInput.value || '').trim(); // display
+	                const destText = (DOMElements.destinationInput.value || '').trim(); // display
+	                const pickupQuery = (pickupText && pickupText === mapsState.pickupText && mapsState.pickupQuery) ? mapsState.pickupQuery : pickupText;
+	                const destQuery = (destText && destText === mapsState.destText && mapsState.destQuery) ? mapsState.destQuery : destText;
+
+	                // No pickup: still allow showing destination pin (quick picks feels "working")
+	                if (!pickupText) {
+	                    mapsState.directionsRenderer?.set('directions', null);
+	                    setMetrics(null, null);
+	                    if (destText) {
+	                        try {
+	                            if (!mapsState.destLatLng || destText !== mapsState.destText) {
+	                                const res = await geocodeAddress(destQuery);
+	                                mapsState.destLatLng = res.geometry.location;
+	                                mapsState.destText = destText;
+	                                mapsState.destQuery = res.formatted_address || destQuery;
+	                            }
+	                            updateDestMarker();
+	                            try {
+	                                mapsState.map.panTo(mapsState.destLatLng);
+	                                const z = mapsState.map.getZoom?.();
+	                                if (typeof z === 'number' && z < 14) mapsState.map.setZoom(15);
+	                            } catch (_) {}
+	                        } catch (_) {}
+	                    }
+	                    return;
+	                }
+	                try {
+	                    if (!mapsState.pickupLatLng || pickupText !== mapsState.pickupText) {
+	                        const res = await geocodeAddress(pickupQuery);
+	                        mapsState.pickupLatLng = res.geometry.location;
+	                        mapsState.pickupText = pickupText;
+	                        mapsState.pickupQuery = res.formatted_address || pickupQuery;
+	                    }
+
+	                    updatePickupMarker();
+
+	                    // Destination not entered yet: keep pickup pin visible and center on it.
+	                    if (!destText) {
+	                        mapsState.directionsRenderer?.set('directions', null);
+	                        setMetrics(null, null);
+                        try {
+                            mapsState.map.panTo(mapsState.pickupLatLng);
+                            const z = mapsState.map.getZoom?.();
+                            if (typeof z === 'number' && z < 14) mapsState.map.setZoom(15);
+                        } catch (_) {}
+	                        return;
+	                    }
+
+	                    if (!mapsState.destLatLng || destText !== mapsState.destText) {
+	                        const res = await geocodeAddress(destQuery);
+	                        mapsState.destLatLng = res.geometry.location;
+	                        mapsState.destText = destText;
+	                        mapsState.destQuery = res.formatted_address || destQuery;
+	                    }
+
+	                    updateDestMarker();
+
+                    const request = {
+                        origin: mapsState.pickupLatLng,
+                        destination: mapsState.destLatLng,
+                        travelMode: 'DRIVING'
+                    };
+
+                    mapsState.directionsService.route(request, (result, status) => {
+                        if (status === 'OK' && result?.routes?.[0]?.legs?.[0]) {
+                            mapsState.directionsRenderer.setDirections(result);
+                            const leg = result.routes[0].legs[0];
+                            setMetrics(leg.distance?.text, leg.duration?.text);
+                            // Fit map to route
+                            if (leg.start_location && leg.end_location) {
+                                const bounds = new google.maps.LatLngBounds();
+                                bounds.extend(leg.start_location);
+                                bounds.extend(leg.end_location);
+                                mapsState.map.fitBounds(bounds);
+                            }
+                            // Cache for select_ride.html
+	                            try {
+	                                localStorage.setItem('lastPickup', mapsState.pickupText || pickupText);
+	                                localStorage.setItem('lastDest', mapsState.destText || destText);
+	                                localStorage.setItem('lastPickupQuery', mapsState.pickupQuery || pickupQuery);
+	                                localStorage.setItem('lastDestQuery', mapsState.destQuery || destQuery);
+	                                localStorage.setItem('lastETA', leg.duration?.text || '');
+	                                localStorage.setItem('lastDistance', leg.distance?.text || '');
+	                            } catch (_) {}
+	                        } else {
+                            setMetrics('N/A', 'N/A');
+                            console.error('Directions failed:', status, result);
+                        }
+                    });
+                } catch (err) {
+                    setMetrics('N/A', 'N/A');
+                }
+            }
+
+            function scheduleRouteUpdate() {
+                clearTimeout(routeDebounce);
+                routeDebounce = setTimeout(updateRouteFromInputs, 450);
+            }
+
+            function setupRideNowMap() {
+                const mapContainer = document.getElementById('map-container');
+                if (!mapContainer) return;
+                const iframe = mapContainer.querySelector('iframe');
+                if (iframe) iframe.style.display = 'none';
+
+                mapsState.geocoder = new google.maps.Geocoder();
+                mapsState.directionsService = new google.maps.DirectionsService();
+                mapsState.directionsRenderer = new google.maps.DirectionsRenderer({
+                    suppressMarkers: true,
+                    polylineOptions: { strokeColor: '#FBBF24', strokeWeight: 5, strokeOpacity: 0.85 }
+                });
+
+                const defaultCenter = { lat: 13.6288, lng: 79.4194 };
+                mapsState.map = new google.maps.Map(mapContainer, {
+                    zoom: 13,
+                    center: defaultCenter,
+                    disableDefaultUI: true,
+                    styles: [
+                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                        { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                        { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                        { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+                        { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+                        { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+                        { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] }
+                    ]
+                });
+                mapsState.directionsRenderer.setMap(mapsState.map);
+
+	                const acOptions = { fields: ['geometry', 'formatted_address', 'name'], componentRestrictions: { country: 'in' } };
+	                mapsState.pickupAutocomplete = new google.maps.places.Autocomplete(DOMElements.pickupInput, acOptions);
+	                mapsState.destAutocomplete = new google.maps.places.Autocomplete(DOMElements.destinationInput, acOptions);
+
+	                mapsState.pickupAutocomplete.addListener('place_changed', () => {
+	                    const place = mapsState.pickupAutocomplete.getPlace();
+	                    if (place?.geometry?.location) {
+	                        mapsState.pickupLatLng = place.geometry.location;
+	                        const display = (place.name || place.formatted_address || DOMElements.pickupInput.value || '').trim();
+	                        const query = (place.formatted_address || place.name || display || '').trim();
+	                        mapsState.pickupText = display;
+	                        mapsState.pickupQuery = query;
+	                        DOMElements.pickupInput.value = display;
+	                        updatePickupMarker();
+	                        updateRouteFromInputs();
+	                    }
+	                });
+	                mapsState.destAutocomplete.addListener('place_changed', () => {
+	                    const place = mapsState.destAutocomplete.getPlace();
+	                    if (place?.geometry?.location) {
+	                        mapsState.destLatLng = place.geometry.location;
+	                        const display = (place.name || place.formatted_address || DOMElements.destinationInput.value || '').trim();
+	                        const query = (place.formatted_address || place.name || display || '').trim();
+	                        mapsState.destText = display;
+	                        mapsState.destQuery = query;
+	                        DOMElements.destinationInput.value = display;
+	                        updateDestMarker();
+	                        updateRouteFromInputs();
+	                    }
+	                });
+
+                DOMElements.pickupInput.addEventListener('input', scheduleRouteUpdate);
+                DOMElements.destinationInput.addEventListener('input', scheduleRouteUpdate);
+                DOMElements.pickupInput.addEventListener('blur', updateRouteFromInputs);
+                DOMElements.destinationInput.addEventListener('blur', updateRouteFromInputs);
+
+                mapsState.ready = true;
+                updateRouteFromInputs();
+            }
+
+            const setupAvailability = () => {
+                const autosEl = document.getElementById('nearby-autos');
+                const etaEl = document.getElementById('pickup-eta');
+                if (!autosEl || !etaEl) return;
+
+                const predictEta = (autos) => {
+                    if (autos >= 10) return [2, 4];
+                    if (autos >= 6) return [3, 6];
+                    if (autos >= 3) return [5, 9];
+                    return [8, 12];
+                };
+
+                const update = () => {
+                    const hasDest = (DOMElements.destinationInput.value || '').trim().length > 0;
+                    const hasPickup = (DOMElements.pickupInput.value || '').trim().length > 0;
+                    const base = (hasDest && hasPickup) ? 7 : (hasDest || hasPickup) ? 5 : 4;
+                    const jitter = Math.floor(Math.random() * 5) - 2;
+                    const autos = Math.max(1, base + jitter + Math.floor(Math.random() * 3));
+                    const [minEta, maxEta] = predictEta(autos);
+
+                    autosEl.textContent = autos.toString();
+                    etaEl.textContent = `${minEta}-${maxEta} min`;
+                };
+                update();
+                setInterval(update, 15000);
+                DOMElements.destinationInput.addEventListener('input', update);
+                DOMElements.pickupInput.addEventListener('input', update);
+                document.querySelectorAll('.quick-dest-btn').forEach(btn => btn.addEventListener('click', update));
+                DOMElements.findRideBtn.addEventListener('click', () => {
+                    autosEl.textContent = (parseInt(autosEl.textContent || '5', 10) + 1).toString();
+                    etaEl.textContent = '2-4 min';
+                });
+            };
+            
+	            const setupTheatresModal = () => {
+	                const theatresModalBackdrop = document.getElementById('theatres-modal-backdrop');
+	                const theatresList = document.getElementById('theatres-list');
+	                const theatres = [
+	                    { label: 'PVR: Pasuparthy Fun Square', query: 'PVR Pasuparthy Fun Square, Tirupati' },
+	                    { label: 'INOX: PSR Mall', query: 'INOX PSR Mall, Tirupati' },
+	                    { label: 'Asian C V R Movie Land', query: 'Asian C V R Movie Land, Tirupati' },
+	                    { label: 'Sandhya Theatre 70MM', query: 'Sandhya Theatre 70MM, Tirupati' },
+	                    { label: 'Srinivasa Theatre', query: 'Srinivasa Theatre, Tirupati' },
+	                    { label: 'Pratap Theatre', query: 'Pratap Theatre, Tirupati' },
+	                    { label: 'Mahati Auditorium', query: 'Mahati Auditorium, Tirupati' },
+	                ];
+	                theatresList.innerHTML = theatres.map(({ label, query }) =>
+	                    `<button type="button" data-dest="${query.replace(/\"/g, '&quot;')}" class="w-full text-left bg-gray-800 hover:bg-gray-700/80 text-slate-300 font-medium p-4 rounded-lg transition-all">${label}</button>`
+	                ).join('');
+	                
+	                const toggleTheatresModal = (visible) => theatresModalBackdrop.classList.toggle('visible', visible);
+	                
+	                document.getElementById('theatres-btn').addEventListener('click', (e) => { e.preventDefault(); toggleTheatresModal(true); });
+	                document.getElementById('close-theatres-btn').addEventListener('click', () => toggleTheatresModal(false));
+	                theatresModalBackdrop.addEventListener('click', (e) => { if (e.target === theatresModalBackdrop) toggleTheatresModal(false); });
+	                
+	                theatresList.querySelectorAll('button').forEach(button => {
+	                    button.addEventListener('click', () => {
+	                        setDestinationFromQuickPick(button.textContent, button.dataset.dest || button.textContent);
+	                        toggleTheatresModal(false);
+	                    });
+	                });
+	            };
+
+	            const setupTemplesModal = () => {
+	                const templesModalBackdrop = document.getElementById('temples-modal-backdrop');
+	                const templesList = document.getElementById('temples-list');
+	                const temples = [
+	                    { label: 'Sri Venkateswara Temple (Tirumala)', query: 'Sri Venkateswara Temple, Tirumala' },
+	                    { label: 'Sri Padmavathi Ammavari Temple', query: 'Sri Padmavathi Ammavari Temple, Tiruchanur, Tirupati' },
+	                    { label: 'Sri Govindaraja Swamy Temple', query: 'Sri Govindaraja Swamy Temple, Tirupati' },
+	                    { label: 'Sri Kapileswara Swamy Temple', query: 'Kapila Theertham, Tirupati' },
+	                    { label: 'Sri Kalyana Venkateswara Swamy Temple', query: 'Kalyana Venkateswara Temple, Srinivasa Mangapuram' },
+	                    { label: 'Kodandarama Swamy Temple', query: 'Kodandarama Swamy Temple, Tirupati' },
+	                    { label: 'ISKCON Tirupati', query: 'ISKCON Temple, Tirupati' },
+	                    { label: 'Srinivasa Mangapuram', query: 'Srinivasa Mangapuram, Tirupati' },
+	                    { label: 'Akasaganga Teertham', query: 'Akasaganga Teertham, Tirumala' },
+	                    { label: 'Papavinasam Theertham', query: 'Papavinasam Theertham, Tirumala' },
+	                    { label: 'Silathoranam', query: 'Silathoranam, Tirumala' },
+	                ];
+	                templesList.innerHTML = temples.map(({ label, query }) =>
+	                    `<button type="button" data-dest="${query.replace(/\"/g, '&quot;')}" class="w-full text-left bg-gray-800 hover:bg-gray-700/80 text-slate-300 font-medium p-4 rounded-lg transition-all">${label}</button>`
+	                ).join('');
+	                
+	                const toggleTemplesModal = (visible) => templesModalBackdrop.classList.toggle('visible', visible);
+	                
+	                document.getElementById('temples-btn').addEventListener('click', (e) => { e.preventDefault(); toggleTemplesModal(true); });
+	                document.getElementById('close-temples-btn').addEventListener('click', () => toggleTemplesModal(false));
+	                templesModalBackdrop.addEventListener('click', (e) => { if (e.target === templesModalBackdrop) toggleTemplesModal(false); });
+	                
+	                templesList.querySelectorAll('button').forEach(button => {
+	                    button.addEventListener('click', () => {
+	                        setDestinationFromQuickPick(button.textContent, button.dataset.dest || button.textContent);
+	                        toggleTemplesModal(false);
+	                    });
+	                });
+	            };
+
+            // Resolve modal endpoints to LatLng when available and matching current text.
+            function resolveModalEndpoint(text, storedText, latLng) {
+                const t = (text || '').trim();
+                if (!latLng) return t;
+                if (storedText && storedText.trim() === t) return latLng;
+                if (/^my location/i.test(t)) return latLng;
+                return t;
+            }
+
+            function updateConfirmationDetails({ distanceText, distanceKm, durationText }) {
+                const fareEl = document.getElementById('confirm-fare');
+                const justificationEl = document.getElementById('confirm-fare-justification');
+                const etaEl = document.getElementById('confirm-eta');
+
+                if (!distanceKm || !durationText) return;
+                const fare = Math.max(20, Math.round(distanceKm * 12));
+                if (fareEl) fareEl.textContent = `\u20B9${fare}`;
+                if (etaEl) etaEl.textContent = durationText;
+                if (justificationEl) {
+                    justificationEl.textContent = distanceText ? `Based on ~${distanceText} distance.` : '';
+                }
+                try {
+                    localStorage.setItem('lastFare', String(fare));
+                    localStorage.setItem('lastETA', durationText);
+                    if (distanceText) localStorage.setItem('lastDistance', distanceText);
+                } catch (_) {}
+            }
+
+            const getSmartFareEstimate = (pickup, destination) => {
+                const loadingEl = document.getElementById('fare-details-loading');
+                const contentEl = document.getElementById('fare-details-content');
+                const fareEl = document.getElementById('confirm-fare');
+                const justificationEl = document.getElementById('confirm-fare-justification');
+                const etaEl = document.getElementById('confirm-eta');
+
+                loadingEl.classList.remove('hidden');
+                contentEl.classList.add('hidden');
+
+                if (!window.google?.maps?.DistanceMatrixService) {
+                    fareEl.textContent = '—';
+                    etaEl.textContent = '—';
+                    justificationEl.textContent = '';
+                    loadingEl.classList.add('hidden');
+                    contentEl.classList.remove('hidden');
+                    return;
+                }
+
+                const distanceService = new google.maps.DistanceMatrixService();
+                const origin = resolveModalEndpoint(pickup, mapsState?.pickupText, mapsState?.pickupLatLng);
+                const dest = resolveModalEndpoint(destination, mapsState?.destText, mapsState?.destLatLng);
+                distanceService.getDistanceMatrix({
+                    origins: [origin],
+                    destinations: [dest],
+                    travelMode: 'DRIVING',
+                }, (response, status) => {
+                    if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+                        const distanceText = response.rows[0].elements[0].distance.text;
+                        const distanceValue = response.rows[0].elements[0].distance.value / 1000; // in km
+                        const durationText = response.rows[0].elements[0].duration.text;
+                        updateConfirmationDetails({ distanceText, distanceKm: distanceValue, durationText });
+                        
+                    } else {
+                        // Don't overwrite values already set by directions.
+                        if ((fareEl?.textContent || '').trim() === '' || (fareEl?.textContent || '').trim() === '—') {
+                            fareEl.textContent = '\u2014';
+                            etaEl.textContent = '\u2014';
+                        }
+                        if (justificationEl) justificationEl.textContent = '';
+                    }
+                    loadingEl.classList.add('hidden');
+                    contentEl.classList.remove('hidden');
+                });
+            };
+
+            const displayConfirmationMap = (pickup, destination) => {
+                const mapContainer = document.getElementById('confirmation-map');
+                if (!mapContainer) return;
+
+                mapContainer.innerHTML = ''; // Clear previous map content
+
+                if (!window.google?.maps?.DirectionsService) {
+                    // Keep the area empty; toast will already warn elsewhere if needed.
+                    return;
+                }
+
+                const directionsService = new google.maps.DirectionsService();
+                const directionsRenderer = new google.maps.DirectionsRenderer({
+                    suppressMarkers: true,
+                    polylineOptions: {
+                        strokeColor: '#FBBF24',
+                        strokeWeight: 5,
+                        strokeOpacity: 0.8
+                    }
+                });
+
+                const mapOptions = {
+                    zoom: 12,
+                    center: { lat: 13.6288, lng: 79.4194 }, // Center of Tirupati
+                    disableDefaultUI: true,
+                    styles: [
+                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                        { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                        { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                        { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
+                        { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
+                        { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+                        { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+                        { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+                        { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+                        { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
+                        { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
+                        { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }] },
+                        { featureType: "transit.station", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                        { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+                        { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+                        { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] },
+                    ]
+                };
+
+                const map = new google.maps.Map(mapContainer, mapOptions);
+                directionsRenderer.setMap(map);
+
+                const origin = resolveModalEndpoint(pickup, mapsState?.pickupText, mapsState?.pickupLatLng);
+                const dest = resolveModalEndpoint(destination, mapsState?.destText, mapsState?.destLatLng);
+                const request = {
+                    origin,
+                    destination: dest,
+                    travelMode: 'DRIVING'
+                };
+
+                directionsService.route(request, (result, status) => {
+                    if (status === 'OK' && result?.routes?.[0]?.legs?.[0]) {
+                        directionsRenderer.setDirections(result);
+                        const leg = result.routes[0].legs[0];
+                        const distanceText = leg.distance?.text;
+                        const distanceKm = (leg.distance?.value || 0) / 1000;
+                        const durationText = leg.duration?.text;
+                        updateConfirmationDetails({ distanceText, distanceKm, durationText });
+                    } else {
+                        console.error('Directions request failed due to ' + status);
+                        showNotification('Could not display route. Try selecting locations from suggestions.');
+                    }
+                });
+            };
+            
+            const setupBookingConfirmation = () => {
+                const toggleBookingModal = (visible) => DOMElements.bookingModalBackdrop.classList.toggle('visible', visible);
+
+                DOMElements.findRideBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const destination = DOMElements.destinationInput.value;
+                    const pickup = DOMElements.pickupInput.value;
+                    if (pickup && destination) {
+                        document.getElementById('confirm-pickup').textContent = pickup;
+                        document.getElementById('confirm-destination').textContent = destination;
+                        toggleBookingModal(true);
+                        displayConfirmationMap(pickup, destination);
+                        getSmartFareEstimate(pickup, destination);
+                    } else {
+                        showNotification("Please enter both pickup and destination.");
+                    }
+                });
+
+                document.getElementById('cancel-booking-btn').addEventListener('click', () => toggleBookingModal(false));
+                DOMElements.bookingModalBackdrop.addEventListener('click', (e) => { if (e.target === DOMElements.bookingModalBackdrop) toggleBookingModal(false); });
+	                document.getElementById('confirm-booking-btn').addEventListener('click', () => {
+	                    // Seed driver-side mock data so call/message works.
+	                    try {
+	                        const riderName = (localStorage.getItem('currentUserName') || '').trim();
+	                        const riderPhone = (localStorage.getItem('currentUserPhone') || '').trim();
+	                        const riderEmail = (localStorage.getItem('currentUserEmail') || '').trim();
+	                        if (riderName) localStorage.setItem('lastRiderName', riderName);
+	                        if (riderPhone) localStorage.setItem('lastRiderPhone', riderPhone);
+	                        if (riderEmail) localStorage.setItem('lastRiderEmail', riderEmail);
+	                    } catch (_) {}
+	                    window.location.href = 'select_ride.html';
+	                });
+	            };
+
+	            const setupOutingPlanner = () => {
+	                const modalBackdrop = document.getElementById('outing-planner-modal-backdrop');
+	                const getSuggestionBtn = document.getElementById('get-outing-suggestion-btn');
+	                const resultEl = document.getElementById('outing-result');
+	                const loadingEl = document.getElementById('outing-result-loading');
+	                if (!modalBackdrop || !getSuggestionBtn || !resultEl || !loadingEl || !DOMElements.outingPrompt) return;
+
+	                const escapeHtml = (value) => String(value ?? '')
+	                    .replace(/&/g, '&amp;')
+	                    .replace(/</g, '&lt;')
+	                    .replace(/>/g, '&gt;')
+	                    .replace(/"/g, '&quot;')
+	                    .replace(/'/g, '&#39;');
+
+	                const buildSuggestionHtml = ({ title, subtitle, picks }) => {
+	                    const safeTitle = escapeHtml(title || 'Outing Ideas');
+	                    const safeSubtitle = subtitle ? `<p class="text-sm text-slate-300 mt-1">${escapeHtml(subtitle)}</p>` : '';
+	                    const items = (Array.isArray(picks) ? picks : []).slice(0, 5).map((p) => {
+	                        const name = escapeHtml(p?.name || '');
+	                        const hint = p?.hint ? `<div class="text-xs text-slate-400 mt-1">${escapeHtml(p.hint)}</div>` : '';
+	                        return `
+	                            <div class="mt-3 rounded-lg border border-gray-700 bg-gray-900/40 p-3">
+	                                <div class="flex items-start justify-between gap-3">
+	                                    <div class="min-w-0">
+	                                        <div class="font-semibold text-slate-100 truncate">${name}</div>
+	                                        ${hint}
+	                                    </div>
+	                                    <button class="set-dest-btn mt-0 text-sm bg-amber-500/20 text-amber-300 font-semibold py-2 px-3 rounded-lg hover:bg-amber-500/30 transition-all"
+	                                        data-dest="${name}">Set as Destination</button>
+	                                </div>
+	                            </div>
+	                        `;
+	                    }).join('');
+
+	                    return `
+	                        <div>
+	                            <div class="text-lg font-bold text-white">${safeTitle}</div>
+	                            ${safeSubtitle}
+	                            ${items || '<p class="text-sm text-slate-300 mt-3">Try searching for “movie”, “dinner”, “temple”, or “cafe”.</p>'}
+	                        </div>
+	                    `;
+	                };
+
+	                const fallbackOutingSuggestion = (prompt) => {
+	                    const text = (prompt || '').toLowerCase();
+	                    const nearMbu = 'Near MBU / Tirupati';
+
+	                    if (/(movie|theatre|theater|cinema|showtime|show time)/.test(text)) {
+	                        return buildSuggestionHtml({
+	                            title: 'Movie Night Picks',
+	                            subtitle: nearMbu,
+	                            picks: [
+	                                { name: 'PVR Cinemas, Tirupati', hint: 'Good for latest releases' },
+	                                { name: 'INOX (Tirupati)', hint: 'Check evening shows' },
+	                                { name: 'Theatres in Tirupati', hint: 'Search nearby listings' },
+	                            ],
+	                        });
+	                    }
+	                    if (/(dinner|food|eat|restaurant|biryani|cafe|coffee|snack|street food)/.test(text)) {
+	                        return buildSuggestionHtml({
+	                            title: 'Dinner & Food Suggestions',
+	                            subtitle: nearMbu,
+	                            picks: [
+	                                { name: 'Tirupati Central (Restaurants)', hint: 'Multiple options in one place' },
+	                                { name: 'Tirupati Street Food Area', hint: 'Try local snacks and chats' },
+	                                { name: 'Cafe in Tirupati', hint: 'Good for a calm evening' },
+	                            ],
+	                        });
+	                    }
+	                    if (/(study|quiet|library|reading|work)/.test(text)) {
+	                        return buildSuggestionHtml({
+	                            title: 'Quiet Places to Study',
+	                            subtitle: nearMbu,
+	                            picks: [
+	                                { name: 'Public Library, Tirupati', hint: 'Quiet reading space' },
+	                                { name: 'Coffee Shop (quiet corner)', hint: 'Go off-peak for silence' },
+	                                { name: 'MBU Nearby Study Spot', hint: 'Search calm places near campus' },
+	                            ],
+	                        });
+	                    }
+	                    if (/(temple|darshan|tiru|tirumala|iskcon|kapila|theertham)/.test(text)) {
+	                        return buildSuggestionHtml({
+	                            title: 'Temple Visits',
+	                            subtitle: nearMbu,
+	                            picks: [
+	                                { name: 'Kapila Theertham', hint: 'Scenic and peaceful' },
+	                                { name: 'ISKCON Temple, Tirupati', hint: 'Great for an evening visit' },
+	                                { name: 'Tirumala Temple', hint: 'Plan for travel + queues' },
+	                            ],
+	                        });
+	                    }
+
+	                    return buildSuggestionHtml({
+	                        title: 'Quick Outing Ideas',
+	                        subtitle: nearMbu,
+	                        picks: [
+	                            { name: 'Tirupati Bus Stand', hint: 'Easy hub to go anywhere' },
+	                            { name: 'Tirupati Railway Station', hint: 'Good starting point for trips' },
+	                            { name: 'D-Mart, Tirupati', hint: 'Quick shopping run' },
+	                        ],
+	                    });
+	                };
+	                const prompts = [
+	                    "Suggest a good place for dinner tonight",
+	                    "What are the showtimes for the latest movie?",
+	                    "Find a quiet place to study off-campus",
+                    "Best places for street food in Tirupati",
+                ];
+                let promptIndex = 0;
+                DOMElements.outingPrompt.placeholder = prompts[promptIndex];
+                
+                DOMElements.outingPrompt.addEventListener('focus', () => {
+                    promptIndex = (promptIndex + 1) % prompts.length;
+                    DOMElements.outingPrompt.placeholder = prompts[promptIndex];
+                });
+
+                const toggleModal = (visible) => modalBackdrop.classList.toggle('visible', visible);
+
+                document.getElementById('plan-outing-btn').addEventListener('click', () => toggleModal(true));
+                document.getElementById('close-outing-planner-btn').addEventListener('click', () => toggleModal(false));
+                modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) toggleModal(false); });
+                
+	                getSuggestionBtn.addEventListener('click', async () => {
+	                    const userPrompt = DOMElements.outingPrompt.value;
+	                    if (!userPrompt) {
+	                        showNotification("Please enter what you're looking for.");
+	                        return;
+	                    }
+
+                    loadingEl.classList.remove('hidden');
+                    resultEl.classList.add('hidden');
+                    
+                    const systemPrompt = "You are an AI assistant for students at Mohan Babu University (MBU), near Tirupati. You help them plan outings. Format your response as simple HTML with bold tags for titles and lists for options. Suggest a specific place and add a 'Set as Destination' button with the destination name in a data-dest attribute. Example: <button class='set-dest-btn' data-dest='PVR Cinemas'>Set as Destination</button>.";
+	                    const payload = {
+	                        contents: [{ parts: [{ text: `My request is: "${userPrompt}"` }] }],
+	                        systemInstruction: { parts: [{ text: systemPrompt }] }
+	                    };
+
+	                    try {
+	                        const key = getGeminiKey();
+	                        if (!key) {
+	                            resultEl.innerHTML = fallbackOutingSuggestion(userPrompt);
+	                        } else {
+	                            const response = await fetch(geminiUrlForKey(key), {
+	                                method: 'POST',
+	                                headers: { 'Content-Type': 'application/json' },
+	                                body: JSON.stringify(payload),
+	                            });
+	                            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+	                            const result = await response.json();
+	                            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+	                            resultEl.innerHTML = text
+	                                ? text.replace(/<button/g, "<button class='set-dest-btn mt-3 text-sm bg-amber-500/20 text-amber-300 font-semibold py-2 px-3 rounded-lg hover:bg-amber-500/30 transition-all'")
+	                                : fallbackOutingSuggestion(userPrompt);
+	                        }
+	                    } catch (error) {
+	                        console.warn('Outing planner error:', error);
+	                        resultEl.innerHTML = fallbackOutingSuggestion(userPrompt);
+	                    } finally {
+	                        loadingEl.classList.add('hidden');
+	                        resultEl.classList.remove('hidden');
+	                    }
+	                });
+
+                resultEl.addEventListener('click', (e) => {
+                    if(e.target.matches('.set-dest-btn')) {
+                        const destination = e.target.dataset.dest;
+                        if(destination) {
+                            setDestinationFromQuickPick(destination);
+                            toggleModal(false);
+                        }
+                    }
+                });
+            };
+
+            const setupRidePools = () => {
+                const listEl = document.getElementById('ride-pools-list');
+                if (!listEl) return;
+
+                let pools = [
+                    { id: 'rail', name: 'Tirupati Railway Station', capacity: 3, count: 1, departing: false },
+                    { id: 'dmart', name: 'D-Mart', capacity: 3, count: 2, departing: false },
+                    { id: 'bus', name: 'Tirupati Bus Stand', capacity: 3, count: 0, departing: false },
+                    { id: 'temple', name: 'Tirumala Temple', capacity: 3, count: 1, departing: false },
+                ];
+	                const popularDestinations = ['Kapila Theertham', 'ISKCON Temple', 'Srinivasa Mangapuram'];
+
+	                // One active pool per student (frontend persistence)
+	                const ACTIVE_POOL_KEY = 'activeRidePoolId';
+	                let activePoolId = null;
+	                try { activePoolId = localStorage.getItem(ACTIVE_POOL_KEY); } catch (_) {}
+
+	                const setActivePool = (id) => {
+	                    activePoolId = id || null;
+	                    try {
+	                        if (activePoolId) localStorage.setItem(ACTIVE_POOL_KEY, activePoolId);
+	                        else localStorage.removeItem(ACTIVE_POOL_KEY);
+	                    } catch (_) {}
+	                };
+
+	                if (activePoolId && !pools.some(p => p.id === activePoolId)) {
+	                    setActivePool(null);
+	                }
+	                
+	                const render = () => {
+	                    if (!listEl) return;
+	                    listEl.innerHTML = '';
+	                    pools.forEach((pool, idx) => {
+	                        const isFull = pool.count >= pool.capacity;
+	                        const isActive = activePoolId === pool.id;
+	                        const hasOtherActive = !!activePoolId && !isActive;
+	                        const card = document.createElement('div');
+	                        card.id = `pool-${pool.id}`;
+	                        card.className = 'bg-gray-800/50 p-4 rounded-lg border border-gray-700/60 hover:border-amber-400/40 transition-all flex items-center justify-between';
+                        if (!pool.isNew) {
+                           card.classList.add('fade-in-up');
+                           card.style.animationDelay = `${0.05 * idx}s`;
+                        }
+                        
+                        if (pool.departing) {
+                            card.classList.add('departing');
+                        }
+
+                        const left = document.createElement('div');
+                        left.className = 'flex-grow pr-4';
+                        let waitingText = pool.departing ? `<span class="font-bold text-red-400">Departing...</span>` : `<span class="font-bold text-amber-400"><span class="count-bump" data-pool="${pool.id}">${pool.count}</span>/${pool.capacity}</span> Waiting`;
+                        
+                        left.innerHTML = `
+                            <p class="font-semibold text-slate-50 flex items-center">
+                                <i class="ph-map-pin-line text-amber-300 mr-2"></i>${pool.name}
+                            </p>
+                            <div class="mt-1 text-sm text-slate-400">
+                                ${waitingText}
+                            </div>`;
+
+	                        const btn = document.createElement('button');
+	                        btn.innerHTML = 'Join';
+	                        let btnBaseClasses = 'flex-shrink-0 px-4 py-2 w-20 h-10 flex items-center justify-center rounded-lg font-semibold transition-all';
+	                        
+	                        const setBtnState = () => {
+	                            if (pool.departing) {
+	                                btn.textContent = 'Departing';
+	                                btn.className = `${btnBaseClasses} bg-gray-700 text-slate-400 opacity-70 cursor-not-allowed`;
+	                                btn.disabled = true;
+	                            } else if (isActive) {
+	                                btn.textContent = 'Leave';
+	                                btn.className = `${btnBaseClasses} bg-red-600 hover:bg-red-500 text-white`;
+	                                btn.disabled = false;
+	                            } else if (hasOtherActive) {
+	                                btn.textContent = 'Locked';
+	                                btn.className = `${btnBaseClasses} bg-gray-700 text-slate-400 opacity-70 cursor-not-allowed`;
+	                                btn.disabled = true;
+	                            } else if (isFull) {
+	                                btn.textContent = 'Full';
+	                                btn.className = `${btnBaseClasses} bg-gray-700 text-slate-400 opacity-70 cursor-not-allowed`;
+	                                btn.disabled = true;
+	                            } else {
+                                btn.textContent = 'Join';
+                                btn.className = `${btnBaseClasses} bg-gray-700 hover:bg-gray-600 text-slate-200`;
+                                btn.disabled = false;
+                            }
+                        };
+	                        setBtnState();
+	
+	                        btn.addEventListener('click', () => {
+	                            btn.innerHTML = `<div class="btn-spinner"></div>`;
+	                            btn.disabled = true;
+	                            
+	                            setTimeout(() => {
+	                                if (pool.departing) { render(); return; }
+	                                if (activePoolId && activePoolId !== pool.id) {
+	                                    showNotification('You can join only one pool at a time. Leave your current pool first.');
+	                                    render();
+	                                    return;
+	                                }
+	                                if (activePoolId === pool.id) {
+	                                    setActivePool(null);
+	                                    pool.count = Math.max(0, pool.count - 1);
+	                                } else if (pool.count < pool.capacity) {
+	                                    setActivePool(pool.id);
+	                                    pool.count += 1;
+	                                } else {
+	                                    showNotification('This pool is full.');
+	                                }
+	                                render();
+	                            }, 300);
+	                        });
+
+                        card.appendChild(left);
+                        card.appendChild(btn);
+                        listEl.appendChild(card);
+                        if (pool.isNew) {
+                           setTimeout(() => card.classList.add('fade-in-up'), 10);
+                           pool.isNew = false;
+                        }
+                    });
+                };
+
+                const createPoolModalBackdrop = document.getElementById('create-pool-modal-backdrop');
+                if (createPoolModalBackdrop) {
+                    const toggleCreatePoolModal = (visible) => createPoolModalBackdrop.classList.toggle('visible', visible);
+
+                    document.getElementById('create-pool-btn').addEventListener('click', () => toggleCreatePoolModal(true));
+                    document.getElementById('close-create-pool-btn').addEventListener('click', () => toggleCreatePoolModal(false));
+                    createPoolModalBackdrop.addEventListener('click', (e) => { if (e.target === createPoolModalBackdrop) toggleCreatePoolModal(false); });
+
+                    document.getElementById('confirm-create-pool-btn').addEventListener('click', () => {
+                        const newDestInput = document.getElementById('new-pool-destination-input');
+                        const newDestination = newDestInput.value.trim();
+
+                        if (newDestination && !pools.find(p => p.name.toLowerCase() === newDestination.toLowerCase())) {
+	                            const newPoolId = newDestination.toLowerCase().replace(/\s+/g, '') + Date.now();
+	                            const canAutoJoin = !activePoolId;
+	                            const newPool = { id: newPoolId, name: newDestination, capacity: 3, count: canAutoJoin ? 1 : 0, departing: false, isNew: true };
+	                            pools.unshift(newPool);
+	                            if (canAutoJoin) setActivePool(newPoolId);
+	                            render();
+	                            newDestInput.value = '';
+	                            toggleCreatePoolModal(false);
+	                        } else if (newDestination) {
+                             showNotification("A pool for this destination already exists.");
+                        }
+                    });
+                }
+                
+                render(); 
+
+                setInterval(() => {
+                    const fullPool = pools.find(p => p.count >= p.capacity && !p.departing);
+                    if (fullPool) {
+                        fullPool.departing = true;
+                        const cardEl = document.getElementById(`pool-${fullPool.id}`);
+                        if (cardEl) cardEl.classList.add('fade-out-down');
+
+	                        setTimeout(() => {
+	                            pools = pools.filter(p => p.id !== fullPool.id);
+	                            if (activePoolId === fullPool.id) setActivePool(null);
+	                            render();
+	                        }, 600);
+	                    }
+
+                    const availablePools = pools.filter(p => p.count < p.capacity && !p.departing);
+                    if (availablePools.length > 0 && Math.random() < 0.25) { // Slower join rate
+                        const poolToUpdate = availablePools[Math.floor(Math.random() * availablePools.length)];
+                        poolToUpdate.count++;
+                    }
+                    
+                    if (Math.random() < 0.1 && popularDestinations.length > 0 && pools.length < 6) {
+                        const newDest = popularDestinations.shift();
+                        if (newDest && !pools.find(p => p.name === newDest)) {
+                            const newId = newDest.toLowerCase().replace(/\s+/g, '') + Date.now();
+                            pools.push({id: newId, name: newDest, capacity: 3, count: 0, departing: false, isNew: true});
+                        }
+                    }
+
+                    render();
+                }, 3000); // Slower interval
+            };
+
+	            // --- Initialize All Features ---
+	            (async () => {
+	                await refreshCurrentUserFromApi();
+	                setGreeting();
+	                setupDashboard();
+	                renderScheduledTrips();
+	                setupTheatresModal();
+	                setupTemplesModal();
+	                setupBookingConfirmation();
+	                setupOutingPlanner();
+	                setupRidePools();
+	                setupAvailability();
+	            })();
+
+            if (window.loadGoogleMaps) {
+                window.loadGoogleMaps()
+                    .then(() => setupRideNowMap())
+                    .catch((err) => {
+                        console.warn(err);
+                        setMetrics(null, null);
+                        showNotification('Google Maps not configured. Add your key in assets/maps-config.js', 'error');
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
+
+

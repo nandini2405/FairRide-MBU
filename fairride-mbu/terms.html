@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms & Privacy - FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FBBF24; --primary-color-transparent-1: rgba(251, 191, 36, 0.2); --primary-color-light: #FCD34D; --bg-color: #111827; --card-bg-color: rgba(31, 41, 55, 0.6); --shadow-color: rgba(251, 191, 36, 0.5);
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); overflow-x: hidden; }
+        .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid var(--primary-color-transparent-1); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3); }
+        .animated-gradient-text { background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color), #f9fafb, var(--primary-color), var(--primary-color-light)); background-size: 200% auto; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textGradientShift 4s linear infinite; }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .prose-custom { color: #d1d5db; }
+        .prose-custom h2 { color: #f9fafb; border-bottom: 1px solid #374151; padding-bottom: 0.5rem; margin-top: 2rem; }
+        .prose-custom p { line-height: 1.75; }
+        .prose-custom a { color: var(--primary-color); text-decoration: none; }
+        .prose-custom a:hover { text-decoration: underline; }
+    </style>
+    <link rel="stylesheet" href="assets/floating-autos.css">
+</head>
+<body class="antialiased text-slate-200">
+    <div class="min-h-screen">
+        <header class="p-4 md:p-6 fade-in-up">
+            <nav class="container mx-auto flex justify-between items-center">
+                <a href="dashboard.html" class="text-2xl font-black text-slate-50"><span class="animated-gradient-text">FairRide MBU</span></a>
+                <a href="user_profile.html" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-600"><i class="ph-arrow-left text-xl text-slate-300"></i></a>
+            </nav>
+        </header>
+        <main class="container mx-auto p-4 md:p-6">
+            <section class="max-w-3xl mx-auto card p-6 md:p-8 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="prose-custom">
+                    <h1 class="text-3xl font-bold text-white mb-6">Terms of Service & Privacy Policy</h1>
+                    
+                    <h2>1. Introduction</h2>
+                    <p>Welcome to FairRide MBU. By using our services, you agree to these terms. This document governs your use of our platform connecting students and drivers.</p>
+                    
+                    <h2>2. User Accounts</h2>
+                    <p>You must be a registered student or an authorized driver to use this service. You are responsible for maintaining the confidentiality of your account information.</p>
+
+                    <h2>3. Privacy Policy</h2>
+                    <p>We collect information such as your name, contact details, and location to provide and improve our services. We do not sell your personal data to third parties. Location data is used for ride booking and tracking only.</p>
+
+                    <h2>4. User Conduct</h2>
+                    <p>Users are expected to treat drivers and fellow passengers with respect. Any form of harassment or misconduct will result in account suspension. Please ensure you follow all safety guidelines provided in the app.</p>
+
+                     <h2>5. Payments</h2>
+                    <p>Fares are calculated based on distance, time, and demand. You agree to pay for all rides booked through your account. All payments are processed through secure third-party gateways.</p>
+
+                    <h2>6. Limitation of Liability</h2>
+                    <p>FairRide MBU is a platform to connect riders and drivers. We are not responsible for the conduct of users or drivers. We are not liable for any damages arising from the use of our service.</p>
+                    
+                    <h2>7. Contact Us</h2>
+                    <p>If you have any questions about these terms, please contact us at <a href="mailto:support@fairridembu.com">support@fairridembu.com</a>.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script defer src="assets/floating-autos.js"></script>
+
+</body>
+</html>
+
+

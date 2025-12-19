@@ -1,0 +1,266 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Fare Predictions - FairRide Tirupati</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    
+    <!-- Maps are optional here. If you add map features later, configure via assets/maps-config.js and loadGoogleMaps(). -->
+    
+    <style>
+        :root { 
+            --primary-color: #FBBF24; --primary-color-transparent-1: rgba(251,191,36,0.2); --bg-color: #111827; 
+            --card-bg-color: rgba(31,41,55,0.6); --success-color: #34D399; --danger-color: #F87171; --info-color: #60A5FA;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); overflow-x: hidden; }
+        .card { 
+            background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+            border-radius: 1.25rem; border: 1px solid var(--primary-color-transparent-1); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3); 
+        }
+        .animated-gradient-text { 
+            background: linear-gradient(90deg, #FCD34D, #FBBF24, #f9fafb, #FBBF24, #FCD34D); background-size: 200% auto; 
+            background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textGradientShift 4s linear infinite; 
+        }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .btn-primary {
+            background-color: var(--primary-color); color: #111827; font-weight: 600; padding: 0.6rem 1.25rem; border-radius: 0.75rem; 
+            transition: all 0.2s ease; box-shadow: 0 4px 15px -5px rgba(251,191,36,0.4);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px -5px rgba(251,191,36,0.5); }
+        select { background-color: rgba(55, 65, 81, 0.7); border: 1px solid rgba(107, 114, 128, 0.5); }
+        .recommendation-card { background: rgba(31,41,55,0.8); border-left: 4px solid var(--primary-color); }
+        .tab-btn {
+            background-color: transparent; border: 1px solid var(--primary-color-transparent-1); color: #9ca3af; 
+            padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s ease-in-out;
+        }
+        .tab-btn.active { background-color: var(--primary-color); color: #111827; font-weight: 600; }
+    </style>
+</head>
+<body class="antialiased text-slate-200">
+    <header class="p-4 md:p-6">
+        <nav class="container mx-auto flex justify-between items-center">
+            <a href="dashboard.html" class="text-2xl font-black text-slate-50"><span class="animated-gradient-text">FairRide Tirupati</span></a>
+            <div class="flex items-center gap-4">
+                <div id="current-time" class="text-sm text-slate-400 font-medium hidden md:block"></div>
+                <a href="dashboard.html" class="inline-flex items-center gap-2 bg-gray-800/60 hover:bg-gray-700/70 border border-gray-700 text-slate-300 font-semibold py-2 px-3 rounded-lg transition-all"><i class="ph-house"></i>Dashboard</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-6 space-y-8">
+        <div id="api-key-error" class="hidden bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded-lg relative" role="alert">
+            <strong class="font-bold">Google Maps API Error:</strong>
+            <span class="block sm:inline">Invalid API Key. Some features may not work as expected.</span>
+        </div>
+
+        <section class="fade-in-up recommendation-card p-5 rounded-xl">
+             <h2 class="text-lg font-bold text-slate-50 flex items-center mb-2"><i class="ph-lightbulb-filament text-amber-400 mr-3"></i>Today's Outlook & Recommendations</h2>
+             <p id="recommendation-text" class="text-sm text-slate-300">Analyzing current data...</p>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <section class="card p-6 md:p-8 fade-in-up lg:col-span-1" style="animation-delay: 0.1s;">
+                 <h2 class="text-xl font-bold text-slate-50 flex items-center mb-4"><i class="ph-rocket-launch text-amber-400 mr-3"></i>Surge Predictor</h2>
+                 <div id="surge-predictor" class="text-center"></div>
+                 <p class="text-xs text-slate-500 mt-4 text-center">Likelihood of price increases based on live demand data.</p>
+            </section>
+            
+            <section class="card p-6 md:p-8 fade-in-up lg:col-span-2" style="animation-delay: 0.2s;">
+                <!-- MODIFIED: Changed title and removed input elements -->
+                <h2 class="text-xl font-bold text-slate-50 flex items-center mb-4"><i class="ph-tag text-amber-400 mr-3"></i>Live Fare Index</h2>
+                <div id="fareResult" class="mt-4 text-center h-24 flex items-center justify-center"></div>
+            </section>
+        </div>
+
+        <section class="card p-6 md:p-8 fade-in-up" style="animation-delay: 0.3s;">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+                <div id="chart-title" class="text-2xl md:text-3xl font-bold text-slate-50 flex items-center mb-3 sm:mb-0"></div>
+                <div class="flex items-center gap-2">
+                     <select id="dayTypeSelector" class="text-sm rounded-lg p-2 text-slate-200">
+                        <option value="weekday">Weekday</option><option value="weekend">Weekend</option>
+                    </select>
+                    <div class="flex gap-1 bg-gray-800/60 p-1 rounded-lg border border-gray-700">
+                        <button id="demandTab" class="tab-btn active">Demand</button><button id="availabilityTab" class="tab-btn">Availability</button>
+                    </div>
+                </div>
+            </div>
+            <div class="relative h-64 md:h-80"><canvas id="mainChart"></canvas></div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <section class="card p-6 md:p-8 fade-in-up" style="animation-delay: 0.4s;">
+                <h2 class="text-xl font-bold text-slate-50 flex items-center mb-6"><i class="ph-broadcast text-amber-400 mr-3"></i>Live Alerts & Events</h2>
+                <ul id="events-list" class="space-y-3 text-sm"></ul>
+            </section>
+            
+            <section class="card p-6 md:p-8 fade-in-up" style="animation-delay: 0.5s;">
+                 <h2 class="text-xl font-bold text-slate-50 flex items-center mb-6"><i class="ph-cloud-sun text-amber-400 mr-3"></i>Weather Impact</h2>
+                 <div id="weather-impact" class="flex items-center justify-around bg-gray-800/60 rounded-xl border border-gray-700 p-6 text-center"></div>
+                 <p class="text-xs text-slate-500 mt-4 text-center">Demand changes significantly based on weather conditions.</p>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chartTextColor = '#e5e7eb', chartGridColor = 'rgba(148,163,184,0.15)';
+            const primaryColor = '#FBBF24', primaryColorSoft = 'rgba(251,191,36,0.25)';
+            const successColor = '#34D399', successColorSoft = 'rgba(52,211,153,0.22)';
+            const infoColor = '#60A5FA', infoColorSoft = 'rgba(96,165,250,0.25)';
+            let mainChartInstance;
+            let currentSurgeChance = 0;
+
+            // --- Data Sources ---
+            // REMOVED: locations and vehicleRates objects are no longer needed for the fare index.
+            const chartData = {
+                labels: ['5am','6am','7am','8am','9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm','6pm','7pm','8pm','9pm'],
+                demand: { weekday: [8, 12, 22, 38, 45, 40, 32, 28, 26, 24, 25, 30, 42, 58, 70, 60, 40], weekend: [4, 6, 10, 16, 22, 28, 34, 38, 44, 46, 40, 38, 36, 44, 56, 64, 48] },
+                availability: { weekday: [65, 60, 50, 40, 35, 45, 55, 60, 62, 65, 68, 70, 60, 45, 30, 38, 55], weekend: [75, 78, 80, 75, 70, 65, 60, 55, 50, 48, 55, 60, 65, 68, 60, 50, 60] }
+            };
+            const weatherConditions = [
+                { name: "Sunny & Clear", icon: "ph-sun", impact: "+5%", color: "text-green-400", note: "Normal Conditions" },
+                { name: "Light Rain", icon: "ph-cloud-rain", impact: "+35%", color: "text-red-400", note: "High Demand Expected" }
+            ];
+
+            // --- Functions ---
+            
+            // NEW: This function replaces the old fare estimator.
+            const updateFareIndex = () => {
+                const fareResultEl = document.getElementById('fareResult');
+                const baseRatePerKm = 12; // Standard auto rate
+                const surgeMultiplier = 1 + (currentSurgeChance / 100);
+                const currentRatePerKm = baseRatePerKm * surgeMultiplier;
+
+                fareResultEl.innerHTML = `
+                    <div class="flex justify-around items-center w-full">
+                        <div>
+                            <p class="text-sm text-slate-400">Standard Rate</p>
+                            <p class="text-2xl font-bold text-slate-100">₹${baseRatePerKm.toFixed(2)}<span class="text-base font-normal">/km</span></p>
+                        </div>
+                        <div class="h-12 border-l border-gray-600"></div>
+                        <div>
+                            <p class="text-sm text-amber-300">Current Rate (w/ Surge)</p>
+                            <p class="text-2xl font-bold text-amber-300">₹${currentRatePerKm.toFixed(2)}<span class="text-base font-normal">/km</span></p>
+                        </div>
+                    </div>
+                `;
+            };
+
+            const updateSurgeAndRecommendations = () => {
+                const hour = new Date().getHours();
+                const dayType = document.getElementById('dayTypeSelector').value;
+                const dataIndex = Math.max(0, Math.min(chartData.labels.length - 1, hour - 5));
+                const currentDemand = chartData.demand[dayType][dataIndex];
+
+                const baseSurge = Math.round((currentDemand / 70) * 80);
+                currentSurgeChance = Math.min(99, baseSurge + Math.floor(Math.random() * 20));
+
+                let color, level, recommendation;
+                if (currentSurgeChance < 40) { level = "Low"; color = "text-green-400"; recommendation = "Fares are stable. It's a great time to book a ride."; } 
+                else if (currentSurgeChance < 75) { level = "Medium"; color = "text-yellow-400"; recommendation = "Demand is rising. Consider booking soon to lock in your fare."; } 
+                else { level = "High"; color = "text-red-400"; recommendation = "High demand expected. <span class='font-semibold text-amber-300'>Book rides 15-20 minutes in advance.</span>"; }
+                
+                document.getElementById('surge-predictor').innerHTML = `<div class="text-6xl font-bold ${color}">${currentSurgeChance}%</div><p class="font-semibold mt-1 ${color}">${level} Likelihood</p>`;
+                document.getElementById('recommendation-text').innerHTML = recommendation;
+                
+                // MODIFIED: Update the fare index whenever surge changes.
+                updateFareIndex();
+            };
+
+            const updateLiveAlerts = () => {
+                 const hour = new Date().getHours();
+                 const eventsList = document.getElementById('events-list');
+                 let alertsHTML = '';
+
+                 if (hour >= 8 && hour <= 10) {
+                     alertsHTML += `<li class="flex items-start gap-3 bg-gray-800/50 p-3 rounded-lg"><i class="ph-traffic-cone text-amber-300 text-xl mt-1"></i><div><p class="font-bold text-slate-100">Morning Rush Hour</p><p class="text-xs text-slate-400">High traffic expected near Railway Station and Bus Stand.</p></div></li>`;
+                 }
+                 if (hour >= 17 && hour <= 19) {
+                     alertsHTML += `<li class="flex items-start gap-3 bg-gray-800/50 p-3 rounded-lg"><i class="ph-traffic-cone text-amber-300 text-xl mt-1"></i><div><p class="font-bold text-slate-100">Evening Peak Traffic</p><p class="text-xs text-slate-400">Expect delays around major city junctions.</p></div></li>`;
+                 }
+                 alertsHTML += `<li class="flex items-start gap-3"><i class="ph-calendar-check text-green-400 text-xl mt-1"></i><div><p class="font-bold text-slate-100">Brahmotsavam Festival</p><p class="text-xs text-slate-400">Increased demand around Tirumala. Plan travel accordingly.</p></div></li>`;
+
+                 eventsList.innerHTML = alertsHTML;
+            };
+            
+            const updateChartAnnotation = () => {
+                if (!mainChartInstance) return;
+                const hour = new Date().getHours();
+                const minute = new Date().getMinutes();
+                const timeAsIndex = hour + minute / 60 - 5; 
+                mainChartInstance.options.plugins.annotation.annotations.currentTimeLine.xMin = timeAsIndex;
+                mainChartInstance.options.plugins.annotation.annotations.currentTimeLine.xMax = timeAsIndex;
+                mainChartInstance.update('none'); 
+            };
+
+            const initMainChart = () => {
+                const ctx = document.getElementById('mainChart').getContext('2d');
+                mainChartInstance = new Chart(ctx, { 
+                    type: 'line', 
+                    data: { labels: chartData.labels, datasets: [] }, 
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { x: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }, y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor }, beginAtZero: true, suggestedMax: 100 } },
+                        plugins: { 
+                            legend: { display: false },
+                            annotation: {
+                                annotations: {
+                                    currentTimeLine: { 
+                                        type: 'line', scaleID: 'x',
+                                        xMin: 0, xMax: 0,
+                                        borderColor: 'rgba(251, 191, 36, 0.7)', borderWidth: 2, borderDash: [6, 6],
+                                        label: { content: 'Now', enabled: true, position: 'start', yAdjust: -15, backgroundColor: 'rgba(251, 191, 36, 0.7)', color: '#111827', font: { weight: 'bold' } }
+                                    }
+                                }
+                            }
+                        },
+                        animation: { duration: 600, easing: 'easeOutQuart' }
+                    } 
+                });
+                updateMainChart();
+            };
+
+            const updateMainChart = () => {
+                const dayType = document.getElementById('dayTypeSelector').value; const activeTab = document.getElementById('demandTab').classList.contains('active') ? 'demand' : 'availability';
+                let data, borderColor, backgroundColor, title, icon;
+                if (activeTab === 'demand') { data = chartData.demand[dayType]; borderColor = dayType === 'weekday' ? primaryColor : successColor; backgroundColor = dayType === 'weekday' ? primaryColorSoft : successColorSoft; title = "Predicted Demand"; icon = "ph-trend-up"; } 
+                else { data = chartData.availability[dayType]; borderColor = infoColor; backgroundColor = infoColorSoft; title = "Driver Availability"; icon = "ph-steering-wheel"; }
+                document.getElementById('chart-title').innerHTML = `<i class="${icon} text-amber-400 mr-3"></i>${title}`;
+                mainChartInstance.data.datasets = [{ label: title, data: data, borderColor, backgroundColor, fill: true, tension: 0.35 }];
+                mainChartInstance.update();
+            };
+            const updateTime = () => { document.getElementById('current-time').textContent = new Date().toLocaleString('en-US', { weekday: 'short', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+            const updateWeather = () => {
+                const weatherImpactEl = document.getElementById('weather-impact'); const condition = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+                weatherImpactEl.innerHTML = `<div><i class="${condition.icon} text-6xl text-amber-300"></i><p class="font-bold mt-2 text-lg">${condition.name}</p><p class="text-sm text-slate-400">Current Weather</p></div><div class="text-4xl font-bold text-slate-300">+</div><div><p class="text-4xl font-bold ${condition.color}">${condition.impact}</p><p class="font-semibold text-slate-300 mt-1">Demand Impact</p><p class="text-sm text-slate-400">${condition.note}</p></div>`;
+            };
+            
+            const setupListeners = () => {
+                document.getElementById('dayTypeSelector').addEventListener('change', updateMainChart);
+                document.getElementById('demandTab').addEventListener('click', () => { document.getElementById('demandTab').classList.add('active'); document.getElementById('availabilityTab').classList.remove('active'); updateMainChart(); });
+                document.getElementById('availabilityTab').addEventListener('click', () => { document.getElementById('availabilityTab').classList.add('active'); document.getElementById('demandTab').classList.remove('active'); updateMainChart(); });
+                // REMOVED: Event listeners for the old fare estimator.
+            };
+            
+            const init = () => {
+                updateTime(); updateWeather();
+                initMainChart(); updateSurgeAndRecommendations(); updateLiveAlerts();
+                setupListeners();
+                
+                setInterval(updateSurgeAndRecommendations, 5000);
+                setInterval(updateTime, 30000);
+                setInterval(updateChartAnnotation, 5000); 
+                setInterval(updateLiveAlerts, 60000 * 5); 
+            };
+            init();
+        });
+    </script>
+</body>
+</html>

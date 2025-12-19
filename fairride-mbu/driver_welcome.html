@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome Driver - FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/floating-autos.css">
+    <style>
+        :root { --primary-color: #FBBF24; --bg-color: #111827; --card-bg-color: rgba(31,41,55,0.6); }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); overflow: hidden; }
+        .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid rgba(251,191,36,0.2); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .char { display: inline-block; will-change: transform, opacity; }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const name = (localStorage.getItem('currentUserName') || '').trim() || 'Driver';
+            const target = document.getElementById('greeting-text');
+            const full = `Hello, ${name}`;
+            target.textContent = '';
+            const spans = [];
+            for (const ch of full) { const s = document.createElement('span'); s.className='char'; s.textContent = ch === ' ' ? '\u00A0' : ch; target.appendChild(s); spans.push(s); }
+            gsap.fromTo(spans, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', stagger: 0.05 });
+            gsap.to('#subtext', { opacity: 1, y: 0, duration: 0.6, delay: 0.3, ease: 'power2.out' });
+            const go = () => { window.location.href = 'driver_dashboard.html'; };
+            setTimeout(go, 2500);
+            document.getElementById('continue-btn')?.addEventListener('click', (e) => { e.preventDefault(); go(); });
+        });
+    </script>
+</head>
+<body class="min-h-screen flex items-center justify-center text-slate-100">
+    <main class="relative z-10 w-full max-w-2xl mx-auto p-6">
+        <section class="card p-10 text-center">
+            <h1 id="greeting-text" class="text-4xl md:text-5xl font-extrabold tracking-tight"></h1>
+            <p id="subtext" class="opacity-0 translate-y-2 mt-4 text-slate-300">Welcome aboard. Taking you to your dashboard...</p>
+            <div class="mt-8">
+                <a id="continue-btn" href="#" class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold bg-amber-400 text-gray-900 hover:bg-amber-300 transition-colors">Go to Driver Dashboard</a>
+            </div>
+        </section>
+    </main>
+    <script defer src="assets/floating-autos.js"></script>
+
+</body>
+</html>
+
+

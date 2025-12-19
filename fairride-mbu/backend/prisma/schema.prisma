@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  RIDER
+  DRIVER
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String?  @unique
+  phone         String?  @unique
+  studentId     String?  @unique
+  gender        Gender?
+  passwordHash  String
+  role          Role     @default(RIDER)
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  driverProfile DriverProfile?
+}
+
+model DriverProfile {
+  id               Int                 @id @default(autoincrement())
+  userId           Int                 @unique
+  user             User                @relation(fields: [userId], references: [id])
+  vehicleNumber    String?
+  licenseNumber    String?
+  insuranceNumber  String?
+  licenseFileUrl   String?
+  insuranceFileUrl String?
+  status           VerificationStatus  @default(PENDING)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+}
