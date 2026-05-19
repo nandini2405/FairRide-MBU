@@ -8,85 +8,49 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #FBBF24; --primary-color-transparent-1: rgba(251, 191, 36, 0.2); --primary-color-light: #FCD34D; --bg-color: #111827; --card-bg-color: rgba(31, 41, 55, 0.6); --shadow-color: rgba(251, 191, 36, 0.5);
-        }
+        :root { --primary-color: #FBBF24; --primary-color-transparent-1: rgba(251,191,36,0.2); --bg-color: #111827; --card-bg-color: rgba(31,41,55,0.6); --shadow-color: rgba(251,191,36,0.5); }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); }
-        .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid var(--primary-color-transparent-1); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3); }
+        .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid var(--primary-color-transparent-1); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3); }
         .primary-btn { transition: transform 0.2s ease, box-shadow 0.2s ease; background-color: var(--primary-color); color: #111827; }
-        .primary-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color); }
+        .primary-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px var(--shadow-color); }
         .soft-badge { background: linear-gradient(90deg, rgba(251,191,36,0.18), rgba(252,211,77,0.14)); color: #FDE68A; border: 1px solid rgba(251,191,36,0.35); }
         .stat-chip { background-color: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.25); }
-        .modal-backdrop { position: fixed; inset: 0; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
-        .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
-        .modal-card { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.97); opacity: 0; pointer-events: none; transition: transform 0.25s ease, opacity 0.25s ease; z-index: 60; }
-        .modal-backdrop.visible + .modal-card { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
-
-        /* Timeline styles */
         .timeline { display: flex; align-items: center; justify-content: center; gap: 1rem; }
         .tl-step { display: flex; align-items: center; gap: 0.5rem; color: #cbd5e1; }
-        .tl-dot { width: 12px; height: 12px; border-radius: 9999px; background: #475569; box-shadow: 0 0 0 2px #334155 inset; transition: all 0.25s ease; }
+        .tl-dot { width: 12px; height: 12px; border-radius: 9999px; background: #475569; transition: all 0.25s ease; }
         .tl-step.active .tl-dot { background: #FBBF24; box-shadow: 0 0 12px rgba(251,191,36,0.6); }
         .tl-line { height: 2px; width: 48px; background: linear-gradient(90deg, rgba(148,163,184,0.3), rgba(251,191,36,0.6)); border-radius: 9999px; }
-
-        /* Micro animations */
         @keyframes pulseSoft { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-2px);} }
         .pulse-soft { animation: pulseSoft 1.8s ease-in-out infinite; }
-        @keyframes glow {
-            0% { box-shadow: 0 0 0 0 rgba(251,191,36,0.25); }
-            100% { box-shadow: 0 0 0 12px rgba(251,191,36,0); }
+        .btn-glow { position: relative; }
+        @keyframes glow { 0%{box-shadow:0 0 0 0 rgba(251,191,36,0.25);} 100%{box-shadow:0 0 0 12px rgba(251,191,36,0);} }
+        .btn-glow::after { content:""; position:absolute; inset:0; border-radius:0.5rem; animation:glow 1.8s infinite; }
+        .hidden-section { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .hidden-section.open { max-height: 400px; }
+        .contact-btn { width:56px; height:56px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.2rem; border:1px solid rgba(148,163,184,0.18); transition:transform 0.18s ease; }
+        .contact-btn span { font-size:10px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; }
+        .contact-btn:hover { transform:translateY(-2px); border-color:rgba(251,191,36,0.35); }
+        .contact-btn.disabled { opacity:0.45; cursor:not-allowed; }
+        #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-20px); opacity:0; pointer-events:none; transition:transform 0.25s ease,opacity 0.25s ease; z-index:80; }
+        #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+        #toast .toast-card { background:rgba(17,24,39,0.92); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:10px 14px; box-shadow:0 16px 38px -24px rgba(0,0,0,0.85); backdrop-filter:blur(10px); }
+        .driver-bg {
+            background: radial-gradient(1200px 700px at 20% 15%, rgba(251,191,36,0.12), rgba(17,24,39,0) 55%),
+                        radial-gradient(900px 600px at 80% 30%, rgba(56,189,248,0.10), rgba(17,24,39,0) 55%),
+                        linear-gradient(180deg, #0b1220 0%, #111827 55%, #0b1220 100%);
         }
-	        .btn-glow { position: relative; }
-	        .btn-glow::after { content: ""; position: absolute; inset: 0; border-radius: 0.5rem; animation: glow 1.8s infinite; }
-	        .hidden-section { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-	        .hidden-section.open { max-height: 400px; }
-
-	        /* Contact actions */
-	        .contact-btn {
-	            width: 56px;
-	            height: 56px;
-	            border-radius: 14px;
-	            display: flex;
-	            flex-direction: column;
-	            align-items: center;
-	            justify-content: center;
-	            gap: 0.2rem;
-	            border: 1px solid rgba(148, 163, 184, 0.18);
-	            transition: transform 0.18s ease, filter 0.18s ease, border-color 0.18s ease;
-	            user-select: none;
-	        }
-	        .contact-btn span { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-	        .contact-btn:hover { transform: translateY(-2px); filter: brightness(1.05); border-color: rgba(251, 191, 36, 0.35); }
-	        .contact-btn:active { transform: translateY(0); }
-	        .contact-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25); }
-	        .contact-btn.disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: none; }
-
-	        /* Toast */
-	        #toast {
-	            position: fixed;
-	            top: 18px;
-	            left: 50%;
-	            transform: translateX(-50%) translateY(-20px);
-	            opacity: 0;
-	            pointer-events: none;
-	            transition: transform 0.25s ease, opacity 0.25s ease;
-	            z-index: 80;
-	        }
-	        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-	        #toast .toast-card { background: rgba(17, 24, 39, 0.92); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 10px 14px; box-shadow: 0 16px 38px -24px rgba(0,0,0,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-	        #toast .toast-card.error { border-color: rgba(248, 113, 113, 0.25); }
-
-	        /* Background */
-	        .driver-bg {
-	            background: radial-gradient(1200px 700px at 20% 15%, rgba(251,191,36,0.12), rgba(17,24,39,0) 55%),
-	                        radial-gradient(900px 600px at 80% 30%, rgba(56,189,248,0.10), rgba(17,24,39,0) 55%),
-	                        linear-gradient(180deg, #0b1220 0%, #111827 55%, #0b1220 100%);
-	        }
-	    </style>
-	    <link rel="stylesheet" href="assets/floating-autos.css">
-	</head>
-	<body class="antialiased text-slate-200">
-	    <div class="relative min-h-screen">
+        .payment-waiting { background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.3); border-radius:0.75rem; padding:0.75rem; text-align:center; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation:spin 1s linear infinite; display:inline-block; }
+        /* OTP Modal */
+        .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px); z-index:50; opacity:0; pointer-events:none; transition:opacity 0.25s; display:flex; align-items:center; justify-content:center; padding:1rem; }
+        .modal-backdrop.visible { opacity:1; pointer-events:auto; }
+        .modal-inner { transform:scale(0.95); transition:transform 0.25s; width:100%; max-width:480px; }
+        .modal-backdrop.visible .modal-inner { transform:scale(1); }
+    </style>
+</head>
+<body class="antialiased text-slate-200">
+    <div class="relative min-h-screen">
         <div class="driver-bg absolute inset-0"></div>
         <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-900/90 via-gray-900/35 to-gray-900/10"></div>
 
@@ -96,13 +60,13 @@
                     <span class="inline-flex items-center"><i class="ph-caret-left-bold mr-2 text-amber-400"></i>FairRide</span>
                 </a>
                 <div class="soft-badge px-4 py-2 rounded-full text-xs md:text-sm font-bold tracking-wide">
-                    In Ride &bull; Ride ID FR-1027
+                    <span id="ride-status-badge">En Route to Pickup</span>
                 </div>
             </nav>
         </header>
 
         <main class="relative z-10 flex flex-col justify-end min-h-screen p-4 md:p-6">
-            <!-- Timeline / Status -->
+            <!-- Timeline -->
             <section class="card p-3 md:p-4 mb-3 max-w-3xl mx-auto w-full">
                 <div class="timeline">
                     <div class="tl-step" id="step-pickup"><span class="tl-dot"></span><span class="text-xs md:text-sm">Pickup</span></div>
@@ -112,75 +76,102 @@
                     <div class="tl-step" id="step-dropoff"><span class="tl-dot"></span><span class="text-xs md:text-sm">Dropoff</span></div>
                 </div>
             </section>
+
+            <!-- Route -->
             <section class="card p-4 md:p-5 mb-4 max-w-3xl mx-auto w-full">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-full bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-300"><i class="ph-map-trifold text-lg"></i></div>
+                        <div class="w-10 h-10 rounded-full bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-300">
+                            <i class="ph-map-trifold text-lg"></i>
+                        </div>
                         <div>
                             <p class="text-sm text-slate-300">Route</p>
-                            <p class="font-semibold text-slate-50"><span id="route-from">&mdash;</span> &rarr; <span id="route-to">&mdash;</span></p>
+                            <p class="font-semibold text-slate-50"><span id="route-from">—</span> → <span id="route-to">—</span></p>
                         </div>
                     </div>
                     <div class="hidden sm:flex items-center space-x-2">
-                        <span class="stat-chip text-amber-300 text-xs md:text-sm font-semibold px-3 py-1 rounded-full"><i class="ph-timer mr-1"></i><span id="chip-eta">12 min</span></span>
-                        <span class="stat-chip text-amber-300 text-xs md:text-sm font-semibold px-3 py-1 rounded-full"><i class="ph-arrows-left-right mr-1"></i><span id="chip-distance">&mdash;</span></span>
-                        <span class="stat-chip text-amber-300 text-xs md:text-sm font-semibold px-3 py-1 rounded-full"><i class="ph-currency-inr mr-1"></i><span id="chip-fare">&mdash;</span></span>
+                        <span class="stat-chip text-amber-300 text-xs font-semibold px-3 py-1 rounded-full"><i class="ph-timer mr-1"></i><span id="chip-eta">-- min</span></span>
+                        <span class="stat-chip text-amber-300 text-xs font-semibold px-3 py-1 rounded-full"><i class="ph-currency-inr mr-1"></i><span id="chip-fare">--</span></span>
                     </div>
                 </div>
             </section>
 
-	            <section class="card p-5 md:p-6 max-w-3xl mx-auto w-full">
-	                <div class="flex items-start justify-between">
-	                    <div class="flex items-center">
-	                        <img id="rider-avatar" src="https://placehold.co/56x56/1f2937/FBBF24?text=U" class="w-14 h-14 rounded-full mr-4 border-2 border-gray-600">
-	                        <div>
-	                            <p id="rider-name" class="font-bold text-lg text-white">Passenger</p>
-	                            <p class="text-sm text-slate-400">OTP: <span id="rider-otp" class="font-mono tracking-widest text-amber-300">&mdash;</span> &bull; UPI</p>
-	                        </div>
-	                    </div>
-	                    <div class="grid grid-cols-3 gap-3">
-	                        <a id="call-rider" href="#" class="contact-btn bg-green-500/15 text-green-200" aria-label="Call rider">
-	                            <i class="ph-phone-call-fill text-2xl"></i><span>Call</span>
-	                        </a>
-	                        <a id="message-rider" href="#" class="contact-btn bg-sky-500/15 text-sky-200" aria-label="Message rider">
-	                            <i class="ph-chat-circle-text-fill text-2xl"></i><span>Msg</span>
-	                        </a>
-	                        <a id="facetime-rider" href="#" class="contact-btn bg-violet-500/15 text-violet-200" aria-label="FaceTime rider">
-	                            <i class="ph-video-camera-fill text-2xl"></i><span>Video</span>
-	                        </a>
-	                    </div>
-	                </div>
-
-                <div class="grid grid-cols-3 gap-3 mt-5">
-                    <div class="text-center bg-gray-800/50 rounded-xl p-3 border border-gray-700">
-                        <p class="text-xs text-slate-400">Speed</p>
-                        <p id="stat-speed" class="text-xl font-extrabold text-amber-400">32 km/h</p>
+            <!-- Rider Info + Controls -->
+            <section class="card p-5 md:p-6 max-w-3xl mx-auto w-full">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center">
+                        <img id="rider-avatar" src="https://placehold.co/56x56/1f2937/FBBF24?text=U" class="w-14 h-14 rounded-full mr-4 border-2 border-gray-600">
+                        <div>
+                            <p id="rider-name" class="font-bold text-lg text-white">Passenger</p>
+                            <p class="text-sm text-slate-400">Fare: <span id="rider-fare" class="font-mono text-amber-300">—</span></p>
+                        </div>
                     </div>
-                    <div class="text-center bg-gray-800/50 rounded-xl p-3 border border-gray-700">
-                        <p class="text-xs text-slate-400">Traffic</p>
-                        <p id="stat-traffic" class="text-xl font-extrabold text-amber-400">Moderate</p>
-                    </div>
-                    <div class="text-center bg-gray-800/50 rounded-xl p-3 border border-gray-700">
-                        <p class="text-xs text-slate-400">ETA</p>
-                        <p id="stat-eta" class="text-xl font-extrabold text-amber-400">12 min</p>
+                    <div class="grid grid-cols-3 gap-3">
+                        <a id="call-rider" href="#" class="contact-btn bg-green-500/15 text-green-200">
+                            <i class="ph-phone-call-fill text-2xl"></i><span>Call</span>
+                        </a>
+                        <a id="message-rider" href="#" class="contact-btn bg-sky-500/15 text-sky-200">
+                            <i class="ph-chat-circle-text-fill text-2xl"></i><span>Msg</span>
+                        </a>
+                        <a id="video-rider" href="#" class="contact-btn bg-violet-500/15 text-violet-200">
+                            <i class="ph-video-camera-fill text-2xl"></i><span>Video</span>
+                        </a>
                     </div>
                 </div>
 
+                <!-- Live Stats -->
+                <div id="live-stats" class="grid grid-cols-3 gap-3 mt-5 hidden">
+                    <div class="text-center bg-gray-800/50 rounded-xl p-3 border border-gray-700">
+                        <p class="text-xs text-slate-400">Speed</p>
+                        <p id="stat-speed" class="text-xl font-extrabold text-amber-400">-- km/h</p>
+                    </div>
+                    <div class="text-center bg-gray-800/50 rounded-xl p-3 border border-gray-700">
+                        <p class="text-xs text-slate-400">Traffic</p>
+                        <p id="stat-traffic" class="text-xl font-extrabold text-amber-400">--</p>
+                    </div>
+                    <div class="text-center bg-gray-800/50 rounded-xl p-3 border border-gray-700">
+                        <p class="text-xs text-slate-400">ETA</p>
+                        <p id="stat-eta" class="text-xl font-extrabold text-amber-400">-- min</p>
+                    </div>
+                </div>
+
+                <!-- Payment waiting -->
+                <div id="payment-waiting-section" class="mt-4 payment-waiting hidden">
+                    <p class="text-amber-300 font-semibold text-sm">
+                        <i class="ph-clock spin mr-2"></i>Student is paying... Please wait.
+                    </p>
+                    <p class="text-slate-400 text-xs mt-1">End Ride will activate once student pays</p>
+                </div>
+
+                <!-- Payment received -->
+                <div id="payment-received-section" class="mt-4 hidden">
+                    <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-3 text-center">
+                        <p class="text-green-400 font-semibold text-sm">
+                            <i class="ph-check-circle-fill mr-2"></i>Payment received! You can now end the ride.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
-                    <button id="expand-details" class="bg-gray-800/60 hover:bg-gray-700/70 text-slate-200 font-semibold py-3 rounded-lg text-center border border-gray-700 transition-colors"><i class="ph-caret-down mr-2"></i>Details</button>
+                    <button id="expand-details" class="bg-gray-800/60 hover:bg-gray-700/70 text-slate-200 font-semibold py-3 rounded-lg border border-gray-700 transition-colors">
+                        <i class="ph-caret-down mr-2"></i>Details
+                    </button>
                     <button id="primary-action" class="primary-btn font-bold py-3 rounded-lg btn-glow">Mark Arrived</button>
-                    <button id="sos-btn" class="bg-red-600/90 hover:bg-red-600 text-white font-bold py-3 rounded-lg text-center shadow-red-500/50 shadow-lg"><i class="ph-warning-octagon-fill mr-2"></i>SOS</button>
+                    <button id="sos-btn" class="bg-red-600/90 hover:bg-red-600 text-white font-bold py-3 rounded-lg shadow-red-500/50 shadow-lg">
+                        <i class="ph-warning-octagon-fill mr-2"></i>SOS
+                    </button>
                 </div>
 
                 <div id="extra-details" class="hidden-section mt-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
-                            <p class="text-xs text-slate-400 mb-1">Notes</p>
-                            <p class="text-slate-300 text-sm">Pickup near main gate. Passenger prefers UPI.</p>
+                            <p class="text-xs text-slate-400 mb-1">Pickup Point</p>
+                            <p id="detail-pickup" class="text-slate-300 text-sm">MBU Campus</p>
                         </div>
                         <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
                             <p class="text-xs text-slate-400 mb-1">Vehicle</p>
-                            <p class="text-slate-300 text-sm">AP 03 N 1234 &bull; Auto</p>
+                            <p class="text-slate-300 text-sm">Auto Rickshaw</p>
                         </div>
                     </div>
                 </div>
@@ -188,237 +179,321 @@
         </main>
     </div>
 
-    <div id="completion-backdrop" class="modal-backdrop"></div>
-    <div id="completion-card" class="modal-card w-full max-w-md card p-6 md:p-8 text-center">
-        <i class="ph-check-circle-fill text-6xl text-amber-400 mx-auto"></i>
-        <h2 class="text-2xl font-bold text-white mt-4">Ride Completed</h2>
-        <p class="text-slate-400 mt-2">Trip: <span id="comp-from">&mdash;</span> &rarr; <span id="comp-to">&mdash;</span></p>
-        <div class="grid grid-cols-3 gap-3 mt-6">
-            <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
-                <p class="text-xs text-slate-400">Distance</p>
-                <p id="comp-distance" class="text-lg font-extrabold text-amber-400">&mdash;</p>
+    <!-- Completion Modal -->
+    <div id="completion-backdrop" class="modal-backdrop">
+        <div class="modal-inner">
+            <div class="card p-6 text-center">
+                <i class="ph-check-circle-fill text-6xl text-amber-400 mx-auto"></i>
+                <h2 class="text-2xl font-bold text-white mt-4">Ride Completed!</h2>
+                <p class="text-slate-400 mt-2">Trip: <span id="comp-from">—</span> → <span id="comp-to">—</span></p>
+                <div class="grid grid-cols-2 gap-3 mt-6">
+                    <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
+                        <p class="text-xs text-slate-400">Fare Collected</p>
+                        <p id="comp-fare" class="text-lg font-extrabold text-amber-400">—</p>
+                    </div>
+                    <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
+                        <p class="text-xs text-slate-400">Status</p>
+                        <p class="text-lg font-extrabold text-green-400">Paid ✓</p>
+                    </div>
+                </div>
+                <div class="mt-6 grid grid-cols-2 gap-3">
+                    <a href="driver_dashboard.html" class="bg-gray-800/70 text-slate-200 font-bold py-3 rounded-lg border border-gray-700">Dashboard</a>
+                    <a href="driver_earnings.html" class="primary-btn font-bold py-3 rounded-lg">Earnings</a>
+                </div>
             </div>
-            <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
-                <p class="text-xs text-slate-400">Duration</p>
-                <p class="text-lg font-extrabold text-amber-400">18 min</p>
-            </div>
-            <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
-                <p class="text-xs text-slate-400">Fare</p>
-                <p id="comp-fare" class="text-lg font-extrabold text-amber-400">&mdash;</p>
-            </div>
-        </div>
-        <div class="mt-6 grid grid-cols-2 gap-3">
-            <a href="driver_dashboard.html" class="bg-gray-800/70 hover:bg-gray-700 text-slate-200 font-bold py-3 rounded-lg border border-gray-700">Go Dashboard</a>
-            <a href="driver_earnings.html" class="primary-btn font-bold py-3 rounded-lg">View Earnings</a>
-        </div>
-    </div>
-
-	    <div id="sos-backdrop" class="modal-backdrop"></div>
-	    <div id="sos-card" class="modal-card w-full max-w-md card p-6 md:p-8 text-center">
-        <i class="ph-warning-octagon-fill text-6xl text-red-500 mx-auto"></i>
-        <h2 class="text-2xl font-bold text-white mt-4">Confirm SOS</h2>
-        <p class="text-slate-400 mt-2">This will notify emergency contacts and dispatch support.</p>
-        <div class="mt-6 grid grid-cols-2 gap-3">
-            <button id="sos-cancel" class="bg-gray-800/70 hover:bg-gray-700 text-slate-200 font-bold py-3 rounded-lg border border-gray-700">Cancel</button>
-            <button id="sos-confirm" class="bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg">Send SOS</button>
         </div>
     </div>
 
-		    <canvas id="confetti-canvas" class="pointer-events-none" style="position:fixed; inset:0; z-index:70;"></canvas>
-		    <div id="toast"><div class="toast-card"><span id="toast-text" class="text-sm text-slate-200 font-semibold"></span></div></div>
+    <!-- OTP Modal -->
+    <div id="otp-modal-backdrop" class="modal-backdrop">
+        <div class="modal-inner">
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-white">Verify Ride OTP</h2>
+                    <button id="otp-close" class="text-slate-300 hover:text-white p-2 rounded-lg hover:bg-gray-700/60">
+                        <i class="ph-x text-2xl"></i>
+                    </button>
+                </div>
+                <p class="text-slate-400 text-sm mb-4">Ask the rider for their OTP and enter it below to start the trip.</p>
+                <div>
+                    <label class="text-slate-300 text-sm font-semibold">Enter 4-digit OTP</label>
+                    <div class="mt-2 flex items-center gap-2">
+                        <input id="driver-otp-input" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-slate-200 font-mono tracking-widest text-center text-xl" maxlength="4" placeholder="0000" inputmode="numeric"/>
+                        <button id="driver-otp-verify" class="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg font-semibold">Verify</button>
+                    </div>
+                    <p id="driver-otp-status" class="mt-2 text-sm"></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-		    <script>
-		        // Toast helper
-		        let toastTimer;
-		        function showToast(message, type = 'info') {
-	            const el = document.getElementById('toast');
-	            const text = document.getElementById('toast-text');
-	            const card = el ? el.querySelector('.toast-card') : null;
-	            if (!el || !text || !card) return;
-	            clearTimeout(toastTimer);
-	            text.textContent = message;
-	            card.classList.toggle('error', type === 'error');
-	            el.classList.add('show');
-	            toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
-	        }
+    <!-- SOS Modal -->
+    <div id="sos-modal-backdrop" class="modal-backdrop">
+        <div class="modal-inner">
+            <div class="card p-6 text-center">
+                <i class="ph-warning-octagon-fill text-6xl text-red-500"></i>
+                <h2 class="text-2xl font-bold text-white mt-4">Confirm SOS</h2>
+                <p class="text-slate-400 mt-2">This will notify emergency contacts and dispatch support.</p>
+                <div class="mt-6 grid grid-cols-2 gap-3">
+                    <button id="sos-cancel" class="bg-gray-800/70 text-slate-200 font-bold py-3 rounded-lg border border-gray-700">Cancel</button>
+                    <button id="sos-confirm" class="bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg">Send SOS</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	        // Elements
-	        const completionBackdrop = document.getElementById('completion-backdrop');
-	        const completionCard = document.getElementById('completion-card');
-	        const primaryActionBtn = document.getElementById('primary-action');
-        const expandBtn = document.getElementById('expand-details');
-        const extraDetails = document.getElementById('extra-details');
-        const speedEl = document.getElementById('stat-speed');
-        const etaEl = document.getElementById('stat-eta');
-        const trafficEl = document.getElementById('stat-traffic');
-        const stepPickup = document.getElementById('step-pickup');
-        const stepInride = document.getElementById('step-inride');
-        const stepDropoff = document.getElementById('step-dropoff');
-        const sosBtn = document.getElementById('sos-btn');
-        const sosBackdrop = document.getElementById('sos-backdrop');
-        const sosCard = document.getElementById('sos-card');
-        const sosCancel = document.getElementById('sos-cancel');
-        const sosConfirm = document.getElementById('sos-confirm');
+    <canvas id="confetti-canvas" class="pointer-events-none" style="position:fixed;inset:0;z-index:70;"></canvas>
+    <div id="toast"><div class="toast-card"><span id="toast-text" class="text-sm text-slate-200 font-semibold"></span></div></div>
 
-	        // Confetti
-	        const confettiCanvas = document.getElementById('confetti-canvas');
-	        const cx = confettiCanvas.getContext('2d');
-	        let confetti = [];
-        function resizeCanvas(){ confettiCanvas.width = innerWidth; confettiCanvas.height = innerHeight; }
-        window.addEventListener('resize', resizeCanvas); resizeCanvas();
-	        function launchConfetti() {
-	            confetti = Array.from({length: 150}, () => ({
-	                x: Math.random()*confettiCanvas.width,
-	                y: -10 - Math.random()*confettiCanvas.height*0.5,
-	                r: 2+Math.random()*4,
-	                c: Math.random() < 0.5 ? '#FBBF24' : '#FDE68A',
-	                v: 1+Math.random()*3,
-	                a: Math.random()*Math.PI*2
-	            }));
-	            (function tick(){
-	                cx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
-	                confetti.forEach(p => {
-	                    p.y += p.v; p.x += Math.sin(p.a)*0.8; p.a += 0.02;
-	                    cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2); cx.fillStyle=p.c; cx.fill();
-	                });
-	                if (confetti.some(p => p.y < confettiCanvas.height + 10)) requestAnimationFrame(tick);
-	            })();
-	        }
+    <script>
+    // ── Toast ──
+    let toastTimer;
+    function showToast(message) {
+        const el = document.getElementById('toast');
+        const text = document.getElementById('toast-text');
+        if (!el || !text) return;
+        clearTimeout(toastTimer);
+        text.textContent = message;
+        el.classList.add('show');
+        toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+    }
 
-		        // Populate dynamic rider and trip info
-		        (function(){
-		            try {
-		                var name = localStorage.getItem('lastRiderName') || 'Passenger';
-		                var phoneRaw = localStorage.getItem('lastRiderPhone') || '';
-		                var email = localStorage.getItem('lastRiderEmail') || '';
-		                var from = localStorage.getItem('lastPickup') || '';
-		                var to = localStorage.getItem('lastDest') || '';
-		                var dist = localStorage.getItem('lastDistanceKm') || '';
-		                var fare = localStorage.getItem('lastFare') || '';
-		                var otp = localStorage.getItem('currentRideOTP') || '';
+    // ── Confetti ──
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const cx = confettiCanvas.getContext('2d');
+    let confetti = [];
+    function resizeCanvas() { confettiCanvas.width = innerWidth; confettiCanvas.height = innerHeight; }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+    function launchConfetti() {
+        confetti = Array.from({length:150}, () => ({
+            x: Math.random()*confettiCanvas.width, y: -10-Math.random()*confettiCanvas.height*0.5,
+            r: 2+Math.random()*4, c: Math.random()<0.5?'#FBBF24':'#FDE68A',
+            v: 1+Math.random()*3, a: Math.random()*Math.PI*2
+        }));
+        (function tick(){
+            cx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+            confetti.forEach(p=>{ p.y+=p.v; p.x+=Math.sin(p.a)*0.8; p.a+=0.02; cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2); cx.fillStyle=p.c; cx.fill(); });
+            if(confetti.some(p=>p.y<confettiCanvas.height+10)) requestAnimationFrame(tick);
+        })();
+    }
 
-                var el;
-                el = document.getElementById('rider-name'); if (el) el.textContent = name;
-                el = document.getElementById('rider-otp'); if (el && otp) el.textContent = otp;
-                el = document.getElementById('rider-avatar'); if (el) { var inl=(name.trim()[0]||'U').toUpperCase(); el.src = 'https://placehold.co/56x56/1f2937/FBBF24?text='+encodeURIComponent(inl); }
-                el = document.getElementById('route-from'); if (el) el.textContent = from || '\u2014';
-                el = document.getElementById('route-to'); if (el) el.textContent = to || '\u2014';
-                el = document.getElementById('chip-distance'); if (el) el.textContent = dist ? (dist+' km') : '\u2014';
-                el = document.getElementById('chip-fare'); if (el) el.textContent = fare ? ('\u20B9'+fare) : '\u2014';
-                // Completion card values
-                el = document.getElementById('comp-from'); if (el) el.textContent = from || '\u2014';
-                el = document.getElementById('comp-to'); if (el) el.textContent = to || '\u2014';
-	                el = document.getElementById('comp-distance'); if (el) el.textContent = dist ? (dist+' km') : '\u2014';
-	                el = document.getElementById('comp-fare'); if (el) el.textContent = fare ? ('\u20B9'+fare) : '\u2014';
+    // ── Elements ──
+    const primaryActionBtn = document.getElementById('primary-action');
+    const expandBtn = document.getElementById('expand-details');
+    const extraDetails = document.getElementById('extra-details');
+    const stepPickup = document.getElementById('step-pickup');
+    const stepInride = document.getElementById('step-inride');
+    const stepDropoff = document.getElementById('step-dropoff');
+    const completionBackdrop = document.getElementById('completion-backdrop');
+    const otpBackdrop = document.getElementById('otp-modal-backdrop');
+    const otpInput = document.getElementById('driver-otp-input');
+    const otpVerifyBtn = document.getElementById('driver-otp-verify');
+    const otpStatus = document.getElementById('driver-otp-status');
+    const otpClose = document.getElementById('otp-close');
+    const liveStats = document.getElementById('live-stats');
+    const paymentWaitingSection = document.getElementById('payment-waiting-section');
+    const paymentReceivedSection = document.getElementById('payment-received-section');
+    const sosModalBackdrop = document.getElementById('sos-modal-backdrop');
 
-	                // Contact links
-	                var cleanPhone = String(phoneRaw || '').replace(/[^\d+]/g, '');
-	                var callHref = cleanPhone ? ('tel:' + cleanPhone) : '';
-	                var msgHref = cleanPhone ? ('sms:' + cleanPhone) : (email ? ('mailto:' + email) : '');
-	                var ftTarget = cleanPhone || email || '';
-	                var ftHref = ftTarget ? ('facetime://' + ftTarget) : '';
+    // ── State ──
+    let state = 'enroute';
+    let telemTimer;
+    let eta = 12;
+    let paymentCheckInterval;
 
-	                function bindLink(id, href, missingMsg) {
-	                    var a = document.getElementById(id);
-	                    if (!a) return;
-	                    if (href) {
-	                        a.href = href;
-	                        a.classList.remove('disabled');
-	                        a.setAttribute('aria-disabled', 'false');
-	                    } else {
-	                        a.href = '#';
-	                        a.classList.add('disabled');
-	                        a.setAttribute('aria-disabled', 'true');
-	                    }
-	                    a.addEventListener('click', function (e) {
-	                        if (!href) {
-	                            e.preventDefault();
-	                            showToast(missingMsg, 'error');
-	                        }
-	                    });
-	                }
+    function setActive(stepEl) {
+        [stepPickup, stepInride, stepDropoff].forEach(s => s.classList.remove('active'));
+        stepEl.classList.add('active');
+    }
+    setActive(stepPickup);
 
-		                bindLink('call-rider', callHref, 'No phone number available for this rider.');
-		                bindLink('message-rider', msgHref, cleanPhone ? 'Unable to open messages.' : (email ? 'Opening email…' : 'No phone/email available for this rider.'));
-		                bindLink('facetime-rider', ftHref, 'FaceTime needs a phone number or email.');
-		            } catch (e) {}
-		        })();
+    // ── Load ride info ──
+    (function loadRideInfo() {
+        const name = localStorage.getItem('lastRiderName') || 'Passenger';
+        const phone = localStorage.getItem('lastRiderPhone') || '';
+        const email = localStorage.getItem('lastRiderEmail') || '';
+        const from = localStorage.getItem('lastPickup') || '';
+        const to = localStorage.getItem('lastDest') || '';
+        const fare = localStorage.getItem('lastFare') || '';
 
-	        // State
-	        let state = 'enroute'; // 'enroute' -> 'arrived' -> 'inride' -> 'completed'
-        function setActive(stepEl){ [stepPickup, stepInride, stepDropoff].forEach(s=>s.classList.remove('active')); stepEl.classList.add('active'); }
-        setActive(stepPickup);
-        primaryActionBtn.addEventListener('click', () => {
-            if (state === 'enroute') {
-                state = 'arrived';
-                primaryActionBtn.textContent = 'Start Ride';
-                primaryActionBtn.classList.add('pulse-soft');
-                setActive(stepPickup);
-            } else if (state === 'arrived') {
-                state = 'inride';
-                primaryActionBtn.textContent = 'End Ride';
-                primaryActionBtn.classList.remove('pulse-soft');
-                setActive(stepInride);
-                startTelemetry();
-                // Start broadcasting driver's live location
-                if (window.LiveGeo && navigator.geolocation) {
-                    LiveGeo.startBroadcast('driverLivePos', { onError: function(msg){ console.warn('Geolocation:', msg); } });
-                }
-            } else if (state === 'inride') {
-                state = 'completed';
-                setActive(stepDropoff);
-                openCompletion(true);
-                launchConfetti();
-                if (window.LiveGeo) LiveGeo.stopBroadcast();
+        const el = (id) => document.getElementById(id);
+        if (el('rider-name')) el('rider-name').textContent = name;
+        if (el('rider-fare')) el('rider-fare').textContent = fare ? '₹'+fare : '—';
+        if (el('rider-avatar')) el('rider-avatar').src = 'https://placehold.co/56x56/1f2937/FBBF24?text='+(name[0]||'U').toUpperCase();
+        if (el('route-from')) el('route-from').textContent = from || '—';
+        if (el('route-to')) el('route-to').textContent = to || '—';
+        if (el('chip-fare')) el('chip-fare').textContent = fare ? '₹'+fare : '—';
+        if (el('comp-from')) el('comp-from').textContent = from || '—';
+        if (el('comp-to')) el('comp-to').textContent = to || '—';
+        if (el('comp-fare')) el('comp-fare').textContent = fare ? '₹'+fare : '—';
+        if (el('detail-pickup')) el('detail-pickup').textContent = from || 'MBU Campus';
+
+        const cleanPhone = phone.replace(/[^\d+]/g, '');
+        const callHref = cleanPhone ? 'tel:'+cleanPhone : '';
+        const msgHref = cleanPhone ? 'sms:'+cleanPhone : (email ? 'mailto:'+email : '');
+
+        function bindContact(id, href, msg) {
+            const a = document.getElementById(id);
+            if (!a) return;
+            if (href) { a.href = href; a.classList.remove('disabled'); }
+            else {
+                a.href = '#'; a.classList.add('disabled');
+                a.addEventListener('click', function(e) { e.preventDefault(); showToast(msg); });
             }
-        });
+        }
+        bindContact('call-rider', callHref, 'No phone number available.');
+        bindContact('message-rider', msgHref, 'No contact info available.');
+        bindContact('video-rider', '', 'Video call not available.');
+    })();
 
-        // Expand/collapse details
-        expandBtn.addEventListener('click', () => {
-            extraDetails.classList.toggle('open');
-            expandBtn.innerHTML = extraDetails.classList.contains('open') ? '<i class="ph-caret-up mr-2"></i>Hide' : '<i class="ph-caret-down mr-2"></i>Details';
-        });
+    // ── OTP Modal ──
+    function toggleOtpModal(show) {
+        otpBackdrop.classList.toggle('visible', show);
+        if (show) { otpInput.value = ''; otpStatus.textContent = ''; otpInput.focus(); }
+    }
+    otpClose.addEventListener('click', () => toggleOtpModal(false));
+    otpBackdrop.addEventListener('click', e => { if (e.target === otpBackdrop) toggleOtpModal(false); });
 
-        // Telemetry simulation
-        let telemTimer; let eta = 12;
-        function startTelemetry(){
+    async function verifyOtp() {
+        const val = (otpInput.value || '').trim();
+        if (val.length !== 4 || /\D/.test(val)) {
+            otpStatus.textContent = 'Enter a valid 4-digit OTP.';
+            otpStatus.style.color = '#f87171';
+            return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        const rideId = localStorage.getItem('currentRideId');
+
+        otpStatus.textContent = 'Verifying...';
+        otpStatus.style.color = '#fbbf24';
+
+        try {
+            const res = await fetch('/api/rides/'+rideId+'/start', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer '+token }
+            });
+            if (!res.ok) throw new Error('Failed to start ride');
+        } catch (e) {
+            console.error('Start ride error:', e);
+        }
+
+        otpStatus.textContent = 'Verified ✓ Starting ride...';
+        otpStatus.style.color = '#34d399';
+
+        setTimeout(() => {
+            state = 'inride';
+            primaryActionBtn.textContent = 'End Ride';
+            primaryActionBtn.classList.remove('pulse-soft');
+            document.getElementById('ride-status-badge').textContent = 'Ride In Progress';
+            setActive(stepInride);
+            liveStats.classList.remove('hidden');
+            startTelemetry();
+            toggleOtpModal(false);
+            showToast('Ride started! Drive safely.');
+        }, 800);
+    }
+
+    otpVerifyBtn.addEventListener('click', verifyOtp);
+    otpInput.addEventListener('keydown', e => { if (e.key === 'Enter') verifyOtp(); });
+
+    // ── Poll for payment ──
+    function startPaymentCheck() {
+        paymentWaitingSection.classList.remove('hidden');
+        paymentCheckInterval = setInterval(() => {
+            const paid = localStorage.getItem('paymentCompleted');
+            if (paid) {
+                clearInterval(paymentCheckInterval);
+                paymentWaitingSection.classList.add('hidden');
+                paymentReceivedSection.classList.remove('hidden');
+                primaryActionBtn.textContent = 'End Ride';
+                primaryActionBtn.disabled = false;
+                primaryActionBtn.classList.add('pulse-soft');
+                showToast('Payment received! You can now end the ride.');
+            }
+        }, 3000);
+    }
+
+    // ── Primary Action ──
+    primaryActionBtn.addEventListener('click', () => {
+        if (state === 'enroute') {
+            state = 'arrived';
+            primaryActionBtn.textContent = 'Verify OTP & Start';
+            primaryActionBtn.classList.add('pulse-soft');
+            document.getElementById('ride-status-badge').textContent = 'Arrived at Pickup';
+            setActive(stepPickup);
+            toggleOtpModal(true);
+
+        } else if (state === 'arrived') {
+            toggleOtpModal(true);
+
+        } else if (state === 'inride') {
+            const paymentCompleted = localStorage.getItem('paymentCompleted');
+            if (!paymentCompleted) {
+                // Mark ride COMPLETED so student gets redirected to payment
+                const token = localStorage.getItem('authToken');
+                const rideId = localStorage.getItem('currentRideId');
+                if (token && rideId) {
+                    fetch('/api/rides/'+rideId+'/status', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+token },
+                        body: JSON.stringify({ status: 'COMPLETED' })
+                    }).catch(err => console.error(err));
+                }
+                primaryActionBtn.textContent = 'Waiting for Payment...';
+                primaryActionBtn.disabled = true;
+                startPaymentCheck();
+                showToast('Student redirected to payment. Please wait...');
+                return;
+            }
+
+            // Payment done - complete ride
+            clearInterval(paymentCheckInterval);
+            state = 'completed';
+            setActive(stepDropoff);
+            document.getElementById('ride-status-badge').textContent = 'Ride Completed';
+            localStorage.removeItem('paymentCompleted');
             clearInterval(telemTimer);
-            telemTimer = setInterval(() => {
-                // Speed
-                const speed = Math.max(18, Math.min(42, Math.round(30 + (Math.random()*14-7))));
-                speedEl.textContent = speed + ' km/h';
-                // Traffic
-                const tLevels = ['Light','Moderate','Heavy'];
-                trafficEl.textContent = tLevels[Math.floor(Math.random()*tLevels.length)];
-                // ETA decrement
-                eta = Math.max(2, eta - (Math.random() < 0.7 ? 1 : 0));
-                etaEl.textContent = eta + ' min';
-            }, 2000);
+            completionBackdrop.classList.add('visible');
+            launchConfetti();
         }
+    });
 
-        // Completion modal toggle
-        function openCompletion(show){
-            completionBackdrop.classList.toggle('visible', show);
-            if (show) completionCard.previousElementSibling.classList.add('visible');
-            else completionCard.previousElementSibling.classList.remove('visible');
-        }
-        completionBackdrop.addEventListener('click', () => openCompletion(false));
+    // ── Expand Details ──
+    expandBtn.addEventListener('click', () => {
+        extraDetails.classList.toggle('open');
+        expandBtn.innerHTML = extraDetails.classList.contains('open')
+            ? '<i class="ph-caret-up mr-2"></i>Hide'
+            : '<i class="ph-caret-down mr-2"></i>Details';
+    });
 
-        // SOS modal
-        function toggleSos(show){
-            sosBackdrop.classList.toggle('visible', show);
-            if (show) sosCard.previousElementSibling.classList.add('visible');
-            else sosCard.previousElementSibling.classList.remove('visible');
-        }
-        sosBtn.addEventListener('click', () => toggleSos(true));
-        sosCancel.addEventListener('click', () => toggleSos(false));
-        sosBackdrop.addEventListener('click', () => toggleSos(false));
-        sosConfirm.addEventListener('click', () => { toggleSos(false); alert('SOS sent. Help is on the way.'); });
+    // ── Telemetry ──
+    function startTelemetry() {
+        clearInterval(telemTimer);
+        telemTimer = setInterval(() => {
+            const speed = Math.max(18, Math.min(42, Math.round(30+(Math.random()*14-7))));
+            document.getElementById('stat-speed').textContent = speed+' km/h';
+            const tLevels = ['Light','Moderate','Heavy'];
+            document.getElementById('stat-traffic').textContent = tLevels[Math.floor(Math.random()*tLevels.length)];
+            eta = Math.max(2, eta-(Math.random()<0.7?1:0));
+            document.getElementById('stat-eta').textContent = eta+' min';
+            document.getElementById('chip-eta').textContent = eta+' min';
+        }, 2000);
+    }
+
+    // ── Completion Modal ──
+    completionBackdrop.addEventListener('click', e => {
+        if (e.target === completionBackdrop) completionBackdrop.classList.remove('visible');
+    });
+
+    // ── SOS ──
+    document.getElementById('sos-btn').addEventListener('click', () => sosModalBackdrop.classList.add('visible'));
+    document.getElementById('sos-cancel').addEventListener('click', () => sosModalBackdrop.classList.remove('visible'));
+    sosModalBackdrop.addEventListener('click', e => { if (e.target === sosModalBackdrop) sosModalBackdrop.classList.remove('visible'); });
+    document.getElementById('sos-confirm').addEventListener('click', () => {
+        sosModalBackdrop.classList.remove('visible');
+        showToast('SOS sent! Help is on the way.');
+    });
     </script>
-    <script defer src="assets/live-geo.js"></script>
-    <script defer src="assets/floating-autos.js"></script>
-
 </body>
 </html>
-
-

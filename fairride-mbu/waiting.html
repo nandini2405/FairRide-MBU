@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finding Driver - FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root { --primary-color: #FBBF24; --bg-color: #111827; --card-bg: rgba(31,41,55,0.6); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-color); color: #e5e7eb; }
+        .card { background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid rgba(251,191,36,0.2); }
+        #map { height: 280px; width: 100%; border-radius: 1.5rem 1.5rem 0 0; z-index: 1; }
+
+        /* Pulsing ring while searching */
+        .pulse-ring {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: rgba(251,191,36,0.1);
+            display: flex; align-items: center; justify-content: center;
+            position: relative; margin: 0 auto;
+        }
+        .pulse-ring::before, .pulse-ring::after {
+            content: ''; position: absolute; border-radius: 50%;
+            border: 2px solid rgba(251,191,36,0.3);
+            animation: pulseOut 2s ease-out infinite;
+        }
+        .pulse-ring::after { animation-delay: 1s; }
+        @keyframes pulseOut {
+            0% { width: 100%; height: 100%; opacity: 1; }
+            100% { width: 220%; height: 220%; opacity: 0; }
+        }
+
+        /* Toast */
+        #toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%) translateY(-20px); opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 9999; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast-card { background: rgba(17,24,39,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 10px 16px; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; display: inline-block; }
+
+        .status-waiting { background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.4); color: #FBBF24; }
+        .status-found { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: #22c55e; }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <header class="p-4">
+        <nav class="container mx-auto flex justify-between items-center">
+            <span class="text-xl font-black text-amber-400">FairRide MBU</span>
+            <button onclick="cancelRide()" class="bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold py-2 px-4 rounded-lg transition-colors text-sm">
+                Cancel
+            </button>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 max-w-lg space-y-4">
+
+        <!-- Status Card (shown when searching) -->
+        <div id="searching-card" class="card p-8 text-center">
+            <div class="pulse-ring mb-5">
+                <i class="ph-magnifying-glass text-4xl text-amber-400"></i>
+            </div>
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-4 status-waiting">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                Looking for driver...
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-2">Finding Your Ride</h1>
+            <p class="text-slate-400 text-sm">Please wait while we connect you with a nearby driver</p>
+            <div class="mt-5">
+                <p class="text-xs text-slate-500">Time elapsed</p>
+                <p id="timer" class="text-3xl font-bold text-amber-400">0:00</p>
+            </div>
+        </div>
+
+        <!-- Map Card (shown after driver accepts) -->
+        <div id="map-card" class="card overflow-hidden hidden">
+            <div id="map"></div>
+            <div class="p-4 border-t border-gray-700/50">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400">Driver is coming to</p>
+                        <p id="pickup-map-text" class="font-semibold text-white">MBU Campus</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400">ETA</p>
+                        <p id="eta-display" class="text-xl font-bold text-amber-400">-- min</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Driver Found Card (hidden initially) -->
+        <div id="driver-found-card" class="card p-5 hidden">
+            <div class="flex items-center gap-2 mb-4">
+                <i class="ph-check-circle-fill text-green-400 text-xl"></i>
+                <p class="font-bold text-green-400">Driver Found!</p>
+            </div>
+            <div class="flex flex-col gap-4">
+    <div class="flex items-center gap-3">
+        <div class="w-14 h-14 rounded-full bg-amber-500/20 border-2 border-amber-500/40 flex items-center justify-center flex-shrink-0">
+            <i class="ph-user text-amber-400 text-2xl"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p id="driver-name-display" class="font-bold text-white text-lg">Your Driver</p>
+            <p id="driver-phone-display" class="text-sm text-green-400 mt-0.5"></p>
+            <p class="text-xs text-slate-500">Auto Rickshaw · 4.8 ⭐</p>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+        <button id="call-driver-btn" class="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 text-white font-bold py-3 rounded-xl transition-colors shadow-lg">
+            <i class="ph-phone-call-fill text-xl"></i>
+            <span>Call Driver</span>
+        </button>
+        <button id="msg-driver-btn" class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 rounded-xl transition-colors shadow-lg">
+            <i class="ph-chat-circle-text-fill text-xl"></i>
+            <span>Message</span>
+        </button>
+    </div>
+</div>            <div class="mt-4 bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 text-center">
+                <p class="text-blue-300 text-sm font-semibold">
+                    <i class="ph-car-profile mr-2"></i>Driver is on the way to your pickup location
+                </p>
+                <p class="text-slate-400 text-xs mt-1">You will be notified when the ride starts</p>
+            </div>
+        </div>
+
+        <!-- Ride Info Card -->
+        <div class="card p-5">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Your Ride</p>
+            <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                    <i class="ph-navigation-arrow text-green-400 text-lg"></i>
+                    <div>
+                        <p class="text-xs text-slate-500">Pickup</p>
+                        <p id="pickup-text" class="font-semibold text-white">MBU Campus</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="ph-map-pin-fill text-red-400 text-lg"></i>
+                    <div>
+                        <p class="text-xs text-slate-500">Destination</p>
+                        <p id="dest-text" class="font-semibold text-white">--</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="ph-currency-inr text-amber-400 text-lg"></i>
+                    <div>
+                        <p class="text-xs text-slate-500">Fare</p>
+                        <p id="fare-text" class="font-semibold text-white">--</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="toast"><div class="toast-card"><span id="toast-text" class="text-sm text-white font-semibold"></span></div></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('authToken');
+        const rideId = localStorage.getItem('currentRideId');
+        const dest = localStorage.getItem('lastDest') || '--';
+        const pickup = localStorage.getItem('lastPickup') || 'MBU Campus';
+        const fare = localStorage.getItem('lastFare') || '--';
+
+        // Populate ride info
+        document.getElementById('dest-text').textContent = dest;
+        document.getElementById('pickup-text').textContent = pickup;
+        document.getElementById('pickup-map-text').textContent = pickup;
+        document.getElementById('fare-text').textContent = fare ? `₹${fare}` : '--';
+
+        if (!token || !rideId) { window.location.href = 'index.html'; return; }
+
+        // Toast
+        let toastTimer;
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            document.getElementById('toast-text').textContent = msg;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        // Timer
+        let seconds = 0;
+        const timerEl = document.getElementById('timer');
+        const timerInterval = setInterval(() => {
+            seconds++;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        }, 1000);
+
+        // Map variables
+        let map = null;
+        let driverMarker = null;
+        let mapInitialized = false;
+        let driverPhone = '';
+        let driverInterval = null;
+
+        // Destination coordinates
+        const MBU = [13.6139, 79.4100];
+        const destCoords = {
+            'tirupati railway station': [13.6374, 79.4210],
+            'railway station': [13.6374, 79.4210],
+            'tirupati bus stand': [13.6356, 79.4195],
+            'bus stand': [13.6356, 79.4195],
+            'tirumala': [13.6837, 79.3472],
+            'padmavathi temple': [13.5967, 79.4017],
+            'tiruchanur': [13.5967, 79.4017],
+            'kapila theertham': [13.6289, 79.3986],
+            'kapila': [13.6289, 79.3986],
+            'iskcon temple': [13.6234, 79.4052],
+            'iskcon': [13.6234, 79.4052],
+            'govindaraja temple': [13.6364, 79.4177],
+            'mangapuram': [13.5990, 79.4055],
+            'dmart': [13.6215, 79.4128],
+        };
+
+        const destKey = dest.toLowerCase().trim();
+        let destLatLng = [13.6374, 79.4210];
+        for (const [key, coords] of Object.entries(destCoords)) {
+            if (destKey.includes(key)) { destLatLng = coords; break; }
+        }
+
+        function initMap() {
+            if (mapInitialized) return;
+            mapInitialized = true;
+
+            map = L.map('map', {
+                center: MBU,
+                zoom: 14, zoomControl: true, attributionControl: false
+            });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+            // You marker
+            const youIcon = L.divIcon({
+                html: `<div style="background:#3b82f6;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 5px rgba(59,130,246,0.3)"></div>`,
+                iconSize: [16,16], iconAnchor: [8,8], className: ''
+            });
+            L.marker(MBU, { icon: youIcon }).addTo(map).bindPopup('📍 Your Location');
+
+            // Driver marker (starts far away, moves towards MBU)
+            const carIcon = L.divIcon({
+                html: `<div style="background:#FBBF24;width:38px;height:38px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px rgba(251,191,36,0.5)">🚗</div>`,
+                iconSize: [38,38], iconAnchor: [19,19], className: ''
+            });
+
+            // Driver starts 2km away and moves towards student
+            const startLat = MBU[0] + 0.02;
+            const startLng = MBU[1] + 0.02;
+            driverMarker = L.marker([startLat, startLng], { icon: carIcon }).addTo(map);
+            driverMarker.bindPopup('🚗 Your Driver (Coming to you)').openPopup();
+
+            // Animate driver moving towards student (MBU)
+            let progress = 0;
+            driverInterval = setInterval(() => {
+                progress = Math.min(progress + 0.05, 0.95);
+                const lat = startLat + (MBU[0] - startLat) * progress;
+                const lng = startLng + (MBU[1] - startLng) * progress;
+                driverMarker.setLatLng([lat, lng]);
+
+                // Update ETA
+                const remainingEta = Math.max(1, Math.round(12 * (1 - progress)));
+                document.getElementById('eta-display').textContent = remainingEta + ' min';
+            }, 4000);
+        }
+
+        // Show driver found UI
+        async function showDriverFound(ride) {
+            // Hide searching card, show map and driver card
+            document.getElementById('searching-card').classList.add('hidden');
+            document.getElementById('map-card').classList.remove('hidden');
+            document.getElementById('driver-found-card').classList.remove('hidden');
+
+            // Initialize map
+            initMap();
+
+            // Get driver info
+            if (ride.driverId && token) {
+                try {
+                    const res = await fetch(`/api/users/${ride.driverId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const driver = await res.json();
+                    if (driver.name) document.getElementById('driver-name-display').textContent = driver.name;
+                    if (driver.phone) {
+                        driverPhone = driver.phone;
+                        localStorage.setItem('driverPhone', driverPhone);
+                        document.getElementById('driver-phone-display').textContent = `📞 ${driverPhone}`;
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            // Set up call/message buttons
+            document.getElementById('call-driver-btn').addEventListener('click', () => {
+                if (driverPhone) window.location.href = `tel:${driverPhone}`;
+                else showToast('Driver phone not available');
+            });
+            document.getElementById('msg-driver-btn').addEventListener('click', () => {
+                if (driverPhone) window.location.href = `sms:${driverPhone}`;
+                else showToast('Driver contact not available');
+            });
+        }
+
+        // Poll ride status every 3 seconds
+        let currentStatus = 'REQUESTED';
+        let pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/rides/${rideId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const ride = await res.json();
+
+                if (ride.status !== currentStatus) {
+                    currentStatus = ride.status;
+
+                    if (ride.status === 'ACCEPTED') {
+                        showDriverFound(ride);
+                        showToast('Driver found! Coming to you...');
+                    } else if (ride.status === 'IN_PROGRESS') {
+                        clearInterval(pollInterval);
+                        clearInterval(timerInterval);
+                        if (driverInterval) clearInterval(driverInterval);
+                        window.location.href = 'tracking.html';
+                    } else if (ride.status === 'CANCELLED') {
+                        clearInterval(pollInterval);
+                        clearInterval(timerInterval);
+                        showToast('Ride cancelled');
+                        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }, 3000);
+
+        // Cancel ride
+        window.cancelRide = async () => {
+            if (!confirm('Cancel this ride?')) return;
+            try {
+                await fetch(`/api/rides/${rideId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ status: 'CANCELLED' })
+                });
+            } catch (e) {}
+            clearInterval(timerInterval);
+            clearInterval(pollInterval);
+            if (driverInterval) clearInterval(driverInterval);
+            window.location.href = 'dashboard.html';
+        };
+    });
+    </script>
+</body>
+</html>

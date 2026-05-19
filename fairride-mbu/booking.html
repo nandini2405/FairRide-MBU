@@ -51,21 +51,73 @@
                             <label for="dropoff" class="block text-sm font-semibold text-slate-300 mb-2">Drop-off Location</label>
                             <input type="text" id="dropoff" class="input-field w-full px-4 py-3" placeholder="Search for a destination...">
                         </div>
-                        <a href="select_ride.html" class="primary-btn w-full font-bold py-3 rounded-lg shadow-lg flex items-center justify-center text-lg mt-4" style="--tw-shadow-color: var(--shadow-color);">Confirm Route</a>
-                    </div>
+<button id="confirm-btn" class="primary-btn w-full font-bold py-3 rounded-lg shadow-lg flex items-center justify-center text-lg mt-4" style="--tw-shadow-color: var(--shadow-color);">Confirm Route</button>
+<p id="error-msg" class="text-red-400 text-sm text-center mt-2 hidden"></p>
+                                           </div>
                 </div>
             </div>
         </main>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const destination = urlParams.get('destination');
-            if (destination) {
-                document.getElementById('dropoff').value = decodeURIComponent(destination);
+       <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const destination = urlParams.get('destination');
+        if (destination) {
+            document.getElementById('dropoff').value = decodeURIComponent(destination);
+        }
+
+        document.getElementById('confirm-btn').addEventListener('click', async () => {
+            const destination = document.getElementById('dropoff').value.trim();
+            const errorMsg = document.getElementById('error-msg');
+
+            if (!destination) {
+                errorMsg.textContent = 'Please enter a destination!';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const btn = document.getElementById('confirm-btn');
+            btn.textContent = 'Booking...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/rides', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ destination, passengers: 1 })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Booking failed');
+
+                // Save ride details for next pages
+                localStorage.setItem('currentRideId', data.id);
+                localStorage.setItem('lastDest', data.destination);
+                localStorage.setItem('lastPickup', data.origin);
+                localStorage.setItem('lastFare', data.fare);
+
+                // Go to select ride page
+                window.location.href = 'select_ride.html';
+
+            } catch (err) {
+                errorMsg.textContent = err.message;
+                errorMsg.classList.remove('hidden');
+                btn.textContent = 'Confirm Route';
+                btn.disabled = false;
             }
         });
-    </script>
+    });
+</script>
     <script defer src="assets/floating-autos.js"></script>
 
 </body>

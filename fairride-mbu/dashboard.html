@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿?<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -499,15 +499,9 @@
 	            // --- Gemini API Configuration ---
 	            // Keep keys out of git. Provide via `assets/ai-config.js` (ignored) or localStorage `fairrideGeminiKey`.
 	            const getGeminiKey = () => {
-	                try {
-	                    const key = (window.FAIRRIDE_GEMINI_KEY || window.FAIRRIDE_GEMINI_API_KEY || localStorage.getItem('fairrideGeminiKey') || '').trim();
-	                    return key;
-	                } catch (_) {
-	                    return '';
-	                }
-	            };
-	            const geminiUrlForKey = (key) =>
-	                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${encodeURIComponent(key || '')}`;
+    return "AIzaSyDWlWYYAeYcz3B97vAcz711lBj1ICi1jtU";
+};	            const geminiUrlForKey = (key) =>
+	                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key || '')}`;
 
 	            // --- Dynamic Greeting ---
 		            const setGreeting = () => {
@@ -580,15 +574,15 @@
             }
 
             function formatTripDateTime(trip) {
-                if (!trip?.date) return '—';
+                if (!trip?.date) return ' ';
                 const iso = `${trip.date}T${trip.time || '00:00'}`;
                 const d = new Date(iso);
                 if (Number.isNaN(d.getTime())) {
-                    return `${trip.date}${trip.time ? ` • ${trip.time}` : ''}`;
+                    return `${trip.date}${trip.time ? `   ${trip.time}` : ''}`;
                 }
                 const dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
                 const timeStr = trip.time ? d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
-                return timeStr ? `${dateStr} • ${timeStr}` : dateStr;
+                return timeStr ? `${dateStr}   ${timeStr}` : dateStr;
             }
 
             function renderScheduledTrips() {
@@ -606,8 +600,8 @@
                     <div class="bg-gray-900/50 border border-gray-700/60 rounded-xl p-4 flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <div class="text-sm text-slate-400 mb-1">${formatTripDateTime(t)}</div>
-                            <div class="text-slate-100 font-semibold truncate"><span class="text-slate-400">Pickup:</span> ${t.pickup || '—'}</div>
-                            <div class="text-slate-100 font-semibold truncate"><span class="text-slate-400">Destination:</span> ${t.destination || '—'}</div>
+                            <div class="text-slate-100 font-semibold truncate"><span class="text-slate-400">Pickup:</span> ${t.pickup || ' '}</div>
+                            <div class="text-slate-100 font-semibold truncate"><span class="text-slate-400">Destination:</span> ${t.destination || ' '}</div>
                         </div>
                         <button data-remove-trip="${t.id}" class="flex-shrink-0 text-xs bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold px-3 py-1.5 rounded-lg">Cancel</button>
                     </div>
@@ -638,37 +632,70 @@
                     });
                 });
                 
-                DOMElements.scheduleRideBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const pickupEl = document.getElementById('schedule-pickup-input');
-                    const destEl = document.getElementById('schedule-destination-input');
-                    const dateEl = document.getElementById('schedule-date');
-                    const timeEl = document.getElementById('schedule-time');
-                    const pickup = (pickupEl?.value || '').trim();
-                    const destination = (destEl?.value || '').trim();
-                    const date = (dateEl?.value || '').trim();
-                    const time = (timeEl?.value || '').trim();
+              DOMElements.scheduleRideBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const pickupEl = document.getElementById('schedule-pickup-input');
+    const destEl = document.getElementById('schedule-destination-input');
+    const dateEl = document.getElementById('schedule-date');
+    const timeEl = document.getElementById('schedule-time');
+    const pickup = (pickupEl?.value || '').trim();
+    const destination = (destEl?.value || '').trim();
+    const date = (dateEl?.value || '').trim();
+    const time = (timeEl?.value || '').trim();
 
-                    if (!pickup || !destination || !date || !time) {
-                        showNotification('Please fill pickup, destination, date and time.', 'error');
-                        return;
-                    }
+    if (!pickup || !destination || !date || !time) {
+        showNotification('Please fill pickup, destination, date and time.', 'error');
+        return;
+    }
 
-                    const trip = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, pickup, destination, date, time, createdAt: Date.now() };
-                    const trips = readScheduledTrips();
-                    trips.push(trip);
-                    writeScheduledTrips(trips);
-                    renderScheduledTrips();
+    const token = localStorage.getItem('authToken');
+    const scheduledAt = `${date}T${time}:00`;
 
-                    // Clear inputs
-                    if (pickupEl) pickupEl.value = '';
-                    if (destEl) destEl.value = '';
-                    if (dateEl) dateEl.value = '';
-                    if (timeEl) timeEl.value = '';
+    try {
+        // Save to database
+        const res = await fetch('/api/scheduled-rides', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                destination,
+                origin: pickup,
+                scheduledAt,
+                passengers: 1
+            })
+        });
 
-                    showNotification('Your ride has been scheduled successfully!', 'success');
-                });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to schedule ride');
 
+        // Also save to localStorage for display
+        const trip = {
+            id: data.id,
+            pickup,
+            destination,
+            date,
+            time,
+            createdAt: Date.now()
+        };
+        const trips = readScheduledTrips();
+        trips.push(trip);
+        writeScheduledTrips(trips);
+        renderScheduledTrips();
+
+        // Clear inputs
+        if (pickupEl) pickupEl.value = '';
+        if (destEl) destEl.value = '';
+        if (dateEl) dateEl.value = '';
+        if (timeEl) timeEl.value = '';
+
+        showNotification('Your ride has been scheduled successfully!', 'success');
+
+    } catch (err) {
+        showNotification(err.message || 'Failed to schedule ride', 'error');
+    }
+});
                 // Clear all scheduled trips
                 document.getElementById('clear-scheduled-btn')?.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -678,15 +705,27 @@
                 });
 
                 // Cancel single scheduled trip
-                document.getElementById('scheduled-trips-list')?.addEventListener('click', (e) => {
-                    const btn = e.target.closest('[data-remove-trip]');
-                    if (!btn) return;
-                    const id = btn.getAttribute('data-remove-trip');
-                    const trips = readScheduledTrips().filter(t => String(t.id) !== String(id));
-                    writeScheduledTrips(trips);
-                    renderScheduledTrips();
-                });
+             document.getElementById('scheduled-trips-list')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-remove-trip]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-remove-trip');
+    const token = localStorage.getItem('authToken');
 
+    // Delete from database
+    try {
+        await fetch(`/api/scheduled-rides/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    } catch (err) {
+        console.error('Failed to delete from database:', err);
+    }
+
+    // Remove from localStorage
+    const trips = readScheduledTrips().filter(t => String(t.id) !== String(id));
+    writeScheduledTrips(trips);
+    renderScheduledTrips();
+});
                 DOMElements.useMyLocBtn.addEventListener('click', () => {
                     if (!navigator.geolocation) { 
                         showNotification('Geolocation is not supported by your browser.');
@@ -742,8 +781,8 @@
             const etaChip = document.getElementById('eta-chip');
 
             function setMetrics(distanceText, durationText) {
-                if (distanceChip) distanceChip.textContent = distanceText ? `Distance: ${distanceText}` : 'Distance: —';
-                if (etaChip) etaChip.textContent = durationText ? `ETA: ${durationText}` : 'ETA: —';
+                if (distanceChip) distanceChip.textContent = distanceText ? `Distance: ${distanceText}` : 'Distance:  ';
+                if (etaChip) etaChip.textContent = durationText ? `ETA: ${durationText}` : 'ETA:  ';
             }
 
             function updatePickupMarker() {
@@ -1090,8 +1129,8 @@
                 contentEl.classList.add('hidden');
 
                 if (!window.google?.maps?.DistanceMatrixService) {
-                    fareEl.textContent = '—';
-                    etaEl.textContent = '—';
+                    fareEl.textContent = ' ';
+                    etaEl.textContent = ' ';
                     justificationEl.textContent = '';
                     loadingEl.classList.add('hidden');
                     contentEl.classList.remove('hidden');
@@ -1114,7 +1153,7 @@
                         
                     } else {
                         // Don't overwrite values already set by directions.
-                        if ((fareEl?.textContent || '').trim() === '' || (fareEl?.textContent || '').trim() === '—') {
+                        if ((fareEl?.textContent || '').trim() === '' || (fareEl?.textContent || '').trim() === ' ') {
                             fareEl.textContent = '\u2014';
                             etaEl.textContent = '\u2014';
                         }
@@ -1218,18 +1257,46 @@
 
                 document.getElementById('cancel-booking-btn').addEventListener('click', () => toggleBookingModal(false));
                 DOMElements.bookingModalBackdrop.addEventListener('click', (e) => { if (e.target === DOMElements.bookingModalBackdrop) toggleBookingModal(false); });
-	                document.getElementById('confirm-booking-btn').addEventListener('click', () => {
-	                    // Seed driver-side mock data so call/message works.
-	                    try {
-	                        const riderName = (localStorage.getItem('currentUserName') || '').trim();
-	                        const riderPhone = (localStorage.getItem('currentUserPhone') || '').trim();
-	                        const riderEmail = (localStorage.getItem('currentUserEmail') || '').trim();
-	                        if (riderName) localStorage.setItem('lastRiderName', riderName);
-	                        if (riderPhone) localStorage.setItem('lastRiderPhone', riderPhone);
-	                        if (riderEmail) localStorage.setItem('lastRiderEmail', riderEmail);
-	                    } catch (_) {}
-	                    window.location.href = 'select_ride.html';
-	                });
+	     document.getElementById('confirm-booking-btn').addEventListener('click', async () => {
+    try {
+        const riderName = (localStorage.getItem('currentUserName') || '').trim();
+        const riderPhone = (localStorage.getItem('currentUserPhone') || '').trim();
+        const riderEmail = (localStorage.getItem('currentUserEmail') || '').trim();
+        if (riderName) localStorage.setItem('lastRiderName', riderName);
+        if (riderPhone) localStorage.setItem('lastRiderPhone', riderPhone);
+        if (riderEmail) localStorage.setItem('lastRiderEmail', riderEmail);
+    } catch (_) {}
+
+    // Book ride via real API
+    const token = localStorage.getItem('authToken');
+    const destination = DOMElements.destinationInput.value.trim();
+    const pickup = DOMElements.pickupInput.value.trim() || 'MBU Campus';
+    const passengers = document.getElementById('passengers')?.value || 1;
+
+    if (token && destination) {
+        try {
+            const res = await fetch('/api/rides', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ destination, passengers: Number(passengers) })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                localStorage.setItem('currentRideId', data.id);
+                localStorage.setItem('lastDest', data.destination);
+                localStorage.setItem('lastPickup', pickup);
+                localStorage.setItem('lastFare', data.fare);
+            }
+        } catch (err) {
+            console.error('Booking failed:', err);
+        }
+    }
+
+    window.location.href = 'select_ride.html';
+});
 	            };
 
 	            const setupOutingPlanner = () => {
@@ -1270,7 +1337,7 @@
 	                        <div>
 	                            <div class="text-lg font-bold text-white">${safeTitle}</div>
 	                            ${safeSubtitle}
-	                            ${items || '<p class="text-sm text-slate-300 mt-3">Try searching for “movie”, “dinner”, “temple”, or “cafe”.</p>'}
+	                            ${items || '<p class="text-sm text-slate-300 mt-3">Try searching for  movie ,  dinner ,  temple , or  cafe .</p>'}
 	                        </div>
 	                    `;
 	                };
@@ -1370,27 +1437,30 @@
 	                        systemInstruction: { parts: [{ text: systemPrompt }] }
 	                    };
 
-	                    try {
-	                        const key = getGeminiKey();
-	                        if (!key) {
-	                            resultEl.innerHTML = fallbackOutingSuggestion(userPrompt);
-	                        } else {
-	                            const response = await fetch(geminiUrlForKey(key), {
-	                                method: 'POST',
-	                                headers: { 'Content-Type': 'application/json' },
-	                                body: JSON.stringify(payload),
-	                            });
-	                            if (!response.ok) throw new Error(`API Error: ${response.status}`);
-	                            const result = await response.json();
-	                            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-	                            resultEl.innerHTML = text
-	                                ? text.replace(/<button/g, "<button class='set-dest-btn mt-3 text-sm bg-amber-500/20 text-amber-300 font-semibold py-2 px-3 rounded-lg hover:bg-amber-500/30 transition-all'")
-	                                : fallbackOutingSuggestion(userPrompt);
-	                        }
-	                    } catch (error) {
-	                        console.warn('Outing planner error:', error);
-	                        resultEl.innerHTML = fallbackOutingSuggestion(userPrompt);
-	                    } finally {
+	                  try {
+    const response = await fetch('/api/ai/outing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userPrompt })
+    });
+
+    if (!response.ok) throw new Error('AI service error');
+    const data = await response.json();
+    const places = data.places || [];
+
+    if (places.length === 0) {
+        resultEl.innerHTML = fallbackOutingSuggestion(userPrompt);
+    } else {
+        resultEl.innerHTML = buildSuggestionHtml({
+            title: 'AI Suggestions for You',
+            subtitle: 'Near MBU / Tirupati',
+            picks: places
+        });
+    }
+} catch (error) {
+    console.warn('Outing planner error:', error);
+    resultEl.innerHTML = fallbackOutingSuggestion(userPrompt);
+}finally {
 	                        loadingEl.classList.add('hidden');
 	                        resultEl.classList.remove('hidden');
 	                    }

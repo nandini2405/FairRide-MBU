@@ -25,31 +25,79 @@ enum Gender {
   OTHER
 }
 
+enum RideStatus {
+  REQUESTED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 model User {
-  id            Int      @id @default(autoincrement())
+  id            Int            @id @default(autoincrement())
   name          String
-  email         String?  @unique
-  phone         String?  @unique
-  studentId     String?  @unique
+  email         String?        @unique
+  phone         String?        @unique
+  studentId     String?        @unique
   gender        Gender?
   passwordHash  String
-  role          Role     @default(RIDER)
+  role          Role           @default(RIDER)
   avatarUrl     String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   driverProfile DriverProfile?
+  ridesAsRider  Ride[]         @relation("RiderRides")
+  ridesAsDriver Ride[]         @relation("DriverRides")
+scheduledRides ScheduledRide[] @relation("ScheduledRides")
 }
 
 model DriverProfile {
-  id               Int                 @id @default(autoincrement())
-  userId           Int                 @unique
-  user             User                @relation(fields: [userId], references: [id])
+  id               Int                @id @default(autoincrement())
+  userId           Int                @unique
+  user             User               @relation(fields: [userId], references: [id])
   vehicleNumber    String?
   licenseNumber    String?
   insuranceNumber  String?
   licenseFileUrl   String?
   insuranceFileUrl String?
-  status           VerificationStatus  @default(PENDING)
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  status           VerificationStatus @default(PENDING)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Ride {
+  id          Int        @id @default(autoincrement())
+  riderId     Int
+  driverId    Int?
+  origin      String     @default("MBU Campus")
+  destination String
+  status      RideStatus @default(REQUESTED)
+  fare        Float?
+  passengers  Int        @default(1)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  rider       User       @relation("RiderRides", fields: [riderId], references: [id])
+  driver      User?      @relation("DriverRides", fields: [driverId], references: [id])
+feedback  Feedback?
+}
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  rideId    Int      @unique
+  rating    Int
+  tags      String[]
+  comment   String?
+  tip       Float    @default(0)
+  createdAt DateTime @default(now())
+  ride      Ride     @relation(fields: [rideId], references: [id])
+}
+model ScheduledRide {
+  id          Int      @id @default(autoincrement())
+  riderId     Int
+  origin      String   @default("MBU Campus")
+  destination String
+  scheduledAt DateTime
+  passengers  Int      @default(1)
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  rider       User     @relation("ScheduledRides", fields: [riderId], references: [id])
 }

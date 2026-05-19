@@ -42,9 +42,13 @@
         </div>
 
         <h2 class="mt-6 text-lg font-semibold text-white">Rate your trip</h2>
-        <div id="stars" class="mt-2 flex items-center gap-2 text-amber-400" role="radiogroup" aria-label="Star Rating">
-          <!-- stars injected via JS -->
-        </div>
+       <div id="stars" class="mt-2 flex items-center gap-2 text-amber-400" role="radiogroup" aria-label="Star Rating">
+  <button type="button" class="star text-3xl" data-star="1">⭐</button>
+  <button type="button" class="star text-3xl" data-star="2">⭐</button>
+  <button type="button" class="star text-3xl" data-star="3">⭐</button>
+  <button type="button" class="star text-3xl" data-star="4">⭐</button>
+  <button type="button" class="star text-3xl" data-star="5">⭐</button>
+</div>
         <p id="rating-hint" class="text-slate-400 text-sm mt-1">Rating is optional.</p>
 
         <h2 class="mt-6 text-lg font-semibold text-white">What stood out?</h2>
@@ -90,26 +94,20 @@
     })();
 
     // Star rating
-    const starsWrap = document.getElementById('stars');
-    let rating = 0;
-    for (let i=1;i<=5;i++){
-      const btn = document.createElement('button');
-      btn.type = 'button'; btn.className = 'star'; btn.setAttribute('role','radio'); btn.setAttribute('aria-checked','false'); btn.title = i + ' star' + (i>1?'s':'');
-      btn.innerHTML = '<i class="ph-star text-3xl"></i>';
-      btn.addEventListener('click', () => setRating(i));
-      starsWrap.appendChild(btn);
-    }
+  const starsWrap = document.getElementById('stars');
+let rating = 0;
+document.querySelectorAll('.star').forEach((btn, idx) => {
+  btn.addEventListener('click', () => setRating(idx + 1));
+});
     function setRating(val){
-      rating = val;
-      [...starsWrap.children].forEach((el, idx) => {
-        const filled = idx < rating;
-        el.innerHTML = `<i class="${filled?'ph-star-fill':'ph-star'} text-3xl"></i>`;
-        el.setAttribute('aria-checked', filled && idx===rating-1 ? 'true':'false');
-        el.style.color = filled ? '#FBBF24' : '#9ca3af';
-      });
-      document.getElementById('rating-hint').textContent = rating ? `You rated ${rating} star${rating>1?'s':''}.` : 'Rating is optional.';
-    }
-
+  rating = val;
+  document.querySelectorAll('.star').forEach((el, idx) => {
+    el.textContent = idx < rating ? '⭐' : '☆';
+    el.style.color = idx < rating ? '#FBBF24' : '#9ca3af';
+    el.style.fontSize = '2rem';
+  });
+  document.getElementById('rating-hint').textContent = rating ? `You rated ${rating} star${rating>1?'s':''}.` : 'Rating is optional.';
+}
     // Tags & Tips
     const selectedTags = new Set();
     document.getElementById('tags').addEventListener('click', (e) => {
@@ -123,15 +121,36 @@
       tip = parseInt(btn.getAttribute('data-tip'),10) || 0;
       document.querySelectorAll('.tip-btn').forEach(b=>b.classList.toggle('active', b===btn));
     });
+async function saveAndRedirect(){
+  document.getElementById('saved-note').classList.remove('hidden');
+  const feedback = (document.getElementById('feedback').value || '').trim();
+  const rideId = localStorage.getItem('currentRideId');
+  const token = localStorage.getItem('authToken');
 
-    function saveAndRedirect(){
-      document.getElementById('saved-note').classList.remove('hidden');
-      const feedback = (document.getElementById('feedback').value || '').trim();
-      const payload = { ts: Date.now(), rating, tags: [...selectedTags], feedback, tip };
-      try { localStorage.setItem('lastRideFeedback', JSON.stringify(payload)); } catch {}
-      setTimeout(() => { window.location.href = 'dashboard.html'; }, 900);
+  if (token && rideId) {
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          rideId: Number(rideId),
+          rating,
+          tags: [...selectedTags],
+          comment: feedback,
+          tip
+        })
+      });
+    } catch (err) {
+      console.error('Failed to save feedback:', err);
     }
-    document.getElementById('submit-btn').addEventListener('click', saveAndRedirect);
+  }
+
+  setTimeout(() => { window.location.href = 'dashboard.html'; }, 900);
+}
+       document.getElementById('submit-btn').addEventListener('click', saveAndRedirect);
     document.getElementById('skip-btn').addEventListener('click', (e)=>{ e.preventDefault(); window.location.href = 'dashboard.html'; });
   </script>
 

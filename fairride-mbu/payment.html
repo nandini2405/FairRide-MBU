@@ -666,17 +666,23 @@
                 }
             }
 
-            function onPaymentSuccess(method, payload) {
-                showError('');
-                setStatus('Payment confirmed! Redirecting you to live tracking...');
-                togglePaymentSuccess(true);
-                try { localStorage.setItem('rideStatus', 'booked'); } catch {}
-                try { localStorage.setItem('lastPaymentMethod', method); } catch {}
-                setTimeout(() => {
-                    window.location.href = 'tracking.html?booked=1';
-                }, 1600);
-            }
+           function onPaymentSuccess(method, payload) {
+    showError('');
+    setStatus('Payment confirmed! Redirecting you to live tracking...');
+    togglePaymentSuccess(true);
+    try { localStorage.setItem('rideStatus', 'booked'); } catch {}
+    try { localStorage.setItem('lastPaymentMethod', method); } catch {}
 
+    // Update ride status to COMPLETED in database
+   // Save payment completion to localStorage
+// Ride status is updated by driver when they complete the ride
+localStorage.setItem('paymentCompleted', 'true');
+localStorage.setItem('paymentMethod', method);
+
+    setTimeout(() => {
+        window.location.href = 'ride_feedback.html';
+    }, 1600);
+}
             async function handleUpiPayment() {
                 setStatus('Creating a secure payment order...');
                 setLoading(true);

@@ -226,8 +226,7 @@
                 </div>
 
                 <div class="mt-8 fade-in-up" style="animation-delay: 1.4s;">
-                     <a id="proceed-to-payment" href="payment.html" class="primary-btn w-full max-w-sm mx-auto font-bold py-3 rounded-lg shadow-lg flex items-center justify-center text-lg" style="--tw-shadow-color: var(--shadow-color);">Proceed to Payment</a>
-                </div>
+                    <button id="proceed-to-payment" class="primary-btn w-full max-w-sm mx-auto font-bold py-3 rounded-lg shadow-lg flex items-center justify-center text-lg" style="--tw-shadow-color: var(--shadow-color);">Request Ride</button>                </div>
             </section>
         </main>
     </div>
@@ -258,15 +257,13 @@
             const baseETAMinutes = parseInt(baseETAString.split(' ')[0]);
 
             const fallbackTiers = { standard: 165, shared: 70, premium: 235 };
-            const tiers = Number.isFinite(storedFare) && storedFare > 0
-                ? {
-                    standard: roundToFive(storedFare),
-                    shared: roundToFive(storedFare * 0.6),
-                    premium: roundToFive(storedFare * 1.35)
-                }
-                : fallbackTiers;
-
-            const etas = Number.isFinite(baseETAMinutes) ? {
+           const tiers = Number.isFinite(storedFare) && storedFare > 0
+    ? {
+        shared: storedFare,                          // API returns shared fare directly
+        standard: roundToFive(storedFare * 2.5),     // full auto = 2.5x shared
+        premium: roundToFive(storedFare * 3.5)       // premium = 3.5x shared
+    }
+    : fallbackTiers;            const etas = Number.isFinite(baseETAMinutes) ? {
                 standard: `${baseETAMinutes - 1}-${baseETAMinutes + 2} min`,
                 shared: `${baseETAMinutes + 2}-${baseETAMinutes + 5} min`,
                 premium: `${baseETAMinutes - 3}-${baseETAMinutes} min`,
@@ -311,6 +308,25 @@
             const storedTier = localStorage.getItem('selectedTier');
             setSelection(storedTier && tiers[storedTier] ? storedTier : 'standard');
         });
+// Handle Request Ride button
+document.getElementById('proceed-to-payment').addEventListener('click', async () => {
+    const token = localStorage.getItem('authToken');
+    const rideId = localStorage.getItem('currentRideId');
+    const selectedTier = localStorage.getItem('selectedTier') || 'standard';
+    const selectedFare = localStorage.getItem('selectedFare');
+
+    if (!token || !rideId) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // Save selected fare and tier
+    localStorage.setItem('lastFare', selectedFare);
+    localStorage.setItem('lastTier', selectedTier);
+
+    // Go to waiting page
+    window.location.href = 'waiting.html';
+});
     </script>
 </body>
 </html>

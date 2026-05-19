@@ -3,373 +3,460 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip Completed • FairRide MBU</title>
+    <title>Live Tracking - FairRide MBU</title>
     <link rel="stylesheet" href="assets/tailwind.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        :root {
-            --primary-color: #FBBF24;
-            --primary-color-transparent-1: rgba(251, 191, 36, 0.2);
-            --bg-color: #111827;
-            --card-bg-color: rgba(31, 41, 55, 0.6);
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: #e5e7eb;
-        }
-        .card {
-            background-color: var(--card-bg-color);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 1.5rem;
-            border: 1px solid var(--primary-color-transparent-1);
-            box-shadow: 0 20px 40px -20px rgba(0,0,0,0.6);
-        }
-        @keyframes fadeInUp { 
-            from { opacity: 0; transform: translateY(20px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-        .fade-in-up { 
-            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        /* Timeline styles */
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: 12px;
-            top: 28px;
-            bottom: -4px;
-            width: 2px;
-            background-color: #4b5563; /* Gray-600 */
-        }
-        .timeline-item:last-child::before {
-            display: none;
-        }
-        /* Modal and Toast */
-        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+        :root { --primary-color: #FBBF24; --bg-color: #111827; --card-bg: rgba(31,41,55,0.6); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-color); color: #e5e7eb; }
+        .card { background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid rgba(251,191,36,0.2); }
+        #map { height: 300px; width: 100%; border-radius: 1.5rem 1.5rem 0 0; z-index: 1; }
+        #toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%) translateY(-20px); opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 9999; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast-card { background: rgba(17,24,39,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 10px 16px; }
+        @keyframes sosPulse { 0%{box-shadow:0 0 0 0 rgba(239,68,68,0.7);} 70%{box-shadow:0 0 0 14px rgba(239,68,68,0);} 100%{box-shadow:0 0 0 0 rgba(239,68,68,0);} }
+        .sos-pulse { animation: sosPulse 1.5s infinite; }
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.25s; display: flex; align-items: center; justify-content: center; padding: 1rem; }
         .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
-        .modal-card { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96); opacity: 0; pointer-events: none; transition: transform 0.25s ease, opacity 0.25s ease; z-index: 101; }
-        .modal-backdrop.visible .modal-card { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
-        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-24px); z-index: 110; opacity: 0; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease; }
-        .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .modal-inner { transform: scale(0.95); transition: transform 0.25s; width: 100%; max-width: 400px; }
+        .modal-backdrop.visible .modal-inner { transform: scale(1); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; display: inline-block; }
+        /* Timeline */
+        .tl-step { display: flex; align-items: center; gap: 0.5rem; color: #cbd5e1; }
+        .tl-dot { width: 12px; height: 12px; border-radius: 50%; background: #475569; transition: all 0.3s; }
+        .tl-step.active .tl-dot { background: #FBBF24; box-shadow: 0 0 10px rgba(251,191,36,0.6); }
+        .tl-line { flex: 1; height: 2px; background: linear-gradient(90deg, rgba(148,163,184,0.3), rgba(251,191,36,0.4)); }
     </style>
 </head>
-<body class="antialiased">
-    <header class="p-4 md:p-6">
+<body class="antialiased min-h-screen">
+
+    <header class="p-4">
         <nav class="container mx-auto flex justify-between items-center">
-            <a href="dashboard.html" class="text-2xl font-black text-slate-50"><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-white to-amber-300">FairRide</span></a>
-            <a href="dashboard.html" class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">Dashboard</a>
+            <span class="text-xl font-black text-amber-400">FairRide MBU</span>
+            <div class="flex items-center gap-2 bg-green-500/15 border border-green-500/30 px-4 py-2 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                <span class="text-green-300 font-semibold text-sm">Ride In Progress</span>
+            </div>
         </nav>
     </header>
 
-    <main class="container mx-auto p-4 md:p-6">
-        <div class="max-w-4xl mx-auto">
-            <div class="text-center mb-8 fade-in-up">
-                <h1 class="text-3xl md:text-4xl font-bold text-white">Trip Completed</h1>
-                <p class="text-slate-400 mt-2">Thanks for riding with us! Here is your trip receipt.</p>
-            </div>
+    <main class="container mx-auto p-4 max-w-lg space-y-4">
 
-            <div id="receipt-card" class="card p-6 md:p-8 fade-in-up" style="animation-delay: 0.2s;">
-                <div class="grid lg:grid-cols-2 gap-8">
-                    <!-- Left Column: Trip Details -->
-                    <div class="space-y-6">
-                        <div>
-                             <img id="route-map-img" src="https://placehold.co/1200x600/1f2937/fbbf24?text=Your+Route" alt="Route map" class="w-full h-48 object-cover rounded-xl">
+        <!-- Timeline -->
+        <div class="card p-4">
+            <div class="flex items-center gap-2">
+                <div class="tl-step active">
+                    <div class="tl-dot"></div>
+                    <span class="text-xs font-semibold">Pickup</span>
+                </div>
+                <div class="tl-line"></div>
+                <div class="tl-step active" id="tl-inride">
+                    <div class="tl-dot"></div>
+                    <span class="text-xs font-semibold">In Ride</span>
+                </div>
+                <div class="tl-line"></div>
+                <div class="tl-step" id="tl-dropoff">
+                    <div class="tl-dot"></div>
+                    <span class="text-xs font-semibold">Dropoff</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Map -->
+        <div class="card overflow-hidden">
+            <div id="map"></div>
+            <div class="p-4 border-t border-gray-700/50">
+                <div class="flex items-center justify-between">
+                    <div class="space-y-2 flex-1">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-navigation-arrow text-green-400"></i>
+                            <span id="pickup-text" class="text-sm text-slate-300">MBU Campus</span>
                         </div>
-                        <div>
-                             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Route</h2>
-                             <div class="flex items-center">
-                                <i class="ph-map-pin-line text-green-400 text-xl mr-3"></i>
-                                <p id="pickup-location" class="font-semibold text-white">MBU Campus</p>
-                            </div>
-                            <div class="ml-3 h-4 border-l-2 border-gray-600"></div>
-                             <div class="flex items-center">
-                                <i class="ph-map-pin-fill text-red-400 text-xl mr-3"></i>
-                                <p id="destination-location" class="font-semibold text-white">Tirupati Railway Station</p>
-                            </div>
-                        </div>
-                        <!-- Timeline -->
-                        <div>
-                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Timeline</h2>
-                            <div class="space-y-4" id="timeline-container">
-                                <!-- Timeline items will be injected here -->
-                            </div>
+                        <div class="flex items-center gap-2">
+                            <i class="ph-map-pin-fill text-red-400"></i>
+                            <span id="dest-text" class="text-sm text-slate-300">--</span>
                         </div>
                     </div>
-                    <!-- Right Column: Financial & Driver -->
-                    <div class="space-y-8">
-                         <div>
-                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Fare Details</h2>
-                            <div class="bg-gray-900/50 p-4 rounded-xl space-y-2 text-sm">
-                                <div class="flex justify-between"><span class="text-slate-300">Base Fare</span><span id="fare-base">--</span></div>
-                                <div class="flex justify-between"><span class="text-slate-300">Distance & Time</span><span id="fare-dist-time">--</span></div>
-                                <div class="flex justify-between"><span class="text-slate-300">Promo Discount</span><span id="fare-promo" class="text-emerald-400">--</span></div>
-                                <div class="flex justify-between font-semibold border-t border-gray-700 pt-2 mt-2"><span class="text-slate-200">Subtotal</span><span id="fare-subtotal">--</span></div>
-                                <div class="flex justify-between text-base font-bold text-white border-t-2 border-amber-400 pt-2 mt-2">
-                                    <span>Total Paid</span>
-                                    <span id="fare-total" class="text-amber-400">--</span>
-                                </div>
-                            </div>
-                        </div>
-                         <div>
-                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Payment & Trip ID</h2>
-                             <div class="bg-gray-900/50 p-4 rounded-xl space-y-3">
-                                <div class="flex items-center gap-4">
-                                    <i id="payment-icon" class="ph-credit-card text-2xl text-amber-400"></i>
-                                    <div>
-                                        <p class="font-semibold text-white" id="payment-method">Paid with Card</p>
-                                        <p class="text-sm text-slate-400" id="payment-details">**** 1234</p>
-                                    </div>
-                                </div>
-                                <div class="border-t border-gray-700 pt-3">
-                                     <p class="text-sm text-slate-400">Ride ID</p>
-                                     <p class="font-semibold text-white mt-1" id="ride-reference">--</p>
-                                </div>
-                            </div>
-                        </div>
-                         <div>
-                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Driver Details</h2>
-                            <div class="flex items-center gap-4">
-                                <img id="driver-avatar" src="https://ui-avatars.com/api/?name=DRV" alt="Driver avatar" class="w-12 h-12 rounded-full border-2 border-gray-600 object-cover">
-                                <div>
-                                    <h3 class="font-bold text-white" id="driver-name">Your Driver</h3>
-                                    <div id="driver-rating" class="flex items-center text-amber-400 mt-1 text-xs"></div>
-                                </div>
-                                <div class="ml-auto text-right">
-                                    <p id="driver-vehicle" class="font-semibold text-white">--</p>
-                                    <p class="text-sm text-slate-400">Vehicle Number</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="border-t border-gray-700 pt-6 space-y-3">
-                            <a href="dashboard.html" class="bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold py-3 px-6 rounded-lg w-full text-center block transition-colors">Book Another Ride</a>
-                            <div class="grid grid-cols-2 gap-3 text-sm">
-                                <button id="download-receipt-btn" class="bg-gray-800/60 hover:bg-gray-700/80 text-slate-300 font-semibold py-2 px-4 rounded-lg transition-colors">Download Receipt</button>
-                                <button id="get-help-btn" class="bg-gray-800/60 hover:bg-gray-700/80 text-slate-300 font-semibold py-2 px-4 rounded-lg transition-colors">Get Help</button>
-                            </div>
-                        </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-500">ETA</p>
+                        <p id="eta-text" class="text-2xl font-bold text-amber-400">-- min</p>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Driver Info + Call/SMS -->
+        <div class="card p-5">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-amber-500/20 border-2 border-amber-500/40 flex items-center justify-center flex-shrink-0">
+                    <i class="ph-user text-amber-400 text-xl"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="driver-name" class="font-bold text-white">Your Driver</p>
+                    <p id="driver-phone-display" class="text-sm text-green-400 mt-0.5"></p>
+                    <p class="text-xs text-slate-500">Auto Rickshaw · 4.8 ⭐</p>
+                </div>
+                <div class="flex gap-2 flex-shrink-0">
+                    <button id="call-driver-btn" class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white hover:bg-green-400 transition-colors shadow-lg shadow-green-500/30" title="Call Driver">
+                        <i class="ph-phone-call-fill text-xl"></i>
+                    </button>
+                    <button id="msg-driver-btn" class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white hover:bg-blue-400 transition-colors shadow-lg shadow-blue-500/30" title="Message Driver">
+                        <i class="ph-chat-circle-text-fill text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Actions -->
+        <div class="card p-5">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-4">Safety</p>
+            <div class="grid grid-cols-3 gap-3">
+                <button id="call-family-btn" class="flex flex-col items-center gap-2 p-4 bg-purple-500/15 border border-purple-500/30 text-purple-300 rounded-xl hover:bg-purple-500/25 transition-colors">
+                    <i class="ph-users-fill text-2xl"></i>
+                    <span class="text-xs font-bold uppercase">Family</span>
+                </button>
+                <button id="share-btn" class="flex flex-col items-center gap-2 p-4 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-xl hover:bg-amber-500/25 transition-colors">
+                    <i class="ph-share-network-fill text-2xl"></i>
+                    <span class="text-xs font-bold uppercase">Share Trip</span>
+                </button>
+                <button id="sos-btn" class="flex flex-col items-center gap-2 p-4 bg-red-600 border border-red-500 text-white rounded-xl sos-pulse">
+                    <i class="ph-warning-octagon-fill text-2xl"></i>
+                    <span class="text-xs font-bold uppercase">SOS</span>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 text-center">
+                <i class="ph-shield-check-fill text-green-400 mr-1"></i>
+                SOS alerts campus security with your live location instantly
+            </p>
+        </div>
+
+        <!-- Trip Details -->
+        <div class="card p-5">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Trip Details</p>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Ride ID</span>
+                    <span id="ride-id-text" class="text-slate-200 font-mono">--</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Pickup</span>
+                    <span id="pickup-detail" class="text-slate-200 text-right">--</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Destination</span>
+                    <span id="dest-detail" class="text-slate-200 text-right">--</span>
+                </div>
+                <div class="flex justify-between border-t border-gray-700 pt-3">
+                    <span class="text-slate-200 font-bold">Total Fare</span>
+                    <span id="fare-detail" class="text-amber-400 font-bold text-lg">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment notice (shown when COMPLETED) -->
+        <div id="payment-notice" class="card p-4 hidden border-green-500/30">
+            <div class="flex items-center gap-3">
+                <i class="ph-check-circle-fill text-green-400 text-2xl"></i>
+                <div>
+                    <p class="font-bold text-white">You have reached your destination!</p>
+                    <p class="text-sm text-slate-400">Redirecting to payment...</p>
+                </div>
+            </div>
+        </div>
+
     </main>
 
-    <!-- Get Help Modal -->
-    <div id="help-modal-backdrop" class="modal-backdrop hidden items-center justify-center p-4">
-        <div class="card w-full max-w-md p-6 space-y-4 modal-card">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-bold text-white">Get Help</h2>
-                <button id="close-help-btn" class="text-slate-400 hover:text-white">&times;</button>
-            </div>
-            <p class="text-sm text-slate-400">Select an issue you need help with:</p>
-            <div class="space-y-2">
-                <button class="help-option w-full text-left bg-gray-800 hover:bg-gray-700 p-3 rounded-lg transition-colors">I lost an item</button>
-                <button class="help-option w-full text-left bg-gray-800 hover:bg-gray-700 p-3 rounded-lg transition-colors">I have an issue with the fare</button>
-                <button class="help-option w-full text-left bg-gray-800 hover:bg-gray-700 p-3 rounded-lg transition-colors">My driver was unprofessional</button>
-                <button class="help-option w-full text-left bg-gray-800 hover:bg-gray-700 p-3 rounded-lg transition-colors">Other</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <div class="card px-5 py-3 flex items-center gap-3 border border-gray-700 bg-gray-900/80">
-            <span id="toast-icon" class="w-8 h-8 rounded-full flex items-center justify-center"></span>
-            <div>
-                <p id="toast-title" class="text-white font-semibold"></p>
-                <p id="toast-sub" class="text-sm text-gray-300"></p>
+    <!-- SOS Modal -->
+    <div id="sos-modal" class="modal-backdrop">
+        <div class="modal-inner">
+            <div class="card p-6 text-center">
+                <div class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                    <i class="ph-warning-octagon-fill text-4xl text-red-400"></i>
+                </div>
+                <h2 class="text-xl font-bold text-white">Emergency SOS</h2>
+                <p class="text-slate-400 mt-2 text-sm">This will immediately alert campus security and share your live location with emergency contacts.</p>
+                <div class="mt-5 space-y-3">
+                    <button id="sos-confirm" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-colors">
+                        <i class="ph-siren-fill mr-2"></i>Send SOS Alert Now
+                    </button>
+                    <button id="sos-close" class="w-full bg-gray-800 text-slate-300 font-semibold py-3 rounded-xl border border-gray-700">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
-    
+
+    <!-- Call Family Modal -->
+    <div id="family-modal" class="modal-backdrop">
+        <div class="modal-inner">
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-white">Call Family</h2>
+                    <button id="family-close" class="text-slate-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <p class="text-slate-400 text-sm mb-4">Enter your family member's phone number to call them.</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs text-slate-400 font-semibold">Phone Number</label>
+                        <input id="family-phone" type="tel" placeholder="Enter phone number" 
+                            class="w-full mt-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-amber-400 text-lg">
+                    </div>
+                    <button id="family-call-btn" class="w-full bg-purple-500 hover:bg-purple-400 text-white font-bold py-3 rounded-xl transition-colors">
+                        <i class="ph-phone-call-fill mr-2"></i>Call Now
+                    </button>
+                    <p class="text-xs text-slate-500 text-center">Your ride details will be shared with them</p>
+                </div>
+                <!-- Quick contacts -->
+                <div class="mt-4 pt-4 border-t border-gray-700">
+                    <p class="text-xs text-slate-400 font-semibold mb-2">Recent Contacts</p>
+                    <div id="quick-contacts" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="share-modal" class="modal-backdrop">
+        <div class="modal-inner">
+            <div class="card p-6 text-center">
+                <i class="ph-share-network-fill text-4xl text-amber-400 mb-3"></i>
+                <h2 class="text-xl font-bold text-white">Share Your Trip</h2>
+                <p class="text-slate-400 mt-1 text-sm mb-4">Share your live trip details with family for safety.</p>
+                <div class="bg-gray-800 rounded-xl p-3 font-mono text-xs text-slate-300 break-all mb-4 text-left" id="share-link-text">--</div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="copy-link" class="bg-amber-500/20 text-amber-300 font-semibold py-2 rounded-xl border border-amber-500/30">
+                        <i class="ph-copy mr-1"></i>Copy Link
+                    </button>
+                    <button id="share-close" class="bg-gray-800 text-slate-300 font-semibold py-2 rounded-xl border border-gray-700">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"><div class="toast-card"><span id="toast-text" class="text-sm text-white font-semibold"></span></div></div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            let toastTimeout;
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = localStorage.getItem('authToken');
+        const rideId = localStorage.getItem('currentRideId');
+        const dest = localStorage.getItem('lastDest') || 'Tirupati Railway Station';
+        const pickup = localStorage.getItem('lastPickup') || 'MBU Campus';
+        const fare = localStorage.getItem('lastFare') || '--';
+        let driverPhone = localStorage.getItem('driverPhone') || '';
+        const driverName = localStorage.getItem('lastRiderName') || 'Your Driver';
 
-            const dom = {
-                driverName: document.getElementById('driver-name'),
-                driverVehicle: document.getElementById('driver-vehicle'),
-                driverRating: document.getElementById('driver-rating'),
-                driverAvatar: document.getElementById('driver-avatar'),
-                rideReference: document.getElementById('ride-reference'),
-                pickupLocation: document.getElementById('pickup-location'),
-                destinationLocation: document.getElementById('destination-location'),
-                routeMapImg: document.getElementById('route-map-img'),
-                timelineContainer: document.getElementById('timeline-container'),
-                fare: {
-                    base: document.getElementById('fare-base'),
-                    distTime: document.getElementById('fare-dist-time'),
-                    promo: document.getElementById('fare-promo'),
-                    subtotal: document.getElementById('fare-subtotal'),
-                    total: document.getElementById('fare-total'),
-                },
-                payment: {
-                    icon: document.getElementById('payment-icon'),
-                    method: document.getElementById('payment-method'),
-                    details: document.getElementById('payment-details'),
-                },
-                downloadBtn: document.getElementById('download-receipt-btn'),
-                helpBtn: document.getElementById('get-help-btn'),
-                helpModal: document.getElementById('help-modal-backdrop'),
-                closeHelpBtn: document.getElementById('close-help-btn'),
-                helpOptions: document.querySelectorAll('.help-option'),
-                toast: {
-                    el: document.getElementById('toast'),
-                    title: document.getElementById('toast-title'),
-                    sub: document.getElementById('toast-sub'),
-                    icon: document.getElementById('toast-icon'),
-                }
-            };
+        // Populate UI
+        document.getElementById('pickup-text').textContent = pickup;
+        document.getElementById('dest-text').textContent = dest;
+        document.getElementById('ride-id-text').textContent = rideId ? `FR-${rideId}` : '--';
+        document.getElementById('pickup-detail').textContent = pickup;
+        document.getElementById('dest-detail').textContent = dest;
+        document.getElementById('fare-detail').textContent = fare ? `₹${fare}` : '--';
+        document.getElementById('driver-name').textContent = driverName;
+        document.getElementById('share-link-text').textContent = `FairRide Trip FR-${rideId} | From: ${pickup} | To: ${dest} | Fare: ₹${fare}`;
 
-            const mockDrivers = [
-                { name: "Rajesh K.", rating: 4.8, vehicle: "AP03 T 4567" },
-                { name: "Suresh V.", rating: 4.9, vehicle: "AP03 W 8921" },
-                { name: "Anand M.", rating: 4.7, vehicle: "AP04 F 1234" },
-            ];
-            
-            const getRandomDriver = () => mockDrivers[Math.floor(Math.random() * mockDrivers.length)];
-            
-            function showToast(title, sub, iconClass = 'ph-info', color = 'amber') {
-                if (!dom.toast.el) return;
-                clearTimeout(toastTimeout);
-                dom.toast.title.textContent = title;
-                dom.toast.sub.textContent = sub;
-                dom.toast.icon.innerHTML = `<i class="${iconClass} text-${color}-400 text-xl"></i>`;
-                dom.toast.el.classList.add('visible');
-                toastTimeout = setTimeout(() => dom.toast.el.classList.remove('visible'), 4000);
-            }
+        // Toast
+        let toastTimer;
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            document.getElementById('toast-text').textContent = msg;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+        }
 
-	            function populateRideDetails() {
-	                const driver = getRandomDriver();
-	                
-	                const pickup = localStorage.getItem('lastPickup') || 'MBU Campus, Tirupati';
-	                const destination = localStorage.getItem('lastDest') || 'Tirupati Railway Station';
-	                const rideId = localStorage.getItem('lastRideId') || `FR-${Date.now()}`;
-	                const totalFare = parseFloat(localStorage.getItem('selectedFare')) || 150;
-	                const paymentMethod = localStorage.getItem('lastPaymentMethod') || 'Card';
-	
-	                // Persist a few details for the feedback page.
-	                try {
-	                    localStorage.setItem('lastRideId', rideId);
-	                    localStorage.setItem('lastDriverName', driver.name);
-	                    localStorage.setItem('lastDriverVehicle', driver.vehicle);
-	                } catch (_) {}
-
-	                // Populate driver info
-	                dom.driverName.textContent = driver.name;
-	                dom.driverVehicle.textContent = driver.vehicle;
-	                dom.driverRating.innerHTML = `<i class="ph-star-fill"></i> ${driver.rating}`;
-                dom.driverAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(driver.name)}&background=374151&color=e5e7eb`;
-                
-                // Populate trip info
-                dom.rideReference.textContent = rideId;
-                dom.pickupLocation.textContent = pickup;
-                dom.destinationLocation.textContent = destination;
-
-                // Update map image
-                const mapText = `start=${encodeURIComponent(pickup)}&end=${encodeURIComponent(destination)}`;
-                dom.routeMapImg.src = `https://placehold.co/1200x600/1f2937/fbbf24?text=${mapText.replace(/%20/g, '+')}`;
-                
-                // Populate fare details
-                const baseFare = 35;
-                const distTimeFare = totalFare - baseFare;
-                dom.fare.base.textContent = `₹${baseFare.toFixed(2)}`;
-                dom.fare.distTime.textContent = `₹${distTimeFare.toFixed(2)}`;
-                dom.fare.promo.textContent = `- ₹0.00`;
-                dom.fare.subtotal.textContent = `₹${totalFare.toFixed(2)}`;
-                dom.fare.total.textContent = `₹${totalFare.toFixed(2)}`;
-
-                // Populate payment method
-                dom.payment.method.textContent = `Paid with ${paymentMethod}`;
-                dom.payment.icon.className = paymentMethod.toLowerCase() === 'wallet' ? 'ph-wallet text-2xl text-amber-400' : 'ph-credit-card text-2xl text-amber-400';
-                dom.payment.details.textContent = paymentMethod.toLowerCase() === 'card' ? `**** 1234` : `FairRide Balance`;
-
-                // Populate timeline
-                const now = new Date();
-                const completionTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                now.setMinutes(now.getMinutes() - 2);
-                const startTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                now.setMinutes(now.getMinutes() - 13);
-                const bookedTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-                const timelineHTML = `
-                    <div class="relative timeline-item"><div class="flex items-center gap-4"><span class="w-6 h-6 flex items-center justify-center bg-gray-700 rounded-full ring-4 ring-gray-900"><i class="ph-timer text-amber-300"></i></span><p class="font-semibold text-white">Ride Booked</p><p class="ml-auto text-sm text-slate-400">${bookedTime}</p></div></div>
-                    <div class="relative timeline-item"><div class="flex items-center gap-4"><span class="w-6 h-6 flex items-center justify-center bg-gray-700 rounded-full ring-4 ring-gray-900"><i class="ph-user text-amber-300"></i></span><p class="font-semibold text-white">Driver Arrived</p><p class="ml-auto text-sm text-slate-400">${startTime}</p></div></div>
-                    <div class="relative timeline-item"><div class="flex items-center gap-4"><span class="w-6 h-6 flex items-center justify-center bg-gray-700 rounded-full ring-4 ring-gray-900"><i class="ph-flag-checkered text-amber-300"></i></span><p class="font-semibold text-white">Trip Completed</p><p class="ml-auto text-sm text-slate-400">${completionTime}</p></div></div>
-                `;
-                dom.timelineContainer.innerHTML = timelineHTML;
-            }
-
-            // Download Receipt Functionality
-            dom.downloadBtn.addEventListener('click', () => {
-                const receiptCard = document.getElementById('receipt-card');
-                let receiptText = "FairRide MBU - Trip Receipt\n";
-                receiptText += "=============================\n\n";
-                
-                receiptText += `Ride ID: ${dom.rideReference.textContent}\n`;
-                receiptText += `Date: ${new Date().toLocaleDateString()}\n\n`;
-
-                receiptText += "ROUTE:\n";
-                receiptText += `- From: ${dom.pickupLocation.textContent}\n`;
-                receiptText += `- To: ${dom.destinationLocation.textContent}\n\n`;
-
-                receiptText += "DRIVER:\n";
-                receiptText += `- Name: ${dom.driverName.textContent}\n`;
-                receiptText += `- Vehicle: ${dom.driverVehicle.textContent}\n\n`;
-
-                receiptText += "FARE DETAILS:\n";
-                receiptText += `- Base Fare: ${dom.fare.base.textContent}\n`;
-                receiptText += `- Distance & Time: ${dom.fare.distTime.textContent}\n`;
-                receiptText += `- Promo Discount: ${dom.fare.promo.textContent}\n`;
-                receiptText += `-----------------------------\n`;
-                receiptText += `- Total Paid: ${dom.fare.total.textContent}\n`;
-                receiptText += `- Payment Method: ${dom.payment.method.textContent}\n`;
-
-                const blob = new Blob([receiptText], { type: 'text/plain' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `FairRide_Receipt_${dom.rideReference.textContent}.txt`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast('Receipt Downloaded', 'Check your downloads folder.', 'ph-download-simple', 'green');
-            });
-
-            // Get Help Functionality
-            dom.helpBtn.addEventListener('click', () => dom.helpModal.classList.add('visible'));
-            dom.closeHelpBtn.addEventListener('click', () => dom.helpModal.classList.remove('visible'));
-            dom.helpModal.addEventListener('click', (e) => {
-                if (e.target === dom.helpModal) dom.helpModal.classList.remove('visible');
-            });
-            dom.helpOptions.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    dom.helpModal.classList.remove('visible');
-                    showToast('Support Request Sent', 'Our team will get back to you shortly.', 'ph-check-circle', 'green');
+        // Get driver phone from API if not in localStorage
+        if (!driverPhone && token && rideId) {
+            try {
+                const rideRes = await fetch(`/api/rides/${rideId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-            });
+                const ride = await rideRes.json();
+                if (ride.driverId) {
+                    const driverRes = await fetch(`/api/users/${ride.driverId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const driver = await driverRes.json();
+                    if (driver.phone) {
+                        driverPhone = driver.phone;
+                        localStorage.setItem('driverPhone', driverPhone);
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }
 
-	            // Initialize
-	            populateRideDetails();
-	
-	            // Auto-redirect to feedback after completion (only when arriving from a booking flow).
-	            (function setupAutoFeedbackRedirect() {
-	                const params = new URLSearchParams(window.location.search);
-	                const shouldRedirect = params.get('booked') === '1' || params.get('autofeedback') === '1';
-	                if (!shouldRedirect) return;
-	
-	                let canceled = false;
-	                const cancel = () => { canceled = true; };
-	                ['click', 'keydown', 'wheel', 'touchstart'].forEach(evt => window.addEventListener(evt, cancel, { once: true, passive: true }));
-	
-	                showToast('Trip completed', 'Redirecting to ride feedback…', 'ph-star', 'amber');
-	                setTimeout(() => {
-	                    if (canceled) return;
-	                    window.location.href = 'ride_feedback.html';
-	                }, 3200);
-	            })();
-	        });
-	    </script>
-	</body>
-	</html>
+        if (driverPhone) {
+            document.getElementById('driver-phone-display').textContent = `📞 ${driverPhone}`;
+        }
+
+        // ── OpenStreetMap ──
+        const MBU = [13.6139, 79.4100];
+        const destCoords = {
+            'tirupati railway station': [13.6374, 79.4210],
+            'railway station': [13.6374, 79.4210],
+            'tirupati bus stand': [13.6356, 79.4195],
+            'bus stand': [13.6356, 79.4195],
+            'tirumala': [13.6837, 79.3472],
+            'tirumala temple': [13.6837, 79.3472],
+            'padmavathi temple': [13.5967, 79.4017],
+            'tiruchanur': [13.5967, 79.4017],
+            'kapila theertham': [13.6289, 79.3986],
+            'kapila': [13.6289, 79.3986],
+            'iskcon temple': [13.6234, 79.4052],
+            'iskcon': [13.6234, 79.4052],
+            'govindaraja temple': [13.6364, 79.4177],
+            'mangapuram': [13.5990, 79.4055],
+            'dmart': [13.6215, 79.4128],
+        };
+
+        const destKey = dest.toLowerCase().trim();
+        let destLatLng = [13.6374, 79.4210];
+        for (const [key, coords] of Object.entries(destCoords)) {
+            if (destKey.includes(key)) { destLatLng = coords; break; }
+        }
+
+        const map = L.map('map', {
+            center: [(MBU[0] + destLatLng[0]) / 2, (MBU[1] + destLatLng[1]) / 2],
+            zoom: 13, zoomControl: true, attributionControl: false
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+        // Icons
+        const youIcon = L.divIcon({
+            html: `<div style="background:#3b82f6;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 5px rgba(59,130,246,0.3)"></div>`,
+            iconSize: [16,16], iconAnchor: [8,8], className: ''
+        });
+        const destIcon = L.divIcon({
+            html: `<div style="font-size:30px">📍</div>`,
+            iconSize: [30,30], iconAnchor: [15,30], className: ''
+        });
+        const carIcon = L.divIcon({
+            html: `<div style="background:#FBBF24;width:38px;height:38px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px rgba(251,191,36,0.5)">🚗</div>`,
+            iconSize: [38,38], iconAnchor: [19,19], className: ''
+        });
+
+        L.marker(MBU, { icon: youIcon }).addTo(map).bindPopup('📍 Pickup: ' + pickup);
+        L.marker(destLatLng, { icon: destIcon }).addTo(map).bindPopup('🏁 ' + dest);
+        L.polyline([MBU, destLatLng], { color: '#FBBF24', weight: 3, opacity: 0.7, dashArray: '8 6' }).addTo(map);
+        map.fitBounds([MBU, destLatLng], { padding: [50, 50] });
+
+        // Animate driver from MBU towards destination
+        let driverMarker = L.marker(MBU, { icon: carIcon }).addTo(map);
+        driverMarker.bindPopup('🚗 Driver').openPopup();
+        let progress = 0;
+        const driverInterval = setInterval(() => {
+            progress = Math.min(progress + 0.03, 0.95);
+            const lat = MBU[0] + (destLatLng[0] - MBU[0]) * progress;
+            const lng = MBU[1] + (destLatLng[1] - MBU[1]) * progress;
+            driverMarker.setLatLng([lat, lng]);
+            if (progress >= 0.9) {
+                document.getElementById('tl-dropoff').classList.add('active');
+            }
+        }, 4000);
+
+        // ETA
+        let eta = 15;
+        function updateEta() { document.getElementById('eta-text').textContent = eta + ' min'; }
+        updateEta();
+        setInterval(() => { if (eta > 1) { eta--; updateEta(); } }, 12000);
+
+        // Poll for COMPLETED status
+        let pollInterval = setInterval(async () => {
+            if (!token || !rideId) return;
+            try {
+                const res = await fetch(`/api/rides/${rideId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const ride = await res.json();
+                if (ride.status === 'COMPLETED') {
+                    clearInterval(pollInterval);
+                    clearInterval(driverInterval);
+                    document.getElementById('tl-dropoff').classList.add('active');
+                    document.getElementById('payment-notice').classList.remove('hidden');
+                    showToast('You have arrived! Redirecting to payment...');
+                    setTimeout(() => { window.location.href = 'payment.html'; }, 2500);
+                }
+            } catch (e) { console.error(e); }
+        }, 3000);
+
+        // ── Call Driver ──
+        document.getElementById('call-driver-btn').addEventListener('click', () => {
+            if (driverPhone) window.location.href = `tel:${driverPhone}`;
+            else showToast('Driver contact not available');
+        });
+
+        // ── Message Driver ──
+        document.getElementById('msg-driver-btn').addEventListener('click', () => {
+            if (driverPhone) window.location.href = `sms:${driverPhone}`;
+            else showToast('Driver contact not available');
+        });
+
+        // ── SOS ──
+        const sosModal = document.getElementById('sos-modal');
+        document.getElementById('sos-btn').addEventListener('click', () => sosModal.classList.add('visible'));
+        document.getElementById('sos-close').addEventListener('click', () => sosModal.classList.remove('visible'));
+        sosModal.addEventListener('click', e => { if (e.target === sosModal) sosModal.classList.remove('visible'); });
+        document.getElementById('sos-confirm').addEventListener('click', () => {
+            sosModal.classList.remove('visible');
+            showToast('🚨 SOS sent! Campus security alerted!');
+            document.body.style.outline = '4px solid #ef4444';
+            setTimeout(() => document.body.style.outline = '', 5000);
+            // Try calling 112
+            setTimeout(() => { window.location.href = 'tel:112'; }, 1000);
+        });
+
+        // ── Call Family ──
+        const familyModal = document.getElementById('family-modal');
+        document.getElementById('call-family-btn').addEventListener('click', () => {
+            familyModal.classList.add('visible');
+            // Load saved contacts
+            const saved = JSON.parse(localStorage.getItem('emergencyContacts') || '[]');
+            const quickContacts = document.getElementById('quick-contacts');
+            if (saved.length > 0) {
+                quickContacts.innerHTML = saved.map(c => `
+                    <button onclick="window.location.href='tel:${c.phone}'" class="w-full flex items-center gap-3 bg-gray-800 hover:bg-gray-700 p-3 rounded-xl text-left transition-colors">
+                        <i class="ph-user-circle text-purple-400 text-xl"></i>
+                        <div>
+                            <p class="text-white font-semibold text-sm">${c.name}</p>
+                            <p class="text-slate-400 text-xs">${c.phone}</p>
+                        </div>
+                        <i class="ph-phone-call text-green-400 ml-auto"></i>
+                    </button>`).join('');
+            } else {
+                quickContacts.innerHTML = '<p class="text-xs text-slate-500">No saved contacts yet.</p>';
+            }
+        });
+        document.getElementById('family-close').addEventListener('click', () => familyModal.classList.remove('visible'));
+        familyModal.addEventListener('click', e => { if (e.target === familyModal) familyModal.classList.remove('visible'); });
+
+        document.getElementById('family-call-btn').addEventListener('click', () => {
+            const phone = document.getElementById('family-phone').value.trim();
+            if (!phone) { showToast('Please enter a phone number'); return; }
+            // Save contact
+            const saved = JSON.parse(localStorage.getItem('emergencyContacts') || '[]');
+            if (!saved.find(c => c.phone === phone)) {
+                saved.unshift({ name: 'Family', phone });
+                if (saved.length > 3) saved.pop();
+                localStorage.setItem('emergencyContacts', JSON.stringify(saved));
+            }
+            familyModal.classList.remove('visible');
+            window.location.href = `tel:${phone}`;
+        });
+
+        // ── Share Trip ──
+        const shareModal = document.getElementById('share-modal');
+        document.getElementById('share-btn').addEventListener('click', () => shareModal.classList.add('visible'));
+        document.getElementById('share-close').addEventListener('click', () => shareModal.classList.remove('visible'));
+        shareModal.addEventListener('click', e => { if (e.target === shareModal) shareModal.classList.remove('visible'); });
+        document.getElementById('copy-link').addEventListener('click', () => {
+            const text = document.getElementById('share-link-text').textContent;
+            navigator.clipboard.writeText(text).then(() => showToast('Trip details copied!')).catch(() => showToast('Could not copy'));
+        });
+    });
+    </script>
+</body>
+</html>

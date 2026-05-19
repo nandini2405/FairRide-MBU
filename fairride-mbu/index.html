@@ -558,8 +558,10 @@
             try {
                 const data = await apiPost('/api/auth/login', payload);
                 localStorage.setItem('authToken', data.token);
+localStorage.setItem('adminToken', data.token);
+localStorage.setItem('currentUserRole', 'ADMIN');
                 cacheCurrentUser(data.user);
-                window.location.href = 'signup_welcome.html';
+                window.location.href = 'admin.html';
             } catch (err) { alert(err.message || 'Login failed'); }
         });
 
@@ -573,6 +575,7 @@
             try {
                 const data = await apiPost('/api/auth/login', payload);
                 localStorage.setItem('authToken', data.token);
+localStorage.setItem('adminToken', data.token);
                 cacheCurrentUser(data.user);
                 window.location.href = 'driver_dashboard.html';
             } catch (err) { alert(err.message || 'Login failed'); }
@@ -589,6 +592,7 @@
             try {
                 const data = await apiPost('/api/auth/login', payload);
                 localStorage.setItem('authToken', data.token);
+localStorage.setItem('adminToken', data.token);
                 cacheCurrentUser(data.user);
                 // Go to Admin Console
                 window.location.href = 'admin.html';
@@ -1056,7 +1060,7 @@
 	            if (fareBreakdownTotal) fareBreakdownTotal.textContent = formatCurrency(components.total);
 
 	            // Auto-scroll the modal to show results after estimating.
-	            try {
+	            try {loc
 	                const modal = document.getElementById('fare-estimator-modal');
 	                requestAnimationFrame(() => {
 	                    try {

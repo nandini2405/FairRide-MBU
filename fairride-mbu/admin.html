@@ -17,13 +17,14 @@
     .badge-pending { background: rgba(251,191,36,.15); color: #FBBF24; border: 1px solid rgba(251,191,36,.35); }
     .badge-verified { background: rgba(16,185,129,.15); color: #34D399; border: 1px solid rgba(16,185,129,.35); }
     .badge-rejected { background: rgba(239,68,68,.15); color: #F87171; border: 1px solid rgba(239,68,68,.35); }
-    .table th, .table td { padding: .75rem .75rem; white-space: nowrap; }
-	    .table thead th { position: sticky; top: 0; background: rgba(31,41,55,0.95); }
-	    .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-20px); z-index: 110; opacity: 0; transition: transform .35s cubic-bezier(0.16,1,0.3,1), opacity .35s ease; }
-	    .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
-	    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-	    .no-scrollbar::-webkit-scrollbar { display: none; }
-	  </style>
+    .table th, .table td { padding: .5rem .5rem; white-space: nowrap; }
+    .table-wrap { overflow-x: auto; }
+    .table thead th { position: sticky; top: 0; background: rgba(31,41,55,0.95); }
+    .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-20px); z-index: 110; opacity: 0; transition: transform .35s cubic-bezier(0.16,1,0.3,1), opacity .35s ease; }
+    .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+  </style>
   <link rel="stylesheet" href="assets/floating-autos.css" />
 </head>
 <body class="antialiased text-slate-200">
@@ -38,19 +39,19 @@
       </nav>
     </header>
 
-	    <main class="container mx-auto p-4 md:p-6 space-y-6">
-	      <!-- Stats -->
-	      <section class="no-scrollbar flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
-	        <div class="card p-5 flex-none w-64"><p class="text-slate-400">Total Drivers</p><p id="stat-total" class="text-3xl font-extrabold text-amber-400">—</p></div>
-	        <div class="card p-5 flex-none w-64"><p class="text-slate-400">Pending</p><p id="stat-pending" class="text-3xl font-extrabold text-amber-400">—</p></div>
-	        <div class="card p-5 flex-none w-64"><p class="text-slate-400">Verified</p><p id="stat-verified" class="text-3xl font-extrabold text-amber-400">—</p></div>
-	        <div class="card p-5 flex-none w-64"><p class="text-slate-400">Rejected</p><p id="stat-rejected" class="text-3xl font-extrabold text-amber-400">—</p></div>
-	      </section>
+    <main class="container mx-auto p-4 md:p-6 space-y-6">
+      <!-- Stats -->
+      <section class="no-scrollbar flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
+        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Total Drivers</p><p id="stat-total" class="text-3xl font-extrabold text-amber-400">—</p></div>
+        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Pending</p><p id="stat-pending" class="text-3xl font-extrabold text-amber-400">—</p></div>
+        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Verified</p><p id="stat-verified" class="text-3xl font-extrabold text-green-400">—</p></div>
+        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Rejected</p><p id="stat-rejected" class="text-3xl font-extrabold text-red-400">—</p></div>
+      </section>
 
       <!-- Controls -->
       <section class="card p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-        <div class="flex items-center gap-2">
-          <input id="search" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 w-64" placeholder="Search by name/email/phone" />
+        <div class="flex flex-wrap items-center gap-2">
+          <input id="search" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 w-56" placeholder="Search by name/email/phone" />
           <select id="filter-status" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
             <option value="">All</option>
             <option value="PENDING">Pending</option>
@@ -60,6 +61,7 @@
           <button id="refresh" class="bg-gray-700 hover:bg-gray-600 text-slate-200 font-semibold px-3 py-2 rounded-lg">Refresh</button>
         </div>
         <div class="flex items-center gap-2">
+          <span id="last-refresh" class="text-xs text-slate-500"></span>
           <button id="export-csv" class="bg-amber-400 hover:bg-amber-300 text-gray-900 font-semibold px-3 py-2 rounded-lg">Export CSV</button>
         </div>
       </section>
@@ -67,20 +69,22 @@
       <!-- Drivers Table -->
       <section class="card overflow-hidden">
         <div class="overflow-auto" style="max-height: 60vh;">
-          <table class="table w-full text-sm">
-            <thead>
-              <tr class="text-slate-300">
-                <th class="text-left">Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Vehicle</th>
-                <th>Status</th>
-                <th>Docs</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="drivers-body"></tbody>
-          </table>
+          <div class="table-wrap">
+            <table class="table w-full text-sm">
+              <thead>
+                <tr class="text-slate-300">
+                  <th class="text-left">Name</th>
+                  <th>Phone</th>
+                  <th>Email</th>
+                  <th>Vehicle</th>
+                  <th>Status</th>
+                  <th>Docs</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="drivers-body"></tbody>
+            </table>
+          </div>
         </div>
       </section>
     </main>
@@ -95,173 +99,190 @@
   </div>
 
   <script>
-    // API base resolution with offline fallback
-    let API_BASE = window.API_BASE || null;
+    let API_BASE = null;
     let OFFLINE = false;
+
     async function resolveApiBase() {
       if (API_BASE) return API_BASE;
-      const candidates = [window.API_BASE, location.origin, `${location.protocol}//${location.hostname}:3001`, 'http://127.0.0.1:3001', 'http://localhost:3001'].filter(Boolean);
+      const candidates = [location.origin, location.protocol + '//' + location.hostname + ':3001', 'http://127.0.0.1:3001', 'http://localhost:3001'];
       for (const base of [...new Set(candidates)]) {
-        try { const res = await fetch(base.replace(/\/$/, '') + '/api/health', { cache: 'no-store' }); if (res.ok) { API_BASE = base; break; } } catch(_){}
+        try {
+          const res = await fetch(base + '/api/health', { cache: 'no-store' });
+          if (res.ok) { API_BASE = base; return API_BASE; }
+        } catch(_) {}
       }
-      if (!API_BASE) OFFLINE = true;
-      return API_BASE;
+      OFFLINE = true;
+      return null;
     }
-    function readLS(key, fallback){ try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } }
-    function writeLS(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
-    // Minimal offline mock API
-    async function mockApi(path, opts={}) {
-      const method = (opts.method || 'GET').toUpperCase();
-      if (path === '/api/users/me') { return { id: 0, name: localStorage.getItem('currentUserName') || 'Admin', role: 'ADMIN' }; }
-      if (path.startsWith('/api/admin/drivers')) {
-        let drivers = readLS('offlineDrivers', null);
-        if (!drivers) {
-          // Seed some demo drivers
-          drivers = [
-            { id: 1, name: 'Ramesh Kumar', email: '', phone: '+919999900001', createdAt: new Date().toISOString(), driverProfile: { vehicleNumber: 'AP03N1234', status: 'PENDING', updatedAt: new Date().toISOString() } },
-            { id: 2, name: 'Priya Sharma', email: 'priya@example.com', phone: '+919999900002', createdAt: new Date().toISOString(), driverProfile: { vehicleNumber: 'AP03K4321', status: 'VERIFIED', updatedAt: new Date().toISOString() } },
-            { id: 3, name: 'Arjun Verma', email: '', phone: '+919999900003', createdAt: new Date().toISOString(), driverProfile: { vehicleNumber: 'AP03M7777', status: 'REJECTED', updatedAt: new Date().toISOString() } },
-          ];
-          writeLS('offlineDrivers', drivers);
-        }
-        if (method === 'GET') {
-          return { drivers };
-        }
-        // Mutations
-        const m = path.match(/\/api\/admin\/drivers\/(\d+)(?:\/(verify|reject))?/);
-        if (m) {
-          const id = parseInt(m[1], 10);
-          const action = m[2];
-          if (method === 'POST' && action) {
-            drivers = drivers.map(d => d.id === id ? { ...d, driverProfile: { ...d.driverProfile, status: action === 'verify' ? 'VERIFIED' : 'REJECTED' } } : d);
-            writeLS('offlineDrivers', drivers);
-            return { ok: true };
-          }
-          if (method === 'DELETE') {
-            drivers = drivers.filter(d => d.id !== id);
-            writeLS('offlineDrivers', drivers);
-            return { ok: true };
-          }
-        }
-      }
-      if (path === '/api/admin/notify' && method === 'POST') return { ok: true };
-      throw new Error('Offline: endpoint not available');
-    }
-    async function api(path, opts={}) {
+
+    async function api(path, opts = {}) {
       const base = await resolveApiBase();
-      if (OFFLINE || !base) return mockApi(path, opts);
-      const url = base.replace(/\/$/, '') + path;
-      const token = localStorage.getItem('authToken') || '';
-      const res = await fetch(url, { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, ...opts });
-      const text = await res.text(); let data = null; try { data = text ? JSON.parse(text) : null; } catch(_){}
-      if (!res.ok) throw new Error((data && (data.error||data.message)) || text || `HTTP ${res.status}`);
+      if (!base) throw new Error('No API available');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken') || '';
+      const res = await fetch(base + path, {
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        ...opts
+      });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch(_) {}
+      if (!res.ok) throw new Error((data && (data.error || data.message)) || 'HTTP ' + res.status);
       return data;
     }
 
     const toast = document.getElementById('toast');
-    function showToast(t){ document.getElementById('toast-text').textContent = t; toast.classList.add('visible'); setTimeout(()=>toast.classList.remove('visible'), 2500); }
-    document.getElementById('toast-close').addEventListener('click', ()=> toast.classList.remove('visible'));
+    function showToast(t) {
+      document.getElementById('toast-text').textContent = t;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2500);
+    }
+    document.getElementById('toast-close').addEventListener('click', () => toast.classList.remove('visible'));
 
-    function badge(status){
-      const s = (status||'').toUpperCase();
-      const cls = s==='VERIFIED'?'badge-verified':s==='REJECTED'?'badge-rejected':'badge-pending';
-      return `<span class="badge ${cls}">${s||'PENDING'}</span>`;
+    function badge(status) {
+      const s = (status || 'PENDING').toUpperCase();
+      const cls = s === 'VERIFIED' ? 'badge-verified' : s === 'REJECTED' ? 'badge-rejected' : 'badge-pending';
+      return '<span class="badge ' + cls + '">' + s + '</span>';
     }
 
-    function phoneLink(p){ return p ? `<a href="tel:${p}" class="text-amber-300 hover:underline">${p}</a>` : '-'; }
-    function emailLink(e){ return e ? `<a href="mailto:${e}" class="text-amber-300 hover:underline">${e}</a>` : '-'; }
-    function docLink(url, icon){ return url ? `<a href="${url}" target="_blank" class="text-amber-300" title="View"><i class="${icon}"></i></a>` : '<span class="text-slate-500">—</span>'; }
+    function phoneLink(p) { return p ? '<a href="tel:' + p + '" class="text-amber-300 hover:underline">' + p + '</a>' : '-'; }
+    function emailLink(e) { return e ? '<a href="mailto:' + e + '" class="text-amber-300 hover:underline">' + e + '</a>' : '-'; }
+    function docLink(url, icon) { return url ? '<a href="' + url + '" target="_blank" class="text-amber-300" title="View"><i class="' + icon + '"></i></a>' : '<span class="text-slate-500">—</span>'; }
 
-    function renderRows(list){
+    function renderRows(list) {
       const tbody = document.getElementById('drivers-body');
+      if (!list || list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-slate-400 py-8">No drivers found</td></tr>';
+        return;
+      }
       tbody.innerHTML = list.map(d => {
         const id = d.id;
         const prof = d.driverProfile || {};
-        return `<tr class="border-t border-gray-700/60">
-          <td class="text-slate-100">${d.name || '—'}</td>
-          <td class="text-center">${phoneLink(d.phone)}</td>
-          <td class="text-center">${emailLink(d.email)}</td>
-          <td class="text-center">${prof.vehicleNumber || '—'}</td>
-          <td class="text-center">${badge(prof.status)}</td>
-          <td class="text-center flex items-center gap-3 justify-center py-3">${docLink(prof.licenseFileUrl,'ph-identification-badge-fill')} ${docLink(prof.insuranceFileUrl,'ph-file-text-fill')}</td>
-          <td class="text-center">
-            <div class="inline-flex items-center gap-2">
-              <button data-action="verify" data-id="${id}" class="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 font-semibold px-3 py-1.5 rounded-lg">Verify</button>
-              <button data-action="reject" data-id="${id}" class="bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold px-3 py-1.5 rounded-lg">Reject</button>
-              <button data-action="contact" data-id="${id}" data-phone="${d.phone||''}" class="bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 font-semibold px-3 py-1.5 rounded-lg">Contact</button>
-              <button data-action="remove" data-id="${id}" class="bg-gray-700 hover:bg-gray-600 text-slate-200 font-semibold px-3 py-1.5 rounded-lg">Remove</button>
-            </div>
-          </td>
-        </tr>`;
+        return '<tr class="border-t border-gray-700/60">' +
+          '<td class="text-slate-100">' + (d.name || '—') + '</td>' +
+          '<td class="text-center">' + phoneLink(d.phone) + '</td>' +
+          '<td class="text-center">' + emailLink(d.email) + '</td>' +
+          '<td class="text-center">' + (prof.vehicleNumber || '—') + '</td>' +
+          '<td class="text-center">' + badge(prof.status) + '</td>' +
+          '<td class="text-center">' + docLink(prof.licenseFileUrl, 'ph-identification-badge-fill') + ' ' + docLink(prof.insuranceFileUrl, 'ph-file-text-fill') + '</td>' +
+          '<td class="text-center"><div class="inline-flex items-center gap-1">' +
+          '<button data-action="verify" data-id="' + id + '" class="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 font-semibold px-2 py-1 rounded-lg text-xs">✓ Verify</button>' +
+          '<button data-action="reject" data-id="' + id + '" class="bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold px-2 py-1 rounded-lg text-xs">✗ Reject</button>' +
+          '<button data-action="remove" data-id="' + id + '" class="bg-gray-700 hover:bg-gray-600 text-slate-200 font-semibold px-2 py-1 rounded-lg text-xs">🗑</button>' +
+          '</div></td>' +
+          '</tr>';
       }).join('');
     }
 
-    function csvEscape(v){ if(v==null) return ''; const s=String(v).replaceAll('"','""'); return `"${s}"`; }
-    function downloadCSV(rows){
-      const header = ['id','name','phone','email','vehicle','status'];
-      const lines = [header.join(',')].concat(rows.map(d => [d.id,d.name,d.phone,d.email,d.driverProfile?.vehicleNumber||'',d.driverProfile?.status||''].map(csvEscape).join(',')));
-      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='drivers.csv'; a.click(); URL.revokeObjectURL(url);
+    function updateStats(drivers) {
+      document.getElementById('stat-total').textContent = drivers.length;
+      document.getElementById('stat-pending').textContent = drivers.filter(d => (d.driverProfile?.status || 'PENDING') === 'PENDING').length;
+      document.getElementById('stat-verified').textContent = drivers.filter(d => d.driverProfile?.status === 'VERIFIED').length;
+      document.getElementById('stat-rejected').textContent = drivers.filter(d => d.driverProfile?.status === 'REJECTED').length;
+      const lastRefresh = document.getElementById('last-refresh');
+      if (lastRefresh) lastRefresh.textContent = 'Updated: ' + new Date().toLocaleTimeString();
     }
 
-    async function fetchDrivers(){
+    async function fetchDrivers() {
       const st = document.getElementById('filter-status').value;
       const q = document.getElementById('search').value.trim();
-      const params = new URLSearchParams(); if (st) params.set('status', st); if (q) params.set('q', q);
-      const data = await api('/api/admin/drivers' + (params.toString()?`?${params.toString()}`:''));
-      const drivers = data.drivers || [];
-      renderRows(drivers);
-      // Update stats
-      document.getElementById('stat-total').textContent = drivers.length;
-      document.getElementById('stat-pending').textContent = drivers.filter(d=> (d.driverProfile?.status||'PENDING')==='PENDING').length;
-      document.getElementById('stat-verified').textContent = drivers.filter(d=> d.driverProfile?.status==='VERIFIED').length;
-      document.getElementById('stat-rejected').textContent = drivers.filter(d=> d.driverProfile?.status==='REJECTED').length;
-      return drivers;
+      const params = new URLSearchParams();
+      if (st) params.set('status', st);
+      if (q) params.set('q', q);
+      try {
+        const data = await api('/api/admin/drivers' + (params.toString() ? '?' + params.toString() : ''));
+        const drivers = data.drivers || [];
+        renderRows(drivers);
+        updateStats(drivers);
+        return drivers;
+      } catch(e) {
+        console.error('fetchDrivers error:', e);
+        throw e;
+      }
     }
 
-	    async function init(){
-	      // Ensure admin token or offline admin
-	      const base = await resolveApiBase();
-	      const apiPill = document.getElementById('api-pill');
-	      if (apiPill) {
-	        if (base) {
-	          apiPill.textContent = `API: ${base}`;
-	          apiPill.classList.remove('hidden');
-	        } else {
-	          apiPill.textContent = '';
-	          apiPill.classList.add('hidden');
-	        }
-	      }
-	      if (OFFLINE) {
-	        const role = localStorage.getItem('currentUserRole') || '';
-	        if ((role || '').toUpperCase() !== 'ADMIN') { alert('Please login as Admin.'); window.location.href = 'index.html'; return; }
-	      } else {
-        try {
-          const me = await api('/api/users/me');
-          if (!me || me.role !== 'ADMIN') { window.location.href = 'index.html'; return; }
-        } catch (e) { alert('Please login as Admin.'); window.location.href = 'index.html'; return; }
+    function csvEscape(v) { if (v == null) return ''; const s = String(v).replaceAll('"', '""'); return '"' + s + '"'; }
+    function downloadCSV(rows) {
+      const header = ['id', 'name', 'phone', 'email', 'vehicle', 'status'];
+      const lines = [header.join(',')].concat(rows.map(d => [d.id, d.name, d.phone, d.email, d.driverProfile?.vehicleNumber || '', d.driverProfile?.status || ''].map(csvEscape).join(',')));
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'drivers.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function init() {
+      const base = await resolveApiBase();
+      const apiPill = document.getElementById('api-pill');
+
+      if (base) {
+        if (apiPill) { apiPill.textContent = 'API: ' + base; apiPill.classList.remove('hidden'); }
+      } else {
+        if (apiPill) apiPill.classList.add('hidden');
+        alert('Cannot connect to server. Please make sure the server is running.');
+        return;
       }
 
+      // Check admin auth
+      try {
+        const me = await api('/api/users/me');
+        if (!me || me.role !== 'ADMIN') {
+          window.location.href = 'index.html';
+          return;
+        }
+        localStorage.setItem('currentUserRole', 'ADMIN');
+      } catch (e) {
+        // Check cached role as fallback
+        const cachedRole = localStorage.getItem('currentUserRole');
+        if (cachedRole !== 'ADMIN') {
+          alert('Please login as Admin.');
+          window.location.href = 'index.html';
+          return;
+        }
+      }
+
+      // Load drivers
       await fetchDrivers();
 
+      // ✅ Auto refresh every 10 seconds
+      setInterval(async () => {
+        try { await fetchDrivers(); } catch(e) { console.error('Auto refresh error:', e); }
+      }, 10000);
+
+      // Event listeners
       document.getElementById('refresh').addEventListener('click', fetchDrivers);
       document.getElementById('filter-status').addEventListener('change', fetchDrivers);
-      document.getElementById('search').addEventListener('input', () => { clearTimeout(window.__t); window.__t=setTimeout(fetchDrivers, 350); });
-      document.getElementById('export-csv').addEventListener('click', async () => { const rows = await fetchDrivers(); downloadCSV(rows); });
-      document.getElementById('logout').addEventListener('click', () => { try { localStorage.removeItem('authToken'); } catch(_){} window.location.href='index.html'; });
-
+      document.getElementById('search').addEventListener('input', () => {
+        clearTimeout(window.__searchTimer);
+        window.__searchTimer = setTimeout(fetchDrivers, 350);
+      });
+      document.getElementById('export-csv').addEventListener('click', async () => {
+        const rows = await fetchDrivers();
+        downloadCSV(rows);
+      });
+      document.getElementById('logout').addEventListener('click', () => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('currentUserRole');
+        window.location.href = 'index.html';
+      });
       document.getElementById('drivers-body').addEventListener('click', async (e) => {
-        const btn = e.target.closest('button[data-action]'); if (!btn) return;
-        const id = btn.getAttribute('data-id'); const action = btn.getAttribute('data-action');
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
         try {
-          if (action === 'verify') { await api(`/api/admin/drivers/${id}/verify`, { method: 'POST' }); showToast('Driver verified'); }
-          else if (action === 'reject') { await api(`/api/admin/drivers/${id}/reject`, { method: 'POST' }); showToast('Driver rejected'); }
-          else if (action === 'remove') { if (!confirm('Remove this driver?')) return; await api(`/api/admin/drivers/${id}`, { method: 'DELETE' }); showToast('Driver removed'); }
-          else if (action === 'contact') { const phone = btn.getAttribute('data-phone'); if (phone) { window.location.href = `tel:${phone}`; } else { alert('No phone available'); } }
+          if (action === 'verify') { await api('/api/admin/drivers/' + id + '/verify', { method: 'POST' }); showToast('✓ Driver verified!'); }
+          else if (action === 'reject') { await api('/api/admin/drivers/' + id + '/reject', { method: 'POST' }); showToast('✗ Driver rejected'); }
+          else if (action === 'remove') {
+            if (!confirm('Remove this driver permanently?')) return;
+            await api('/api/admin/drivers/' + id, { method: 'DELETE' });
+            showToast('Driver removed');
+          }
           await fetchDrivers();
         } catch (err) { alert(err.message || 'Action failed'); }
       });
     }
+
     init();
   </script>
 
