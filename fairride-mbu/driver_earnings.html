@@ -17,7 +17,7 @@
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in-up { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
     </style>
-    <link rel="stylesheet" href="assets/floating-autos.css">
+    
 </head>
 <body class="antialiased text-slate-200">
     <div class="min-h-screen">
@@ -58,8 +58,8 @@
                     <canvas id="weekly-chart"></canvas>
                 </div>
                 <div class="mt-4 text-sm text-slate-300 flex flex-wrap gap-3">
-                    <span id="weekly-total" class="bg-amber-500/10 text-amber-300 font-semibold px-3 py-1 rounded-full">Total: —</span>
-                    <span id="weekly-best" class="bg-amber-500/10 text-amber-300 font-semibold px-3 py-1 rounded-full">Best day: —</span>
+                    <span id="weekly-total" class="bg-amber-500/10 text-amber-300 font-semibold px-3 py-1 rounded-full">Total: �</span>
+                    <span id="weekly-best" class="bg-amber-500/10 text-amber-300 font-semibold px-3 py-1 rounded-full">Best day: �</span>
                 </div>
             </div>
 
@@ -73,7 +73,7 @@
         </main>
     </div>
 
-    <script defer src="assets/floating-autos.js"></script>
+    
     <script>
     document.addEventListener('DOMContentLoaded', async () => {
         const token = localStorage.getItem('authToken');
@@ -165,3 +165,4 @@
     </script>
 </body>
 </html>
+

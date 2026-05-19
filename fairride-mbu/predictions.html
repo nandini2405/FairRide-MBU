@@ -167,7 +167,7 @@
             }
         };
 
-        // ── Real Stats ──
+        // -- Real Stats --
         const loadRealStats = async () => {
             try {
                 const res = await fetch('/api/stats');
@@ -227,7 +227,7 @@ if (stats.surgePct !== undefined) {
             }
         };
 
-        // ── Real Hourly Data ──
+        // -- Real Hourly Data --
         const loadRealHourlyData = async () => {
             try {
                 const res = await fetch('/api/stats/hourly');
@@ -242,7 +242,7 @@ if (stats.surgePct !== undefined) {
             }
         };
 
-        // ── Fare Index ──
+        // -- Fare Index --
         const updateFareIndex = () => {
             const baseRate = 12;
             const surge = 1 + (currentSurgeChance / 100);
@@ -261,7 +261,7 @@ if (stats.surgePct !== undefined) {
                 </div>`;
         };
 
-        // ── Surge ──
+        // -- Surge --
         const updateSurge = () => {
             const hour = new Date().getHours();
             const dayType = document.getElementById('dayTypeSelector').value;
@@ -289,7 +289,7 @@ if (stats.surgePct !== undefined) {
             updateFareIndex();
         };
 
-        // ── Weather ──
+        // -- Weather --
         const updateWeather = async () => {
             const el = document.getElementById('weather-impact');
             try {
@@ -328,7 +328,7 @@ if (stats.surgePct !== undefined) {
             }
         };
 
-        // ── Live Alerts ──
+        // -- Live Alerts --
         const updateAlerts = async () => {
             const hour = new Date().getHours();
             const el = document.getElementById('events-list');
@@ -412,7 +412,7 @@ if (stats.surgePct !== undefined) {
             el.innerHTML = html || '<li class="text-slate-400 text-sm">No active alerts right now.</li>';
         };
 
-        // ── Chart ──
+        // -- Chart --
         const initChart = () => {
             const ctx = document.getElementById('mainChart').getContext('2d');
             mainChartInstance = new Chart(ctx, {
@@ -472,7 +472,7 @@ if (stats.surgePct !== undefined) {
                 new Date().toLocaleString('en-US', { weekday: 'short', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         };
 
-        // ── Listeners ──
+        // -- Listeners --
         document.getElementById('dayTypeSelector').addEventListener('change', updateMainChart);
         document.getElementById('demandTab').addEventListener('click', () => {
             document.getElementById('demandTab').classList.add('active');
@@ -485,7 +485,7 @@ if (stats.surgePct !== undefined) {
             updateMainChart();
         });
 
-        // ── Init ──
+        // -- Init --
         const init = async () => {
             updateTime();
             initChart();
@@ -506,3 +506,4 @@ if (stats.surgePct !== undefined) {
     </script>
 </body>
 </html>
+

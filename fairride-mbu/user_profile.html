@@ -28,7 +28,7 @@
         .toast-success { background: rgba(5, 150, 105, 0.95); }
         .toast-error { background: rgba(190, 18, 60, 0.95); }
     </style>
-    <link rel="stylesheet" href="assets/floating-autos.css">
+    
 </head>
 <body class="antialiased text-slate-200">
     <div class="min-h-screen">
@@ -145,7 +145,7 @@
         // Toast helper
         function showToast(message, type='info'){
             const toast = document.createElement('div');
-            toast.className = `toast ${type==='success'?'toast-success':''} ${type==='error'?'toast-error':''}`;
+            toast.className = `toast ${type==='success'₹'toast-success':''} ${type==='error'₹'toast-error':''}`;
             toast.textContent = message;
             document.body.appendChild(toast);
             // force reflow then show
@@ -320,9 +320,11 @@
             window.location.href = 'index.html';
         });
     </script>
-    <script defer src="assets/floating-autos.js"></script>
+    
 
 </body>
 </html>
+
+
 
 

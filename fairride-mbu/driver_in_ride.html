@@ -86,7 +86,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-slate-300">Route</p>
-                            <p class="font-semibold text-slate-50"><span id="route-from">—</span> → <span id="route-to">—</span></p>
+                            <p class="font-semibold text-slate-50"><span id="route-from">�</span> ? <span id="route-to">�</span></p>
                         </div>
                     </div>
                     <div class="hidden sm:flex items-center space-x-2">
@@ -103,7 +103,7 @@
                         <img id="rider-avatar" src="https://placehold.co/56x56/1f2937/FBBF24?text=U" class="w-14 h-14 rounded-full mr-4 border-2 border-gray-600">
                         <div>
                             <p id="rider-name" class="font-bold text-lg text-white">Passenger</p>
-                            <p class="text-sm text-slate-400">Fare: <span id="rider-fare" class="font-mono text-amber-300">—</span></p>
+                            <p class="text-sm text-slate-400">Fare: <span id="rider-fare" class="font-mono text-amber-300">�</span></p>
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-3">
@@ -185,15 +185,15 @@
             <div class="card p-6 text-center">
                 <i class="ph-check-circle-fill text-6xl text-amber-400 mx-auto"></i>
                 <h2 class="text-2xl font-bold text-white mt-4">Ride Completed!</h2>
-                <p class="text-slate-400 mt-2">Trip: <span id="comp-from">—</span> → <span id="comp-to">—</span></p>
+                <p class="text-slate-400 mt-2">Trip: <span id="comp-from">�</span> ? <span id="comp-to">�</span></p>
                 <div class="grid grid-cols-2 gap-3 mt-6">
                     <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
                         <p class="text-xs text-slate-400">Fare Collected</p>
-                        <p id="comp-fare" class="text-lg font-extrabold text-amber-400">—</p>
+                        <p id="comp-fare" class="text-lg font-extrabold text-amber-400">�</p>
                     </div>
                     <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
                         <p class="text-xs text-slate-400">Status</p>
-                        <p class="text-lg font-extrabold text-green-400">Paid ✓</p>
+                        <p class="text-lg font-extrabold text-green-400">Paid ?</p>
                     </div>
                 </div>
                 <div class="mt-6 grid grid-cols-2 gap-3">
@@ -246,7 +246,7 @@
     <div id="toast"><div class="toast-card"><span id="toast-text" class="text-sm text-slate-200 font-semibold"></span></div></div>
 
     <script>
-    // ── Toast ──
+    // -- Toast --
     let toastTimer;
     function showToast(message) {
         const el = document.getElementById('toast');
@@ -258,7 +258,7 @@
         toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
     }
 
-    // ── Confetti ──
+    // -- Confetti --
     const confettiCanvas = document.getElementById('confetti-canvas');
     const cx = confettiCanvas.getContext('2d');
     let confetti = [];
@@ -277,7 +277,7 @@
         })();
     }
 
-    // ── Elements ──
+    // -- Elements --
     const primaryActionBtn = document.getElementById('primary-action');
     const expandBtn = document.getElementById('expand-details');
     const extraDetails = document.getElementById('extra-details');
@@ -295,7 +295,7 @@
     const paymentReceivedSection = document.getElementById('payment-received-section');
     const sosModalBackdrop = document.getElementById('sos-modal-backdrop');
 
-    // ── State ──
+    // -- State --
     let state = 'enroute';
     let telemTimer;
     let eta = 12;
@@ -307,7 +307,7 @@
     }
     setActive(stepPickup);
 
-    // ── Load ride info ──
+    // -- Load ride info --
     (function loadRideInfo() {
         const name = localStorage.getItem('lastRiderName') || 'Passenger';
         const phone = localStorage.getItem('lastRiderPhone') || '';
@@ -318,14 +318,14 @@
 
         const el = (id) => document.getElementById(id);
         if (el('rider-name')) el('rider-name').textContent = name;
-        if (el('rider-fare')) el('rider-fare').textContent = fare ? '₹'+fare : '—';
+        if (el('rider-fare')) el('rider-fare').textContent = fare ? '₹'+fare : '�';
         if (el('rider-avatar')) el('rider-avatar').src = 'https://placehold.co/56x56/1f2937/FBBF24?text='+(name[0]||'U').toUpperCase();
-        if (el('route-from')) el('route-from').textContent = from || '—';
-        if (el('route-to')) el('route-to').textContent = to || '—';
-        if (el('chip-fare')) el('chip-fare').textContent = fare ? '₹'+fare : '—';
-        if (el('comp-from')) el('comp-from').textContent = from || '—';
-        if (el('comp-to')) el('comp-to').textContent = to || '—';
-        if (el('comp-fare')) el('comp-fare').textContent = fare ? '₹'+fare : '—';
+        if (el('route-from')) el('route-from').textContent = from || '�';
+        if (el('route-to')) el('route-to').textContent = to || '�';
+        if (el('chip-fare')) el('chip-fare').textContent = fare ? '₹'+fare : '�';
+        if (el('comp-from')) el('comp-from').textContent = from || '�';
+        if (el('comp-to')) el('comp-to').textContent = to || '�';
+        if (el('comp-fare')) el('comp-fare').textContent = fare ? '₹'+fare : '�';
         if (el('detail-pickup')) el('detail-pickup').textContent = from || 'MBU Campus';
 
         const cleanPhone = phone.replace(/[^\d+]/g, '');
@@ -346,7 +346,7 @@
         bindContact('video-rider', '', 'Video call not available.');
     })();
 
-    // ── OTP Modal ──
+    // -- OTP Modal --
     function toggleOtpModal(show) {
         otpBackdrop.classList.toggle('visible', show);
         if (show) { otpInput.value = ''; otpStatus.textContent = ''; otpInput.focus(); }
@@ -378,7 +378,7 @@
             console.error('Start ride error:', e);
         }
 
-        otpStatus.textContent = 'Verified ✓ Starting ride...';
+        otpStatus.textContent = 'Verified ? Starting ride...';
         otpStatus.style.color = '#34d399';
 
         setTimeout(() => {
@@ -397,7 +397,7 @@
     otpVerifyBtn.addEventListener('click', verifyOtp);
     otpInput.addEventListener('keydown', e => { if (e.key === 'Enter') verifyOtp(); });
 
-    // ── Poll for payment ──
+    // -- Poll for payment --
     function startPaymentCheck() {
         paymentWaitingSection.classList.remove('hidden');
         paymentCheckInterval = setInterval(() => {
@@ -414,7 +414,7 @@
         }, 3000);
     }
 
-    // ── Primary Action ──
+    // -- Primary Action --
     primaryActionBtn.addEventListener('click', () => {
         if (state === 'enroute') {
             state = 'arrived';
@@ -459,7 +459,7 @@
         }
     });
 
-    // ── Expand Details ──
+    // -- Expand Details --
     expandBtn.addEventListener('click', () => {
         extraDetails.classList.toggle('open');
         expandBtn.innerHTML = extraDetails.classList.contains('open')
@@ -467,7 +467,7 @@
             : '<i class="ph-caret-down mr-2"></i>Details';
     });
 
-    // ── Telemetry ──
+    // -- Telemetry --
     function startTelemetry() {
         clearInterval(telemTimer);
         telemTimer = setInterval(() => {
@@ -481,12 +481,12 @@
         }, 2000);
     }
 
-    // ── Completion Modal ──
+    // -- Completion Modal --
     completionBackdrop.addEventListener('click', e => {
         if (e.target === completionBackdrop) completionBackdrop.classList.remove('visible');
     });
 
-    // ── SOS ──
+    // -- SOS --
     document.getElementById('sos-btn').addEventListener('click', () => sosModalBackdrop.classList.add('visible'));
     document.getElementById('sos-cancel').addEventListener('click', () => sosModalBackdrop.classList.remove('visible'));
     sosModalBackdrop.addEventListener('click', e => { if (e.target === sosModalBackdrop) sosModalBackdrop.classList.remove('visible'); });
@@ -497,3 +497,4 @@
     </script>
 </body>
 </html>
+

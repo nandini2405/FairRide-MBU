@@ -25,7 +25,7 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
   </style>
-  <link rel="stylesheet" href="assets/floating-autos.css" />
+  
 </head>
 <body class="antialiased text-slate-200">
   <div class="min-h-screen">
@@ -42,10 +42,10 @@
     <main class="container mx-auto p-4 md:p-6 space-y-6">
       <!-- Stats -->
       <section class="no-scrollbar flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
-        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Total Drivers</p><p id="stat-total" class="text-3xl font-extrabold text-amber-400">—</p></div>
-        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Pending</p><p id="stat-pending" class="text-3xl font-extrabold text-amber-400">—</p></div>
-        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Verified</p><p id="stat-verified" class="text-3xl font-extrabold text-green-400">—</p></div>
-        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Rejected</p><p id="stat-rejected" class="text-3xl font-extrabold text-red-400">—</p></div>
+        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Total Drivers</p><p id="stat-total" class="text-3xl font-extrabold text-amber-400">�</p></div>
+        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Pending</p><p id="stat-pending" class="text-3xl font-extrabold text-amber-400">�</p></div>
+        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Verified</p><p id="stat-verified" class="text-3xl font-extrabold text-green-400">�</p></div>
+        <div class="card p-5 flex-none w-48"><p class="text-slate-400 text-sm">Rejected</p><p id="stat-rejected" class="text-3xl font-extrabold text-red-400">�</p></div>
       </section>
 
       <!-- Controls -->
@@ -146,7 +146,7 @@
 
     function phoneLink(p) { return p ? '<a href="tel:' + p + '" class="text-amber-300 hover:underline">' + p + '</a>' : '-'; }
     function emailLink(e) { return e ? '<a href="mailto:' + e + '" class="text-amber-300 hover:underline">' + e + '</a>' : '-'; }
-    function docLink(url, icon) { return url ? '<a href="' + url + '" target="_blank" class="text-amber-300" title="View"><i class="' + icon + '"></i></a>' : '<span class="text-slate-500">—</span>'; }
+    function docLink(url, icon) { return url ? '<a href="' + url + '" target="_blank" class="text-amber-300" title="View"><i class="' + icon + '"></i></a>' : '<span class="text-slate-500">�</span>'; }
 
     function renderRows(list) {
       const tbody = document.getElementById('drivers-body');
@@ -158,16 +158,16 @@
         const id = d.id;
         const prof = d.driverProfile || {};
         return '<tr class="border-t border-gray-700/60">' +
-          '<td class="text-slate-100">' + (d.name || '—') + '</td>' +
+          '<td class="text-slate-100">' + (d.name || '�') + '</td>' +
           '<td class="text-center">' + phoneLink(d.phone) + '</td>' +
           '<td class="text-center">' + emailLink(d.email) + '</td>' +
-          '<td class="text-center">' + (prof.vehicleNumber || '—') + '</td>' +
+          '<td class="text-center">' + (prof.vehicleNumber || '�') + '</td>' +
           '<td class="text-center">' + badge(prof.status) + '</td>' +
           '<td class="text-center">' + docLink(prof.licenseFileUrl, 'ph-identification-badge-fill') + ' ' + docLink(prof.insuranceFileUrl, 'ph-file-text-fill') + '</td>' +
           '<td class="text-center"><div class="inline-flex items-center gap-1">' +
-          '<button data-action="verify" data-id="' + id + '" class="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 font-semibold px-2 py-1 rounded-lg text-xs">✓ Verify</button>' +
-          '<button data-action="reject" data-id="' + id + '" class="bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold px-2 py-1 rounded-lg text-xs">✗ Reject</button>' +
-          '<button data-action="remove" data-id="' + id + '" class="bg-gray-700 hover:bg-gray-600 text-slate-200 font-semibold px-2 py-1 rounded-lg text-xs">🗑</button>' +
+          '<button data-action="verify" data-id="' + id + '" class="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 font-semibold px-2 py-1 rounded-lg text-xs">? Verify</button>' +
+          '<button data-action="reject" data-id="' + id + '" class="bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold px-2 py-1 rounded-lg text-xs">? Reject</button>' +
+          '<button data-action="remove" data-id="' + id + '" class="bg-gray-700 hover:bg-gray-600 text-slate-200 font-semibold px-2 py-1 rounded-lg text-xs">??</button>' +
           '</div></td>' +
           '</tr>';
       }).join('');
@@ -189,7 +189,7 @@
       if (st) params.set('status', st);
       if (q) params.set('q', q);
       try {
-        const data = await api('/api/admin/drivers' + (params.toString() ? '?' + params.toString() : ''));
+        const data = await api('/api/admin/drivers' + (params.toString() ? '₹' + params.toString() : ''));
         const drivers = data.drivers || [];
         renderRows(drivers);
         updateStats(drivers);
@@ -243,7 +243,7 @@
       // Load drivers
       await fetchDrivers();
 
-      // ✅ Auto refresh every 10 seconds
+      // ? Auto refresh every 10 seconds
       setInterval(async () => {
         try { await fetchDrivers(); } catch(e) { console.error('Auto refresh error:', e); }
       }, 10000);
@@ -271,8 +271,8 @@
         const id = btn.getAttribute('data-id');
         const action = btn.getAttribute('data-action');
         try {
-          if (action === 'verify') { await api('/api/admin/drivers/' + id + '/verify', { method: 'POST' }); showToast('✓ Driver verified!'); }
-          else if (action === 'reject') { await api('/api/admin/drivers/' + id + '/reject', { method: 'POST' }); showToast('✗ Driver rejected'); }
+          if (action === 'verify') { await api('/api/admin/drivers/' + id + '/verify', { method: 'POST' }); showToast('? Driver verified!'); }
+          else if (action === 'reject') { await api('/api/admin/drivers/' + id + '/reject', { method: 'POST' }); showToast('? Driver rejected'); }
           else if (action === 'remove') {
             if (!confirm('Remove this driver permanently?')) return;
             await api('/api/admin/drivers/' + id, { method: 'DELETE' });
@@ -286,6 +286,7 @@
     init();
   </script>
 
-  <script defer src="assets/floating-autos.js"></script>
+  
 </body>
 </html>
+

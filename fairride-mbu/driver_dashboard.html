@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -20,8 +20,8 @@
         .availability-toggle { display: inline-flex; align-items: center; gap: 0.5rem; }
         .toggle-side-label { font-size: 0.75rem; color: rgba(148,163,184,0.9); font-weight: 700; letter-spacing: 0.06em; }
         .toggle-checkbox { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-        .toggle-label { position: relative; display: inline-block; width: 3.25rem; height: 1.75rem; border-radius: 9999px; background: rgba(75,85,99,0.65); border: 1px solid rgba(148,163,184,0.22); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease; }
-        .toggle-label .toggle-ball { position: absolute; top: 3px; left: 3px; width: 1.375rem; height: 1.375rem; border-radius: 9999px; background: linear-gradient(180deg, #ffffff, #e5e7eb); box-shadow: 0 10px 18px -14px rgba(0,0,0,0.85); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1); }
+        .toggle-label { position: relative; display: inline-block; width: 3.25rem; height: 1.75rem; border-radius: 9999px; background: rgba(75,85,99,0.65); border: 1px solid rgba(148,163,184,0.22); cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease; }
+        .toggle-label .toggle-ball { position: absolute; top: 3px; left: 3px; width: 1.375rem; height: 1.375rem; border-radius: 9999px; background: linear-gradient(180deg, #ffffff, #e5e7eb); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1); }
         .toggle-checkbox:checked + .toggle-label { background: rgba(34,197,94,0.35); border-color: rgba(34,197,94,0.55); }
         .toggle-checkbox:checked + .toggle-label .toggle-ball { transform: translateX(1.5rem); }
         .modal-backdrop { position: fixed; inset: 0; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
@@ -32,7 +32,6 @@
         .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
         .verification-banner { margin: 0 0 1rem 0; }
     </style>
-    <link rel="stylesheet" href="assets/floating-autos.css">
 </head>
 <body class="antialiased text-slate-200">
     <div class="min-h-screen">
@@ -58,27 +57,24 @@
             </nav>
         </header>
 
-        <!-- Verification banner inserted here by JS -->
-
         <main class="container mx-auto p-4 md:p-6">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Left Column -->
                 <div class="lg:col-span-1 space-y-6">
-                    <!-- Earnings Summary -->
+                    <!-- Earnings -->
                     <section class="card p-6 fade-in-up" style="animation-delay:0.1s;">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-bold text-slate-100 flex items-center"><i class="ph-currency-inr text-amber-400 mr-2"></i>Today's Earnings</h2>
-                            <a href="driver_earnings.html" class="text-xs text-amber-400 hover:text-amber-300 font-semibold">View All →</a>
+                            <a href="driver_earnings.html" class="text-xs text-amber-400 hover:text-amber-300 font-semibold">View All &rarr;</a>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
                                 <p class="text-xs text-slate-400">Today</p>
-                                <p id="dash-today-earnings" class="text-2xl font-bold text-amber-400">₹0</p>
+                                <p id="dash-today-earnings" class="text-2xl font-bold text-amber-400">&#8377;0</p>
                                 <p id="dash-today-trips" class="text-xs text-slate-500 mt-0.5">0 trips</p>
                             </div>
                             <div class="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
                                 <p class="text-xs text-slate-400">This Week</p>
-                                <p id="dash-week-earnings" class="text-2xl font-bold text-green-400">₹0</p>
+                                <p id="dash-week-earnings" class="text-2xl font-bold text-green-400">&#8377;0</p>
                                 <p id="dash-week-trips" class="text-xs text-slate-500 mt-0.5">0 trips</p>
                             </div>
                         </div>
@@ -92,14 +88,14 @@
                                 <div class="flex items-center mb-3">
                                     <img src="https://placehold.co/40x40/374151/FBBF24?text=U" class="w-10 h-10 rounded-full mr-3">
                                     <div>
-                                        <p id="inc-name" class="font-bold text-white">—</p>
-                                        <p class="text-xs text-gray-400"><span id="inc-from">—</span> → <span id="inc-to">—</span></p>
+                                        <p id="inc-name" class="font-bold text-white">&mdash;</p>
+                                        <p class="text-xs text-gray-400"><span id="inc-from">&mdash;</span> &rarr; <span id="inc-to">&mdash;</span></p>
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <p id="inc-fare" class="text-xl font-extrabold text-amber-400">—</p>
+                                    <p id="inc-fare" class="text-xl font-extrabold text-amber-400">&mdash;</p>
                                     <div class="flex space-x-2">
-                                        <button class="bg-red-500/20 hover:bg-red-500/40 text-red-300 font-bold py-2 px-4 rounded-lg transition-colors">Decline</button>
+                                        <button id="decline-btn" class="bg-red-500/20 hover:bg-red-500/40 text-red-300 font-bold py-2 px-4 rounded-lg transition-colors">Decline</button>
                                         <button class="accept-btn bg-green-500/20 hover:bg-green-500/40 text-green-300 font-bold py-2 px-4 rounded-lg transition-colors">Accept</button>
                                     </div>
                                 </div>
@@ -120,7 +116,7 @@
                     <!-- Total Earnings -->
                     <a href="./driver_earnings.html" class="card block p-6 md:p-8 fade-in-up hover:bg-gray-700/50 transition-colors" style="animation-delay:0.4s;">
                         <h2 class="text-lg font-bold text-slate-100 mb-1">Total Earnings</h2>
-                        <p id="dash-total-earnings" class="text-5xl font-extrabold text-amber-400">₹0</p>
+                        <p id="dash-total-earnings" class="text-5xl font-extrabold text-amber-400">&#8377;0</p>
                         <p id="dash-total-trips" class="text-gray-400 mt-2">0 completed trips</p>
                     </a>
                 </div>
@@ -169,7 +165,7 @@
     </div>
 
     <script>
-    // ── Online/Offline Toggle ──
+    // Online/Offline Toggle
     (function () {
         const toggle = document.getElementById('online-toggle');
         const statusText = document.getElementById('status-text');
@@ -190,7 +186,7 @@
         toggle.addEventListener('change', function () { applyState(this.checked); });
     })();
 
-    // ── Load Available Rides ──
+    // Load Available Rides
     (async function () {
         try {
             const token = localStorage.getItem('authToken');
@@ -207,7 +203,7 @@
                 document.getElementById('inc-name').textContent = 'Student #' + ride.riderId;
                 document.getElementById('inc-from').textContent = ride.origin || 'MBU Campus';
                 document.getElementById('inc-to').textContent = ride.destination;
-                document.getElementById('inc-fare').textContent = ride.fare ? '₹' + ride.fare : '—';
+                document.getElementById('inc-fare').textContent = ride.fare ? '\u20B9' + ride.fare : '\u2014';
                 localStorage.setItem('currentRideId', ride.id);
             } else {
                 if (card) card.classList.add('hidden');
@@ -216,7 +212,26 @@
         } catch (e) { console.error(e); }
     })();
 
-    // ── Accept Ride ──
+    // Decline Ride
+    document.getElementById('decline-btn').addEventListener('click', async () => {
+        const token = localStorage.getItem('authToken');
+        const rideId = localStorage.getItem('currentRideId');
+        if (!token || !rideId) return;
+        try {
+            await fetch('/api/rides/' + rideId + '/status', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ status: 'CANCELLED' })
+            });
+        } catch (e) { console.error(e); }
+        document.getElementById('incoming-latest').classList.add('hidden');
+        const empty = document.getElementById('incoming-empty');
+        empty.classList.remove('hidden');
+        empty.textContent = 'Ride declined.';
+        localStorage.removeItem('currentRideId');
+    });
+
+    // Accept Ride
     document.querySelectorAll('.accept-btn').forEach(btn => btn.addEventListener('click', async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('authToken');
@@ -232,7 +247,7 @@
         } catch (e) { console.error(e); }
     }));
 
-    // ── Map Location ──
+    // Map Location
     (function () {
         var btn = document.getElementById('driver-map-my-location');
         var frame = document.querySelector('#map-container iframe');
@@ -247,7 +262,7 @@
         });
     })();
 
-    // ── Header Profile ──
+    // Header Profile
     (function () {
         const nameEl = document.getElementById('header-name');
         const avatarEl = document.getElementById('header-avatar');
@@ -265,7 +280,7 @@
         document.getElementById('header-profile-link').addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'driver_profile.html'; });
     })();
 
-    // ── Earnings ──
+    // Earnings
     async function loadDashboardEarnings() {
         const token = localStorage.getItem('authToken');
         if (!token) return;
@@ -273,7 +288,7 @@
             const res = await fetch('/api/driver/earnings', { headers: { 'Authorization': 'Bearer ' + token } });
             if (res.ok) {
                 const data = await res.json();
-                const fmt = (n) => '₹' + Math.round(n || 0);
+                const fmt = (n) => '\u20B9' + Math.round(n || 0);
                 const el = (id) => document.getElementById(id);
                 if (el('dash-today-earnings')) el('dash-today-earnings').textContent = fmt(data.todayEarnings);
                 if (el('dash-today-trips')) el('dash-today-trips').textContent = (data.todayTrips || 0) + ' trips';
@@ -285,7 +300,7 @@
         } catch (e) { console.error(e); }
     }
 
-    // ── Verification Banner ──
+    // Verification Banner
     async function checkVerificationStatus() {
         const token = localStorage.getItem('authToken');
         if (!token) return null;
@@ -293,10 +308,7 @@
             const res = await fetch('/api/driver/profile', { headers: { 'Authorization': 'Bearer ' + token } });
             const profile = await res.json();
             const toggle = document.getElementById('online-toggle');
-
-            // Remove old banners
             document.querySelectorAll('.verification-banner').forEach(el => el.remove());
-
             const banner = document.createElement('div');
             if (profile.status === 'PENDING') {
                 banner.className = 'verification-banner bg-amber-500/15 border border-amber-500/40 rounded-xl p-4 text-center mx-4 md:mx-6 mb-4';
@@ -308,25 +320,20 @@
                 if (toggle) toggle.disabled = true;
             } else if (profile.status === 'VERIFIED') {
                 banner.className = 'verification-banner bg-green-500/15 border border-green-500/30 rounded-xl p-3 flex items-center gap-2 mx-4 md:mx-6 mb-4';
-                banner.innerHTML = '<i class="ph-check-circle-fill text-green-400 text-xl"></i><p class="text-green-300 font-semibold text-sm">Account Verified — You can accept rides!</p>';
+                banner.innerHTML = '<i class="ph-check-circle-fill text-green-400 text-xl"></i><p class="text-green-300 font-semibold text-sm">Account Verified &mdash; You can accept rides!</p>';
                 if (toggle) toggle.disabled = false;
             }
-
             const header = document.querySelector('header');
             header.insertAdjacentElement('afterend', banner);
             return profile.status;
         } catch (e) { console.error(e); return null; }
     }
 
-    // ── Init ──
+    // Init
     let _cachedVerifStatus = null;
-
     async function init() {
-        // Load earnings and verification on startup
         loadDashboardEarnings();
         _cachedVerifStatus = await checkVerificationStatus();
-
-        // Poll every 8 seconds — reload page if verification status changes
         setInterval(async () => {
             const token = localStorage.getItem('authToken');
             if (!token) return;
@@ -334,21 +341,17 @@
                 const res = await fetch('/api/driver/profile', { headers: { 'Authorization': 'Bearer ' + token } });
                 const profile = await res.json();
                 if (_cachedVerifStatus !== null && _cachedVerifStatus !== profile.status) {
-                    // Status changed — reload page to show updated banner
                     window.location.reload();
                 }
                 _cachedVerifStatus = profile.status;
             } catch (e) {}
         }, 8000);
     }
-
     init();
 
-    // ── Toast ──
     document.getElementById('driver-toast-close').addEventListener('click', () => {
         document.getElementById('driver-toast').classList.remove('visible');
     });
     </script>
-    <script defer src="assets/floating-autos.js"></script>
 </body>
 </html>

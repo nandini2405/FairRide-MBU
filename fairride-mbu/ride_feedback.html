@@ -1,161 +1,173 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rate Your Ride - FairRide MBU</title>
-  <link rel="stylesheet" href="assets/tailwind.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet" />
-  <style>
-    :root { --primary-color: #FBBF24; --primary-color-transparent-1: rgba(251, 191, 36, 0.2); --primary-color-light: #FCD34D; --bg-color: #111827; --card-bg-color: rgba(31, 41, 55, 0.6); --shadow-color: rgba(251, 191, 36, 0.5); }
-    body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); overflow-x: hidden; }
-    .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1.25rem; border: 1px solid var(--primary-color-transparent-1); box-shadow: 0 10px 30px -10px rgba(0,0,0,.3); }
-    .animated-gradient-text { background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color), #f9fafb, var(--primary-color), var(--primary-color-light)); background-size: 200% auto; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textGradientShift 4s linear infinite; }
-    @keyframes textGradientShift { to { background-position: 200% center; } }
-    .star { cursor: pointer; transition: transform .15s ease; }
-    .star:hover { transform: scale(1.12); }
-    .tag { padding: 6px 10px; border-radius: 9999px; border: 1px solid #4b5563; background: rgba(31,41,55,.5); cursor: pointer; font-weight: 600; }
-    .tag.active { border-color: var(--primary-color); background: rgba(251,191,36,0.1); color: #FBBF24; }
-    .tip-btn { padding: 6px 10px; border-radius: 10px; border: 1px solid #4b5563; background: rgba(31,41,55,.5); cursor: pointer; font-weight: 700; }
-    .tip-btn.active { border-color: var(--primary-color); background: rgba(251,191,36,0.12); color: #FBBF24; }
-  </style>
-  <link rel="stylesheet" href="assets/floating-autos.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Your Ride - FairRide MBU</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css" rel="stylesheet">
+    <style>
+        :root { --primary-color: #FBBF24; --bg-color: #111827; --card-bg-color: rgba(31,41,55,0.6); }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); }
+        .card { background-color: var(--card-bg-color); backdrop-filter: blur(12px); border-radius: 1.5rem; border: 1px solid rgba(251,191,36,0.2); }
+        .star { cursor: pointer; transition: transform .15s ease; }
+        .star:hover { transform: scale(1.12); }
+        .tag { padding: 6px 10px; border-radius: 9999px; border: 1px solid #4b5563; background: rgba(31,41,55,.5); cursor: pointer; font-weight: 600; }
+        .tag.active { border-color: var(--primary-color); background: rgba(251,191,36,0.1); color: #FBBF24; }
+        .tip-btn { padding: 8px 16px; border-radius: 9999px; border: 1px solid #4b5563; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .tip-btn.active { border-color: var(--primary-color); background: rgba(251,191,36,0.1); color: #FBBF24; }
+        .submit-btn { background-color: var(--primary-color); color: #111827; transition: transform 0.2s ease; }
+        .submit-btn:hover { transform: translateY(-2px); }
+        .animated-gradient-text { background: linear-gradient(90deg, #FCD34D, #FBBF24, #f9fafb, #FBBF24, #FCD34D); background-size: 200% auto; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: textGradientShift 4s linear infinite; }
+        @keyframes textGradientShift { to { background-position: 200% center; } }
+    </style>
 </head>
-<body class="antialiased text-slate-200">
-  <div class="min-h-screen">
-    <header class="p-4 md:p-6">
-      <nav class="container mx-auto flex justify-between items-center">
-        <a href="dashboard.html" class="text-2xl font-black text-slate-50"><span class="animated-gradient-text">FairRide MBU</span></a>
-        <a href="dashboard.html" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-600" title="Close"><i class="ph-x text-xl text-slate-300"></i></a>
-      </nav>
+<body class="antialiased text-slate-200 min-h-screen">
+    <header class="p-4">
+        <nav class="container mx-auto flex justify-between items-center">
+            <span class="text-2xl font-black"><span class="animated-gradient-text">FairRide MBU</span></span>
+            <a href="dashboard.html" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-600">
+                <i class="ph-x text-xl text-slate-300"></i>
+            </a>
+        </nav>
     </header>
 
-    <main class="container mx-auto p-4 md:p-6">
-      <section class="max-w-xl mx-auto card p-6 md:p-8">
-        <div class="flex items-center gap-4">
-          <img id="driver-avatar" src="https://placehold.co/80x80/374151/FBBF24?text=R" class="w-16 h-16 rounded-full border-4 border-gray-700"/>
-          <div>
-            <h1 id="driver-name" class="text-xl font-bold text-white">Your Driver</h1>
-            <p id="vehicle" class="text-slate-400 text-sm">&mdash;</p>
-          </div>
+    <main class="container mx-auto p-4 max-w-md">
+        <div class="card p-6">
+            <!-- Driver Info -->
+            <div class="flex items-center gap-4 mb-6">
+                <div id="driver-avatar" class="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-500/40 flex items-center justify-center text-2xl font-bold text-amber-400">R</div>
+                <div>
+                    <p id="driver-name" class="text-xl font-bold text-white">Your Driver</p>
+                    <p id="driver-vehicle" class="text-sm text-slate-400">Auto Rickshaw</p>
+                </div>
+            </div>
+
+            <!-- Star Rating -->
+            <div class="mb-6">
+                <p class="font-semibold text-slate-200 mb-2">Rate your trip</p>
+                <div id="stars" class="flex items-center gap-2 text-amber-400">
+                    <button type="button" class="star text-3xl" data-star="1">&#9733;</button>
+                    <button type="button" class="star text-3xl" data-star="2">&#9733;</button>
+                    <button type="button" class="star text-3xl" data-star="3">&#9733;</button>
+                    <button type="button" class="star text-3xl" data-star="4">&#9733;</button>
+                    <button type="button" class="star text-3xl" data-star="5">&#9733;</button>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Rating is optional.</p>
+            </div>
+
+            <!-- Tags -->
+            <div class="mb-6">
+                <p class="font-semibold text-slate-200 mb-3">What stood out?</p>
+                <div class="flex flex-wrap gap-2">
+                    <button class="tag text-slate-300 text-sm" data-tag="Polite">Polite</button>
+                    <button class="tag text-slate-300 text-sm" data-tag="Safe driving">Safe driving</button>
+                    <button class="tag text-slate-300 text-sm" data-tag="Clean vehicle">Clean vehicle</button>
+                    <button class="tag text-slate-300 text-sm" data-tag="On time">On time</button>
+                    <button class="tag text-slate-300 text-sm" data-tag="Helpful">Helpful</button>
+                    <button class="tag text-slate-300 text-sm" data-tag="Music too loud">Music too loud</button>
+                    <button class="tag text-slate-300 text-sm" data-tag="Rash driving">Rash driving</button>
+                </div>
+            </div>
+
+            <!-- Comment -->
+            <div class="mb-6">
+                <p class="font-semibold text-slate-200 mb-2">Leave a feedback (optional)</p>
+                <textarea id="comment" rows="3" placeholder="Your feedback helps improve rides" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-amber-400 resize-none"></textarea>
+            </div>
+
+            <!-- Tip -->
+            <div class="mb-6">
+                <p class="font-semibold text-slate-200 mb-3">Tip your driver (optional)</p>
+                <div class="flex flex-wrap gap-2">
+                    <button class="tip-btn text-slate-300 text-sm active" data-tip="0">No Tip</button>
+                    <button class="tip-btn text-slate-300 text-sm" data-tip="10">&#8377;10</button>
+                    <button class="tip-btn text-slate-300 text-sm" data-tip="20">&#8377;20</button>
+                    <button class="tip-btn text-slate-300 text-sm" data-tip="30">&#8377;30</button>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button id="submit-btn" class="submit-btn w-full font-bold py-3 rounded-xl text-lg">
+                Submit Feedback
+            </button>
         </div>
-
-        <h2 class="mt-6 text-lg font-semibold text-white">Rate your trip</h2>
-       <div id="stars" class="mt-2 flex items-center gap-2 text-amber-400" role="radiogroup" aria-label="Star Rating">
-  <button type="button" class="star text-3xl" data-star="1">⭐</button>
-  <button type="button" class="star text-3xl" data-star="2">⭐</button>
-  <button type="button" class="star text-3xl" data-star="3">⭐</button>
-  <button type="button" class="star text-3xl" data-star="4">⭐</button>
-  <button type="button" class="star text-3xl" data-star="5">⭐</button>
-</div>
-        <p id="rating-hint" class="text-slate-400 text-sm mt-1">Rating is optional.</p>
-
-        <h2 class="mt-6 text-lg font-semibold text-white">What stood out?</h2>
-        <div id="tags" class="mt-2 flex flex-wrap gap-2">
-          <button class="tag" data-tag="Polite">Polite</button>
-          <button class="tag" data-tag="Safe driving">Safe driving</button>
-          <button class="tag" data-tag="Clean vehicle">Clean vehicle</button>
-          <button class="tag" data-tag="On time">On time</button>
-          <button class="tag" data-tag="Helpful">Helpful</button>
-          <button class="tag" data-tag="Music too loud">Music too loud</button>
-          <button class="tag" data-tag="Rash driving">Rash driving</button>
-        </div>
-
-        <h2 class="mt-6 text-lg font-semibold text-white">Leave a feedback (optional)</h2>
-        <textarea id="feedback" rows="3" class="mt-2 w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-slate-200" placeholder="Your feedback helps improve rides"></textarea>
-
-        <h2 class="mt-6 text-lg font-semibold text-white">Tip your driver (optional)</h2>
-        <div id="tips" class="mt-2 flex items-center gap-2">
-          <button class="tip-btn" data-tip="0">No Tip</button>
-          <button class="tip-btn" data-tip="10">&#8377;10</button>
-          <button class="tip-btn" data-tip="20">&#8377;20</button>
-          <button class="tip-btn" data-tip="30">&#8377;30</button>
-        </div>
-
-        <div class="mt-8 flex items-center gap-3">
-          <button id="submit-btn" class="primary-btn font-bold px-5 py-3 rounded-lg">Submit</button>
-          <a id="skip-btn" href="#" class="bg-gray-700 hover:bg-gray-600 text-slate-200 font-semibold px-5 py-3 rounded-lg">Skip</a>
-        </div>
-        <p id="saved-note" class="mt-3 text-emerald-400 text-sm hidden">Thanks! Saving your feedback&hellip;</p>
-      </section>
     </main>
-  </div>
 
-  <script>
-    // Prefill driver info from localStorage if available
-    (function(){
-      const name = localStorage.getItem('lastDriverName') || 'Ramesh Kumar';
-      const vehicle = localStorage.getItem('lastDriverVehicle') || 'AP 03 N 1234';
-      document.getElementById('driver-name').textContent = name;
-      document.getElementById('vehicle').textContent = vehicle;
-      const initial = (name||'R').trim().charAt(0).toUpperCase();
-      document.getElementById('driver-avatar').src = `https://placehold.co/80x80/374151/FBBF24?text=${encodeURIComponent(initial)}`;
-    })();
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('authToken');
+        const rideId = localStorage.getItem('currentRideId');
 
-    // Star rating
-  const starsWrap = document.getElementById('stars');
-let rating = 0;
-document.querySelectorAll('.star').forEach((btn, idx) => {
-  btn.addEventListener('click', () => setRating(idx + 1));
-});
-    function setRating(val){
-  rating = val;
-  document.querySelectorAll('.star').forEach((el, idx) => {
-    el.textContent = idx < rating ? '⭐' : '☆';
-    el.style.color = idx < rating ? '#FBBF24' : '#9ca3af';
-    el.style.fontSize = '2rem';
-  });
-  document.getElementById('rating-hint').textContent = rating ? `You rated ${rating} star${rating>1?'s':''}.` : 'Rating is optional.';
-}
-    // Tags & Tips
-    const selectedTags = new Set();
-    document.getElementById('tags').addEventListener('click', (e) => {
-      const btn = e.target.closest('.tag'); if (!btn) return;
-      const t = btn.getAttribute('data-tag');
-      if (btn.classList.toggle('active')) selectedTags.add(t); else selectedTags.delete(t);
+        // Load driver info
+        const driverName = localStorage.getItem('lastRiderName') || 'Your Driver';
+        const driverNameEl = document.getElementById('driver-name');
+        const driverAvatarEl = document.getElementById('driver-avatar');
+        if (driverNameEl) driverNameEl.textContent = driverName;
+        if (driverAvatarEl) driverAvatarEl.textContent = driverName.charAt(0).toUpperCase();
+
+        // Stars
+        let selectedRating = 0;
+        const stars = document.querySelectorAll('.star');
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                selectedRating = Number(star.dataset.star);
+                stars.forEach(s => {
+                    s.style.opacity = Number(s.dataset.star) <= selectedRating ? '1' : '0.3';
+                });
+            });
+            star.addEventListener('mouseover', () => {
+                stars.forEach(s => {
+                    s.style.opacity = Number(s.dataset.star) <= Number(star.dataset.star) ? '1' : '0.3';
+                });
+            });
+            star.addEventListener('mouseout', () => {
+                stars.forEach(s => {
+                    s.style.opacity = Number(s.dataset.star) <= selectedRating ? '1' : '0.3';
+                });
+            });
+        });
+
+        // Tags
+        const selectedTags = new Set();
+        document.querySelectorAll('.tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                tag.classList.toggle('active');
+                if (selectedTags.has(tag.dataset.tag)) selectedTags.delete(tag.dataset.tag);
+                else selectedTags.add(tag.dataset.tag);
+            });
+        });
+
+        // Tips
+        let selectedTip = 0;
+        document.querySelectorAll('.tip-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tip-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedTip = Number(btn.dataset.tip);
+            });
+        });
+
+        // Submit
+        document.getElementById('submit-btn').addEventListener('click', async () => {
+            const comment = document.getElementById('comment').value.trim();
+            if (!token || !rideId) {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+            try {
+                await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ rideId: Number(rideId), rating: selectedRating, tags: Array.from(selectedTags), comment, tip: selectedTip })
+                });
+            } catch (e) { console.error(e); }
+            localStorage.removeItem('currentRideId');
+            localStorage.removeItem('paymentCompleted');
+            window.location.href = 'dashboard.html';
+        });
     });
-    let tip = 0;
-    document.getElementById('tips').addEventListener('click', (e) => {
-      const btn = e.target.closest('.tip-btn'); if (!btn) return;
-      tip = parseInt(btn.getAttribute('data-tip'),10) || 0;
-      document.querySelectorAll('.tip-btn').forEach(b=>b.classList.toggle('active', b===btn));
-    });
-async function saveAndRedirect(){
-  document.getElementById('saved-note').classList.remove('hidden');
-  const feedback = (document.getElementById('feedback').value || '').trim();
-  const rideId = localStorage.getItem('currentRideId');
-  const token = localStorage.getItem('authToken');
-
-  if (token && rideId) {
-    try {
-      await fetch('/api/feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          rideId: Number(rideId),
-          rating,
-          tags: [...selectedTags],
-          comment: feedback,
-          tip
-        })
-      });
-    } catch (err) {
-      console.error('Failed to save feedback:', err);
-    }
-  }
-
-  setTimeout(() => { window.location.href = 'dashboard.html'; }, 900);
-}
-       document.getElementById('submit-btn').addEventListener('click', saveAndRedirect);
-    document.getElementById('skip-btn').addEventListener('click', (e)=>{ e.preventDefault(); window.location.href = 'dashboard.html'; });
-  </script>
-
-  <script defer src="assets/floating-autos.js"></script>
+    </script>
 </body>
 </html>
-
-
