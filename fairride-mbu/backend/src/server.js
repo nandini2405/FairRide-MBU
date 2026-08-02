@@ -22,7 +22,11 @@ app.use(express.json({ limit: '1mb' }));
 const staticRoot = path.resolve(__dirname, process.env.STATIC_ROOT || '..');
 app.use(express.static(staticRoot));
 
-const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret) {
+  console.error('FATAL: JWT_SECRET environment variable is required');
+  process.exit(1);
+}
 
 // -- Auth Middleware --
 function auth(req, res, next) {
