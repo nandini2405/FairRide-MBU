@@ -33,7 +33,21 @@ fairride-mbu/
 ## Achievement
 
 Won 3rd Prize in a college-level Web Development Hackathon (100+ teams).
+
 ## How to Run Locally
+## How to Run Locally
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL installed and running
+- (Optional) Docker for containerized database
+
+### 1. Clone and Setup
+```bash
+git clone https://github.com/nandini2405/FairRide-MBU.git
+cd FairRide-MBU/fairride-mbu/backend
+cp .env.example .env
+# Edit .env with your actual database URL and API keys
 
 ### Prerequisites
 - Node.js 18+
