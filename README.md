@@ -30,10 +30,6 @@ fairride-mbu/
 └── ...
 ```
 
-## Achievement
-
-Won 3rd Prize in a college-level Web Development Hackathon (100+ teams).
-
 
 ## How to Run Locally
 
