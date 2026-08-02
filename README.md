@@ -37,7 +37,7 @@ Won 3rd Prize in a college-level Web Development Hackathon (100+ teams).
 
 ## How to Run Locally
 
- **Note:** These are instructions for anyone cloning this repository. You need Node.js 18+ and PostgreSQL installed.
+ > **Note:** These are instructions for anyone cloning this repository. You need Node.js 18+ and PostgreSQL installed.
 
 ### 1. Clone and Setup
 ```bash
@@ -46,23 +46,23 @@ cd FairRide-MBU/fairride-mbu/backend
 cp .env.example .env
 # Edit .env with your actual database URL and API keys
 
-# Install Dependencies
-bash
+### 2. Install Dependencies
+```bash
 npm install
 
-# Run Database Migrations
-bash
+### 3. Run Database Migrations
+```bash
 npx prisma migrate dev
 
-# Start Backend Server
-bash
+### 4. Start Backend Server
+```bash
 npm start
--- Server runs on http://localhost:3001--
+# Server runs on http://localhost:3001
 
-# Access Frontend
-Open fairride-mbu/index.html in your browser, or visit http://localhost:3001.
+### 5. Access Frontend
+Open `fairride-mbu/index.html` in your browser, or visit `http://localhost:3001`.
 
-# API Endpoints
+## API Endpoints
 
 | Endpoint                   | Method | Description          |
 | -------------------------- | ------ | -------------------- |
@@ -76,9 +76,9 @@ Open fairride-mbu/index.html in your browser, or visit http://localhost:3001.
 | `/api/ai/outing`           | POST   | AI outing planner    |
 | `/api/stats`               | GET    | Platform statistics  |
 
-# Achievement
+## Achievement
 Won 3rd Prize in a college-level Web Development Hackathon (100+ teams).
 
-# Developer
+## Developer
 Built by Nandini Kancharla as a campus project for MBU.
 
