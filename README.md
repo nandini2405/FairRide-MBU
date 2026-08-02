@@ -46,19 +46,20 @@ cd FairRide-MBU/fairride-mbu/backend
 cp .env.example .env
 # Edit .env with your actual database URL and API keys
 
+```
 ### 2. Install Dependencies
 ```bash
 npm install
-
+```
 ### 3. Run Database Migrations
 ```bash
 npx prisma migrate dev
-
+```
 ### 4. Start Backend Server
 ```bash
 npm start
 # Server runs on http://localhost:3001
-
+```
 ### 5. Access Frontend
 Open `fairride-mbu/index.html` in your browser, or visit `http://localhost:3001`.
 
